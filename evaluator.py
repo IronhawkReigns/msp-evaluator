@@ -77,6 +77,7 @@ def evaluate_answer(question, answer):
             if content in {"1", "2", "3", "4", "5"}:
                 return int(content)
             else:
+                print(f"⚠️ Unexpected response format: '{content}'")
                 return f"Unexpected response: {content}"
         except Exception as e:
             wait = min(60, 2 ** attempt + random.uniform(0.5, 1.5))
