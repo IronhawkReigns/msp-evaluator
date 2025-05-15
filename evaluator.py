@@ -2,13 +2,10 @@ import os
 import time
 import random
 import pandas as pd
-from dotenv import load_dotenv
 from openai import OpenAI
 
-# Load CLOVA API Key
-load_dotenv()
 API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
-API_KEY = os.getenv("CLOVA_API_KEY")
+API_KEY = os.environ["CLOVA_API_KEY"]
 
 client = OpenAI(
     api_key=API_KEY,

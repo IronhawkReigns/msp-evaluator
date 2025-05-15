@@ -1,20 +1,19 @@
 import os
+import json
 import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # Load configs
-CREDENTIALS_PATH = os.getenv("GOOGLE_SHEET_CREDENTIALS_PATH")
 INTERVIEW_SHEET_DOC_NAME = os.getenv("INTERVIEW_SHEET_DOC_NAME")
 INTERVIEW_SHEET = os.getenv("INTERVIEW_SHEET_NAME")
 
 # Authenticate and connect to Google Sheets
 def connect_to_sheets():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_PATH, scope)
+    creds_json_str = os.getenv("GOOGLE_SHEET_CREDENTIALS_PATH")
+    creds_dict = json.loads(creds_json_str)
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client = gspread.authorize(creds)
     return client
 
