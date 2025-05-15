@@ -5,13 +5,23 @@ import time
 if __name__ == "__main__":
     df, sheet = load_evaluation_data()
     scores = []
+
     for idx, row in df.iterrows():
+        interview_result = str(row.get("Interview Result", "")).strip()
+        current_level = str(row.get("Present Lv.", "")).strip()
+
+        # Skip if there's no interview result, or already evaluated
+        if interview_result == "" or current_level not in {"", "nan", "NaN"}:
+            print(f"Skipping row {idx+1} (no new input or already scored)")
+            scores.append(current_level)
+            continue
+
         question = row["Key Questions"]
-        answer = row["설명"]
+        answer = interview_result
         score = evaluate_answer(question, answer)
         print(f"{idx+1}. {question} → Score: {score}")
         scores.append(score)
         time.sleep(2.5)
 
-    df["Score"] = scores
+    df["Present Lv."] = scores
     update_scores_to_sheet(df, sheet)

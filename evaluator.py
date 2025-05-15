@@ -18,9 +18,9 @@ client = OpenAI(
 # Load rubric from Excel
 rubric_df = pd.read_excel("Criteria.xlsx")
 rubric_lookup = {
-    row["Key Questions"].strip(): row["진단 기준 정의"].strip()
+    row["Key Questions"].strip(): row["Rubric"].strip()
     for _, row in rubric_df.iterrows()
-    if pd.notna(row["Key Questions"]) and pd.notna(row["진단 기준 정의"])
+    if pd.notna(row["Key Questions"]) and pd.notna(row["Rubric"])
 }
 
 def evaluate_answer(question, answer):
