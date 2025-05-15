@@ -11,9 +11,7 @@ INTERVIEW_SHEET = os.getenv("INTERVIEW_SHEET_NAME")
 # Authenticate and connect to Google Sheets
 def connect_to_sheets():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds_json_str = os.getenv("GOOGLE_SHEET_CREDENTIALS_PATH")
-    creds_dict = json.loads(creds_json_str)
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
     client = gspread.authorize(creds)
     return client
 
