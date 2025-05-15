@@ -11,8 +11,13 @@ if __name__ == "__main__":
         current_level = str(row.get("Present Lv.", "")).strip()
 
         # Skip if there's no interview result, or already evaluated
-        if interview_result == "" or current_level not in {"", "nan", "NaN"}:
-            print(f"Skipping row {idx+1} (no new input or already scored)")
+        if interview_result == "":
+            print(f"⏭️ Skipping row {idx+1} due to empty 'Interview Result'")
+            scores.append(current_level)
+            continue
+
+        if current_level not in {"", "nan", "NaN"}:
+            print(f"Skipping row {idx+1} (already scored)")
             scores.append(current_level)
             continue
 
