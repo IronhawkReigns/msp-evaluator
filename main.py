@@ -12,7 +12,7 @@ if __name__ == "__main__":
 
         # Skip if there's no interview result, or already evaluated
         if interview_result == "":
-            print(f"⏭️ Skipping row {idx+1} due to empty 'Interview Result'")
+            print(f"Skipping row {idx+1} due to empty 'Interview Result'")
             scores.append(current_level)
             continue
 
@@ -26,7 +26,6 @@ if __name__ == "__main__":
         score = evaluate_answer(question, answer)
         print(f"{idx+1}. {question} → Score: {score}")
         scores.append(score)
-        time.sleep(2.5)
 
     df["Present Lv."] = scores
     update_scores_to_sheet(df, sheet)
