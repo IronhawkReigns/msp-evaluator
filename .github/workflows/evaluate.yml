@@ -1,0 +1,31 @@
+name: Evaluate Sheet
+
+on:
+  workflow_dispatch:  # You can also add 'schedule' or 'push' later for timed or code-triggered runs
+
+jobs:
+  run-evaluator:
+    runs-on: ubuntu-latest
+
+    env:
+      CLOVA_API_KEY: ${{ secrets.CLOVA_API_KEY }}
+      GOOGLE_SHEET_CREDENTIALS_JSON: ${{ secrets.GOOGLE_SHEET_CREDENTIALS_JSON }}
+      INTERVIEW_SHEET_DOC_NAME: ${{ secrets.INTERVIEW_SHEET_DOC_NAME }}
+      INTERVIEW_SHEET_NAME: ${{ secrets.INTERVIEW_SHEET_NAME }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.9"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run main evaluator
+      run: python main.py
