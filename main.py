@@ -21,7 +21,6 @@ if __name__ == "__main__":
         score = evaluate_answer(question, answer)
         print(f"{idx+1}. {question} → Score: {score}")
         scores.append(score)
-        time.sleep(2.5)
 
     df["Present Lv."] = scores
     update_scores_to_sheet(df, sheet)
