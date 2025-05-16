@@ -7,14 +7,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Load configs
-CREDENTIALS_PATH = os.getenv("GOOGLE_SHEET_CREDENTIALS_PATH")
 INTERVIEW_SHEET_DOC_NAME = os.getenv("INTERVIEW_SHEET_DOC_NAME")
 INTERVIEW_SHEET = os.getenv("INTERVIEW_SHEET_NAME")
 
 # Authenticate and connect to Google Sheets
 def connect_to_sheets():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_PATH, scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
     client = gspread.authorize(creds)
     return client
 
