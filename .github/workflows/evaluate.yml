@@ -26,7 +26,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install openpyxl
+        pip install gspread oauth2client openpyxl python-dotenv
 
     - name: Run main evaluator
       run: python main.py
