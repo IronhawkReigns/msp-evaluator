@@ -1,3 +1,12 @@
+import signal
+
+class TimeoutException(Exception):
+    pass
+
+def handler(signum, frame):
+    raise TimeoutException("Timed out")
+
+signal.signal(signal.SIGALRM, handler)
 from sheets_reader import load_evaluation_data, update_scores_to_sheet
 from evaluator import evaluate_answer
 import time
@@ -18,8 +27,18 @@ if __name__ == "__main__":
 
         question = row["Key Questions"]
         answer = interview_result
-        score = evaluate_answer(question, answer)
-        print(f"{idx+1}. {question} → Score: {score}")
+        print(f"🔍 Evaluating row {idx+1}", flush=True)
+        try:
+            signal.alarm(60)
+            score = evaluate_answer(question, answer)
+            signal.alarm(0)
+            print(f"✅ Done row {idx+1} → {score}", flush=True)
+        except TimeoutException:
+            print(f"⚠️ Timeout for row {idx+1}", flush=True)
+            score = "Timeout"
+        except Exception as e:
+            print(f"❌ Exception at row {idx+1}: {e}", flush=True)
+            score = "Error"
         scores.append(score)
         time.sleep(2.5)
 
