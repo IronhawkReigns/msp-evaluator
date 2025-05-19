@@ -71,10 +71,13 @@ def write_combined_summary(summary_dict, sheet_name="데이터 요약"):
     client = connect_to_sheets()
     interview_sheet = client.open(INTERVIEW_SHEET_DOC_NAME)
 
+    # Always create a new auto-generated sheet for testing
+    auto_summary_name = f"{sheet_name} (Auto)"
     try:
-        worksheet = interview_sheet.worksheet(sheet_name)
+        interview_sheet.del_worksheet(interview_sheet.worksheet(auto_summary_name))
     except gspread.exceptions.WorksheetNotFound:
-        raise RuntimeError(f"[ERROR] The sheet '{sheet_name}' does not exist. Please create it manually.")
+        pass
+    worksheet = interview_sheet.add_worksheet(title=auto_summary_name, rows="100", cols="5")
 
     combined_rows = [["Category", "Score (%)"]]
     total_scores = []
