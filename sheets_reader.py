@@ -43,13 +43,23 @@ def create_and_write_summary_sheet(df_summary, new_sheet_name="Category Summary"
     except gspread.exceptions.WorksheetNotFound:
         worksheet = interview_sheet.add_worksheet(title=new_sheet_name, rows="100", cols="5")
 
-    # Clean and simplify the summary DataFrame before writing
+        # Clean and simplify the summary DataFrame before writing
     df_summary = df_summary.rename(columns={
         "Key Questions": "Category",
         "Present Lv.": "Score (%)"
     })[["Score (%)"]]
 
-    # Update only the Score (%) column in place, starting from B2
+    # Prepare list of scores
     score_values = df_summary["Score (%)"].fillna("").tolist()
+
+    # Compute 총점 (average of all category scores)
+    numeric_scores = [
+        float(str(score).replace('%', '')) for score in score_values
+        if str(score).replace('%', '').replace('.', '').isdigit()
+    ]
+    total_score = round(sum(numeric_scores) / len(numeric_scores), 2) if numeric_scores else 0.0
+    score_values.insert(0, f"{total_score:.2f}%")  # insert at top
+
+    # Write to column B starting from B2 (row 2)
     cell_range = f"B2:B{len(score_values) + 1}"
     worksheet.update(cell_range, [[v] for v in score_values])
