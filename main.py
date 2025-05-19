@@ -54,3 +54,10 @@ for sheet_name in target_sheets:
     # Compute and write category summary
     df_summary = append_category_scores_to_sheet(df)
     all_summaries[sheet_name] = df_summary
+    print(f"[DEBUG] {sheet_name} → Summary shape: {df_summary.shape}")
+
+
+# After the loop, before write_combined_summary
+print("[DEBUG] Writing combined summary:")
+for sheet, df in all_summaries.items():
+    print(f" - {sheet}: {df.shape}")
