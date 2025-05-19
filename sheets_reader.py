@@ -99,11 +99,21 @@ def write_combined_summary(summary_dict, sheet_name="데이터 요약"):
         combined_rows.insert(1, ["총점", f"{avg_score:.2f}%"])
 
     print(f"[DEBUG] Combined row count: {len(combined_rows)}")
-    print(f"[DEBUG] First few rows: {combined_rows[:5]}")
+    print(f"[DEBUG] Full combined_rows content (up to 15): {combined_rows[:15]}")
+
+    # Sanitize combined_rows to ensure every row is a list of 2 strings
+    sanitized_rows = []
+    for row in combined_rows:
+        if isinstance(row, list) and len(row) == 2:
+            sanitized_rows.append([str(row[0]), str(row[1])])
+        else:
+            print(f"[WARNING] Malformed row skipped: {row}")
+
+    print(f"[DEBUG] Final sanitized rows (up to 10): {sanitized_rows[:10]}")
 
     # Clear the sheet and write new data
     worksheet.clear()
-    worksheet.update("A1", combined_rows)
+    worksheet.update("A1", sanitized_rows)
 
     # Bold the headers
     try:
