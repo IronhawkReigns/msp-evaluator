@@ -1,7 +1,7 @@
 import os
 import signal
 import time
-from sheets_reader import load_evaluation_data, update_scores_to_sheet, create_and_write_summary_sheet, write_combined_summary
+from sheets_reader import load_evaluation_data, update_scores_to_sheet, create_and_write_summary_sheet, write_combined_summary, connect_to_sheets
 from evaluator import evaluate_answer, append_category_scores_to_sheet
 
 class TimeoutException(Exception):
@@ -67,7 +67,8 @@ def write_combined_summary(all_summaries):
     # Here is the updated logic for updating existing category labels in column A
     
     # This is a placeholder for sheet access, replace with actual sheet object
-    worksheet = get_worksheet()  # Replace this with actual worksheet retrieval logic
+    interview_sheet = connect_to_sheets()
+    worksheet = interview_sheet.worksheet(sheet_name)
     
     combined_rows = []
     for sheet_name, df_summary in all_summaries.items():
