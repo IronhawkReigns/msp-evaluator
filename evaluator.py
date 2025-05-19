@@ -62,3 +62,38 @@ def evaluate_answer(question, answer):
             return f"Unexpected content: {message}"
     else:
         return f"Error in API response: {result}"
+
+
+# --- Category summary functions ---
+def compute_category_scores_from_dataframe(df):
+    df['설명'] = df['설명'].replace('', pd.NA).ffill()
+    df['Present Lv.'] = pd.to_numeric(df['Present Lv.'], errors='coerce')
+
+    # Keep only rows with valid questions and scores
+    valid_rows = df[df['Key Questions'].notna() & df['Present Lv.'].notna()].copy()
+
+    category_scores = {}
+    grouped = valid_rows.groupby('설명', sort=False)
+
+    for category, group in grouped:
+        question_count = len(group)
+        total_score = group['Present Lv.'].sum()
+        max_score = question_count * 5
+        percentage = round(total_score / max_score, 4) if max_score > 0 else 0.0
+
+        category_scores[category] = percentage
+
+    return category_scores
+
+def append_category_scores_to_sheet(sheet_df):
+    category_scores = compute_category_scores_from_dataframe(sheet_df)
+
+    summary_rows = []
+    summary_rows.append(['', '', '=== 평가 결과 요약 ===', '', ''])
+    for category, score in category_scores.items():
+        summary_rows.append(['', '', category, f"{score*100:.2f}%", ''])
+
+    summary_df = pd.DataFrame(summary_rows, columns=sheet_df.columns[:5])
+    final_df = pd.concat([sheet_df, summary_df], ignore_index=True)
+
+    return final_df
