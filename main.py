@@ -103,14 +103,20 @@ def write_combined_summary(all_summaries):
         "개발 로드맵 및 향후 계획": 26
     }
 
-    # Sanitize and write only recognized rows
+    cell_updates = []
     for row in combined_rows:
         if isinstance(row, list) and len(row) == 2:
             label, score = str(row[0]), str(row[1])
             if label in row_mapping:
-                cell_address = f"B{row_mapping[label]}"
-                worksheet.update(cell_address, [[score]])
+                row_num = row_mapping[label]
+                cell_updates.append({
+                    "range": f"B{row_num}",
+                    "values": [[score]]
+                })
             else:
                 print(f"[WARNING] Label '{label}' not in hardcoded row mapping.")
+
+    if cell_updates:
+        worksheet.batch_update(cell_updates)
 
 write_combined_summary(all_summaries)
