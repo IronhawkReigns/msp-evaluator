@@ -89,11 +89,14 @@ def append_category_scores_to_sheet(sheet_df):
     category_scores = compute_category_scores_from_dataframe(sheet_df)
 
     summary_rows = []
-    summary_rows.append(['', '', '=== 평가 결과 요약 ===', '', ''])
+    total = 0
+    for score in category_scores.values():
+        total += score
+    avg_score = round((total / len(category_scores)) * 100, 2) if category_scores else 0.0
+
+    summary_rows.append(["총점", f"{avg_score:.2f}%"])
     for category, score in category_scores.items():
-        summary_rows.append(['', '', category, f"{score*100:.2f}%", ''])
+        summary_rows.append([category, f"{score*100:.2f}%"])
 
-    summary_df = pd.DataFrame(summary_rows, columns=sheet_df.columns[:5])
-    final_df = pd.concat([sheet_df, summary_df], ignore_index=True)
-
-    return final_df
+    summary_df = pd.DataFrame(summary_rows, columns=["Category", "Score (%)"])
+    return summary_df
