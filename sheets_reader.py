@@ -17,10 +17,10 @@ def connect_to_sheets():
     return client
 
 # Read the interview sheet
-def load_evaluation_data():
+def load_evaluation_data(sheet_name=None):
     client = connect_to_sheets()
     interview_sheet = client.open(INTERVIEW_SHEET_DOC_NAME)
-    worksheet = interview_sheet.worksheet(INTERVIEW_SHEET)
+    worksheet = interview_sheet.worksheet(sheet_name or INTERVIEW_SHEET)
     interview_records = worksheet.get_all_records()
     df_interview = pd.DataFrame(interview_records)
     df_interview["Key Questions"] = df_interview["Key Questions"].str.strip()
@@ -33,8 +33,8 @@ def update_scores_to_sheet(df, sheet):
     sheet.update([header] + data_to_update)
 
 
-# Write only the Score (%) column to an existing "Category Summary" sheet
-def create_and_write_summary_sheet(df_summary, new_sheet_name="Category Summary"):
+# Write only the Score (%) column to an existing "데이터 요약" sheet
+def create_and_write_summary_sheet(df_summary, new_sheet_name="데이터 요약"):
     client = connect_to_sheets()
     interview_sheet = client.open(INTERVIEW_SHEET_DOC_NAME)
 
