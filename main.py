@@ -1,7 +1,7 @@
 import os
 import signal
 import time
-from sheets_reader import load_evaluation_data, update_scores_to_sheet, create_and_write_summary_sheet
+from sheets_reader import load_evaluation_data, update_scores_to_sheet, create_and_write_summary_sheet, write_combined_summary
 from evaluator import evaluate_answer, append_category_scores_to_sheet
 
 class TimeoutException(Exception):
@@ -61,3 +61,5 @@ for sheet_name in target_sheets:
 print("[DEBUG] Writing combined summary:")
 for sheet, df in all_summaries.items():
     print(f" - {sheet}: {df.shape}")
+
+write_combined_summary(all_summaries)
