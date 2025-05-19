@@ -67,6 +67,7 @@ def create_and_write_summary_sheet(df_summary, new_sheet_name="데이터 요약"
 
 # Combine summaries from multiple sheets into a unified summary sheet
 def write_combined_summary(summary_dict, sheet_name="데이터 요약"):
+    print(f"[DEBUG] Opening summary sheet: {sheet_name}")
     client = connect_to_sheets()
     interview_sheet = client.open(INTERVIEW_SHEET_DOC_NAME)
 
@@ -96,6 +97,9 @@ def write_combined_summary(summary_dict, sheet_name="데이터 요약"):
     if total_scores:
         avg_score = round(sum(total_scores) / len(total_scores), 2)
         combined_rows.insert(1, ["총점", f"{avg_score:.2f}%"])
+
+    print(f"[DEBUG] Combined row count: {len(combined_rows)}")
+    print(f"[DEBUG] First few rows: {combined_rows[:5]}")
 
     # Clear the sheet and write new data
     worksheet.clear()
