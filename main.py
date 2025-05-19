@@ -69,7 +69,7 @@ def write_combined_summary(all_summaries):
     # This is a placeholder for sheet access, replace with actual sheet object
     client = connect_to_sheets()
     interview_sheet = client.open("Test")
-    worksheet = interview_sheet.worksheet(sheet_name)
+    worksheet = interview_sheet.worksheet("데이터 요약 (Auto)")
     
     combined_rows = []
     for sheet_name, df_summary in all_summaries.items():
