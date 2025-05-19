@@ -97,8 +97,9 @@ def write_combined_summary(summary_dict, sheet_name="데이터 요약"):
         avg_score = round(sum(total_scores) / len(total_scores), 2)
         combined_rows.insert(1, ["총점", f"{avg_score:.2f}%"])
 
-    # Write to the sheet
-    worksheet.update(f"A1:B{len(combined_rows)}", combined_rows)
+    # Clear the sheet and write new data
+    worksheet.clear()
+    worksheet.update("A1", combined_rows)
 
     # Bold the headers
     try:
