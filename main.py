@@ -74,8 +74,8 @@ def write_combined_summary(all_summaries):
     combined_rows = []
     for sheet_name, df_summary in all_summaries.items():
         for idx, row in df_summary.iterrows():
-            label = row['Category'].strip() if 'Category' in row else None
-            score = row['Score (%)'] if 'Score (%)' in row else None
+            label = row['Category'] if 'Category' in row else None
+            score = row['Score'] if 'Score' in row else None
             if label is not None and score is not None:
                 combined_rows.append([label, score])
     
@@ -114,13 +114,34 @@ def write_combined_summary(all_summaries):
                     "values": [[score]]
                 })
             else:
-                print(f"[DEBUG] Unmatched label: '{label}'")
                 print(f"[WARNING] Label '{label}' not in hardcoded row mapping.")
+
+    # Section header rows and their row numbers
+    section_headers = {
+        "인적역량 총점": 3,
+        "AI기술역량 총점": 10,
+        "솔루션 역량 총점": 18
+    }
+
+    # Compute per-section averages and add to cell_updates
+    for header_label, row_index in section_headers.items():
+        # Filter rows for that section based on their index ranges
+        if header_label == "인적역량 총점":
+            rows = [r for r in cell_updates if 4 <= int(r["range"][1:]) <= 8]
+        elif header_label == "AI기술역량 총점":
+            rows = [r for r in cell_updates if 11 <= int(r["range"][1:]) <= 16]
+        elif header_label == "솔루션 역량 총점":
+            rows = [r for r in cell_updates if 19 <= int(r["range"][1:]) <= 26]
+        values = [float(r["values"][0][0].replace("%", "")) for r in rows if "%" in r["values"][0][0]]
+        if values:
+            avg = sum(values) / len(values)
+            formatted = f"{avg:.2f}%"
+            cell_updates.append({
+                "range": f"B{row_index}",
+                "values": [[formatted]]
+            })
 
     if cell_updates:
         worksheet.batch_update(cell_updates)
-        print("[DEBUG] Batch update payload:")
-        for update in cell_updates:
-            print(f"  - {update['range']}: {update['values'][0][0]}")
 
 write_combined_summary(all_summaries)
