@@ -68,7 +68,7 @@ def write_combined_summary(all_summaries):
     
     # This is a placeholder for sheet access, replace with actual sheet object
     client = connect_to_sheets()
-    interview_sheet = client.open(INTERVIEW_SHEET_DOC_NAME)
+    interview_sheet = client.open("Test")
     worksheet = interview_sheet.worksheet(sheet_name)
     
     combined_rows = []
