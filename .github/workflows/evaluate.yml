@@ -1,7 +1,7 @@
 name: Evaluate Sheet
 
 on:
-  workflow_dispatch:  # allows manual or webhook-based triggering
+  workflow_dispatch:  # You can also add 'schedule' or 'push' later for timed or code-triggered runs
 
 jobs:
   run-evaluator:
@@ -9,9 +9,9 @@ jobs:
 
     env:
       CLOVA_API_KEY: ${{ secrets.CLOVA_API_KEY }}
-      GOOGLE_SHEET_CREDENTIALS_PATH: ${{ secrets.GOOGLE_SHEET_CREDENTIALS_PATH }}
+      GOOGLE_SHEET_CREDENTIALS_JSON: ${{ secrets.GOOGLE_SHEET_CREDENTIALS_JSON }}
       INTERVIEW_SHEET_DOC_NAME: ${{ secrets.INTERVIEW_SHEET_DOC_NAME }}
-      INTERVIEW_SHEET_NAME: ${{ secrets.INTERVIEW_SHEET_NAME }}
+      TARGET_SHEET_NAMES: ${{ secrets.TARGET_SHEET_NAMES }}
 
     steps:
     - name: Checkout repository
@@ -24,11 +24,9 @@ jobs:
 
     - name: Install dependencies
       run: |
+        python -m pip install --upgrade pip
         pip install -r requirements.txt
-
-    - name: Create creds.json from secret
-      run: |
-        echo "$GOOGLE_SHEET_CREDENTIALS_PATH" > creds.json
+        pip install gspread oauth2client openpyxl python-dotenv
 
     - name: Run main evaluator
       run: python main.py
