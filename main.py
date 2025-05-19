@@ -79,22 +79,38 @@ def write_combined_summary(all_summaries):
             if label is not None and score is not None:
                 combined_rows.append([label, score])
     
-    # Pull all existing values from the worksheet
-    existing_data = worksheet.get_all_values()
+    # Define exact row mappings for each label (row number = 1-based index)
+    row_mapping = {
+        "총점": 2,
+        "AI 전문 인력 구성": 4,
+        "프로젝트 경험 및 성공 사례": 5,
+        "지속적인 교육 및 학습": 6,
+        "프로젝트 관리 및 커뮤니케이션": 7,
+        "AI 윤리 및 책임 의식": 8,
+        "AI 기술 연구 능력": 11,
+        "AI 모델 개발 능력": 12,
+        "AI 플랫폼 및 인프라 구축 능력": 13,
+        "데이터 처리 및 분석 능력": 14,
+        "AI 기술의 융합 및 활용 능력": 15,
+        "AI 기술의 특허 및 인증 보유 현황": 16,
+        "다양성 및 전문성": 19,
+        "안정성": 20,
+        "확장성 및 유연성": 21,
+        "사용자 편의성": 22,
+        "보안성": 23,
+        "기술 지원 및 유지보수": 24,
+        "차별성 및 경쟁력": 25,
+        "개발 로드맵 및 향후 계획": 26
+    }
 
-    # Create a map of row index for each category label in column A
-    label_to_row = {row[0]: idx + 1 for idx, row in enumerate(existing_data) if row and row[0]}
-
-    # Sanitize combined_rows and update column B values in place
+    # Sanitize and write only recognized rows
     for row in combined_rows:
         if isinstance(row, list) and len(row) == 2:
             label, score = str(row[0]), str(row[1])
-            if label in label_to_row:
-                cell_address = f"B{label_to_row[label]}"
+            if label in row_mapping:
+                cell_address = f"B{row_mapping[label]}"
                 worksheet.update(cell_address, [[score]])
             else:
-                print(f"[WARNING] Label '{label}' not found in sheet. Skipping.")
-        else:
-            print(f"[WARNING] Malformed row skipped: {row}")
+                print(f"[WARNING] Label '{label}' not in hardcoded row mapping.")
 
 write_combined_summary(all_summaries)
