@@ -62,4 +62,37 @@ print("[DEBUG] Writing combined summary:")
 for sheet, df in all_summaries.items():
     print(f" - {sheet}: {df.shape}")
 
+def write_combined_summary(all_summaries):
+    # Assuming this function writes combined summaries to a Google Sheet
+    # Here is the updated logic for updating existing category labels in column A
+    
+    # This is a placeholder for sheet access, replace with actual sheet object
+    worksheet = get_worksheet()  # Replace this with actual worksheet retrieval logic
+    
+    combined_rows = []
+    for sheet_name, df_summary in all_summaries.items():
+        for idx, row in df_summary.iterrows():
+            label = row['Category'] if 'Category' in row else None
+            score = row['Score'] if 'Score' in row else None
+            if label is not None and score is not None:
+                combined_rows.append([label, score])
+    
+    # Pull all existing values from the worksheet
+    existing_data = worksheet.get_all_values()
+
+    # Create a map of row index for each category label in column A
+    label_to_row = {row[0]: idx + 1 for idx, row in enumerate(existing_data) if row and row[0]}
+
+    # Sanitize combined_rows and update column B values in place
+    for row in combined_rows:
+        if isinstance(row, list) and len(row) == 2:
+            label, score = str(row[0]), str(row[1])
+            if label in label_to_row:
+                cell_address = f"B{label_to_row[label]}"
+                worksheet.update(cell_address, [[score]])
+            else:
+                print(f"[WARNING] Label '{label}' not found in sheet. Skipping.")
+        else:
+            print(f"[WARNING] Malformed row skipped: {row}")
+
 write_combined_summary(all_summaries)
