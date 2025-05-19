@@ -1,4 +1,8 @@
+import os
 import signal
+import time
+from sheets_reader import load_evaluation_data, update_scores_to_sheet, create_and_write_summary_sheet
+from evaluator import evaluate_answer, append_category_scores_to_sheet
 
 class TimeoutException(Exception):
     pass
@@ -7,12 +11,13 @@ def handler(signum, frame):
     raise TimeoutException("Timed out")
 
 signal.signal(signal.SIGALRM, handler)
-from sheets_reader import load_evaluation_data, update_scores_to_sheet, create_and_write_summary_sheet
-from evaluator import evaluate_answer, append_category_scores_to_sheet
-import time
 
-if __name__ == "__main__":
-    df, sheet = load_evaluation_data()
+target_sheets = os.getenv("TARGET_SHEET_NAMES", "Test").split(",")
+
+for sheet_name in target_sheets:
+    sheet_name = sheet_name.strip()
+    print(f"\nProcessing sheet: {sheet_name}", flush=True)
+    df, sheet = load_evaluation_data(sheet_name=sheet_name)
     scores = []
 
     for idx, row in df.iterrows():
@@ -21,7 +26,7 @@ if __name__ == "__main__":
 
         # Skip if there's no interview result, or already evaluated
         if interview_result == "" or current_level not in {"", "nan", "NaN"}:
-            print(f"Skipping row {idx+1} (no new input or already scored)")
+            print(f"Skipping row {idx+1} (no new input or already scored)", flush=True)
             scores.append(current_level)
             continue
 
@@ -48,4 +53,4 @@ if __name__ == "__main__":
     df_with_summary = append_category_scores_to_sheet(df)
     summary_start_idx = df_with_summary[df_with_summary["Key Questions"] == "=== 평가 결과 요약 ==="].index[0]
     df_summary = df_with_summary.iloc[summary_start_idx + 1:].reset_index(drop=True)
-    create_and_write_summary_sheet(df_summary)
+    create_and_write_summary_sheet(df_summary, new_sheet_name=f"{sheet_name} Summary")
