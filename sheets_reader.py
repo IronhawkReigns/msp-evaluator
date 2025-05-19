@@ -74,7 +74,7 @@ def write_combined_summary(summary_dict, sheet_name="데이터 요약"):
     try:
         worksheet = interview_sheet.worksheet(sheet_name)
     except gspread.exceptions.WorksheetNotFound:
-        worksheet = interview_sheet.add_worksheet(title=sheet_name, rows="100", cols="5")
+        raise RuntimeError(f"[ERROR] The sheet '{sheet_name}' does not exist. Please create it manually.")
 
     combined_rows = [["Category", "Score (%)"]]
     total_scores = []
