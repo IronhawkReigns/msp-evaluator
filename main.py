@@ -14,6 +14,8 @@ signal.signal(signal.SIGALRM, handler)
 
 target_sheets = os.getenv("TARGET_SHEET_NAMES", "Test").split(",")
 
+all_summaries = {}
+
 for sheet_name in target_sheets:
     sheet_name = sheet_name.strip()
     print(f"\nProcessing sheet: {sheet_name}", flush=True)
@@ -53,4 +55,4 @@ for sheet_name in target_sheets:
     df_with_summary = append_category_scores_to_sheet(df)
     summary_start_idx = df_with_summary[df_with_summary["Key Questions"] == "=== 평가 결과 요약 ==="].index[0]
     df_summary = df_with_summary.iloc[summary_start_idx + 1:].reset_index(drop=True)
-    create_and_write_summary_sheet(df_summary, new_sheet_name=f"{sheet_name} Summary")
+    all_summaries[sheet_name] = df_summary
