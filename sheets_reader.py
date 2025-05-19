@@ -63,3 +63,47 @@ def create_and_write_summary_sheet(df_summary, new_sheet_name="데이터 요약"
     # Write to column B starting from B2 (row 2)
     cell_range = f"B2:B{len(score_values) + 1}"
     worksheet.update(cell_range, [[v] for v in score_values])
+
+
+# Combine summaries from multiple sheets into a unified summary sheet
+def write_combined_summary(summary_dict, sheet_name="데이터 요약"):
+    client = connect_to_sheets()
+    interview_sheet = client.open(INTERVIEW_SHEET_DOC_NAME)
+
+    try:
+        worksheet = interview_sheet.worksheet(sheet_name)
+    except gspread.exceptions.WorksheetNotFound:
+        worksheet = interview_sheet.add_worksheet(title=sheet_name, rows="100", cols="5")
+
+    combined_rows = [["Category", "Score (%)"]]
+    total_scores = []
+
+    for sheet_title, df_summary in summary_dict.items():
+        if not df_summary.empty:
+            # Add section-level summary
+            section_score = df_summary.iloc[0, 0]
+            combined_rows.append([f"{sheet_title} 총점", section_score])
+            try:
+                total_scores.append(float(str(section_score).replace('%', '')))
+            except ValueError:
+                pass
+
+            # Add each category score under this section
+            for idx in range(1, len(df_summary)):
+                combined_rows.append(df_summary.iloc[idx].tolist())
+
+    # Insert overall average score at the top
+    if total_scores:
+        avg_score = round(sum(total_scores) / len(total_scores), 2)
+        combined_rows.insert(1, ["총점", f"{avg_score:.2f}%"])
+
+    # Write to the sheet
+    worksheet.update(f"A1:B{len(combined_rows)}", combined_rows)
+
+    # Bold the headers
+    try:
+        from gspread_formatting import CellFormat, TextFormat, format_cell_range
+        bold_format = CellFormat(textFormat=TextFormat(bold=True))
+        format_cell_range(worksheet, "A1:B2", bold_format)
+    except Exception as e:
+        print(f"Could not apply formatting: {e}")
