@@ -67,7 +67,8 @@ def write_combined_summary(all_summaries):
     # Here is the updated logic for updating existing category labels in column A
     
     # This is a placeholder for sheet access, replace with actual sheet object
-    interview_sheet = connect_to_sheets()
+    client = connect_to_sheets()
+    interview_sheet = client.open(INTERVIEW_SHEET_DOC_NAME)
     worksheet = interview_sheet.worksheet(sheet_name)
     
     combined_rows = []
