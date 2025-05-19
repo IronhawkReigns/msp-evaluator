@@ -5,13 +5,15 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 # Load configs
+GOOGLE_SHEET_CREDENTIALS_JSON = os.getenv("GOOGLE_SHEET_CREDENTIALS_JSON")
 INTERVIEW_SHEET_DOC_NAME = os.getenv("INTERVIEW_SHEET_DOC_NAME")
 INTERVIEW_SHEET = os.getenv("INTERVIEW_SHEET_NAME")
 
 # Authenticate and connect to Google Sheets
 def connect_to_sheets():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
+    creds_dict = json.loads(GOOGLE_SHEET_CREDENTIALS_JSON)
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client = gspread.authorize(creds)
     return client
 
@@ -30,3 +32,25 @@ def update_scores_to_sheet(df, sheet):
     data_to_update = df.fillna("").values.tolist()
     header = df.columns.tolist()
     sheet.update([header] + data_to_update)
+
+
+# Write only the Score (%) column to an existing "Category Summary" sheet
+def create_and_write_summary_sheet(df_summary, new_sheet_name="Category Summary"):
+    client = connect_to_sheets()
+    interview_sheet = client.open(INTERVIEW_SHEET_DOC_NAME)
+
+    try:
+        worksheet = interview_sheet.worksheet(new_sheet_name)
+    except gspread.exceptions.WorksheetNotFound:
+        worksheet = interview_sheet.add_worksheet(title=new_sheet_name, rows="100", cols="5")
+
+    # Clean and simplify the summary DataFrame before writing
+    df_summary = df_summary.rename(columns={
+        "Key Questions": "Category",
+        "Present Lv.": "Score (%)"
+    })[["Score (%)"]]
+
+    # Update only the Score (%) column in place, starting from B2
+    score_values = df_summary["Score (%)"].fillna("").tolist()
+    cell_range = f"B2:B{len(score_values) + 1}"
+    worksheet.update(cell_range, [[v] for v in score_values])
