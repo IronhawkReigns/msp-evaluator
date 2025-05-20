@@ -109,15 +109,13 @@ def write_combined_summary(all_summaries):
     cell_updates = []
     for row in combined_rows:
         if isinstance(row, list) and len(row) == 2:
-            label, score = str(row[0]), str(row[1])
+            label, score = str(row[0]).strip(), str(row[1]).strip()
             if label in row_mapping:
                 row_num = row_mapping[label]
                 cell_updates.append({
                     "range": f"B{row_num}",
                     "values": [[score]]
                 })
-            else:
-                print(f"[WARNING] Label '{label}' not in hardcoded row mapping.")
 
     # Section-level 평균 계산 (revised to use actual Present Lv. scores from each sheet's df)
     import pandas as pd
