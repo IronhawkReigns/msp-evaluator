@@ -144,6 +144,11 @@ def write_combined_summary(all_summaries):
                 "values": [[f"{avg:.2f}%"]]
             })
 
+    # Ensure display rows under each section header remain visually separated with a blank line
+    cell_updates.append({"range": "B3", "values": [[""]]})
+    cell_updates.append({"range": "B10", "values": [[""]]})
+    cell_updates.append({"range": "B18", "values": [[""]]})
+
     if cell_updates:
         worksheet.batch_update(cell_updates)
 
