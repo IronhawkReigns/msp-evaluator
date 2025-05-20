@@ -106,10 +106,13 @@ def write_combined_summary(all_summaries):
         "솔루션 역량 총점": 30
     }
 
+    section_headers = {"인적역량", "AI기술역량", "솔루션 역량"}
     cell_updates = []
     for row in combined_rows:
         if isinstance(row, list) and len(row) == 2:
             label, score = str(row[0]).strip(), str(row[1]).strip()
+            if label in section_headers:
+                continue  # Skip section headers
             if label in row_mapping:
                 row_num = row_mapping[label]
                 cell_updates.append({
