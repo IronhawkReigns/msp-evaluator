@@ -127,22 +127,19 @@ def write_combined_summary(all_summaries):
     }
     section_rows = {"인적역량 총점": 4, "AI기술역량 총점": 11, "솔루션 역량 총점": 19}
 
-    for section, member_rows in sections.items():
-        values = []
-        for row in member_rows:
-            match = next((c for c in cell_updates if c["range"] == f"B{row}"), None)
-            if match:
-                try:
-                    percent = float(match["values"][0][0].replace("%", ""))
-                    values.append(percent)
-                except:
-                    continue
-        if values:
-            avg = round(sum(values) / len(values), 2)
-            cell_updates.append({
-                "range": f"B{section_rows[section]}",
-                "values": [[f"{avg:.2f}%"]]
-            })
+    for sheet_name, df_summary in all_summaries.items():
+        for section, member_rows in sections.items():
+            section_labels = [label for label, row in row_mapping.items() if row in member_rows]
+            filtered_df = df_summary[df_summary["Category"].isin(section_labels)]
+            if not filtered_df.empty:
+                scores = filtered_df["Score (%)"].str.replace("%", "").astype(float)
+                weights = filtered_df["Questions"].astype(float)
+                if weights.sum() > 0:
+                    weighted_avg = round((scores * weights).sum() / weights.sum(), 2)
+                    cell_updates.append({
+                        "range": f"B{section_rows[section]}",
+                        "values": [[f"{weighted_avg:.2f}%"]]
+                    })
 
     # Ensure display rows under each section header remain visually separated with a blank line
     cell_updates.append({"range": "B3", "values": [[""]]})
