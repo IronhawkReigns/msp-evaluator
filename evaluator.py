@@ -70,7 +70,7 @@ def compute_category_scores_from_dataframe(df):
     df['Present Lv.'] = pd.to_numeric(df['Present Lv.'], errors='coerce')
 
     # Keep only rows with valid questions and scores
-    valid_rows = df[df['Key Questions'].notna() & df['Present Lv. '].notna()].copy()
+    valid_rows = df[df['Key Questions'].notna() & df['Present Lv.'].notna()].copy()
 
     category_scores = {}
     grouped = valid_rows.groupby('설명', sort=False)
