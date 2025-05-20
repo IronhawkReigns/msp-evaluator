@@ -144,6 +144,21 @@ def write_combined_summary(all_summaries):
                 "values": [[f"{avg:.2f}%"]]
             })
 
+    # Overall score: weighted average of all items
+    all_scores = []
+    for row in combined_rows:
+        try:
+            score = float(row[1].replace("%", ""))
+            all_scores.append(score)
+        except:
+            continue
+    if all_scores:
+        overall_avg = round(sum(all_scores) / len(all_scores), 2)
+        cell_updates.append({
+            "range": "B2",
+            "values": [[f"{overall_avg:.2f}%"]]
+        })
+
     # Ensure display rows under each section header remain visually separated with a blank line
     cell_updates.append({"range": "B3", "values": [[""]]})
     cell_updates.append({"range": "B10", "values": [[""]]})
