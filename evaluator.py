@@ -88,13 +88,16 @@ def compute_category_scores_from_dataframe(df):
 def append_category_scores_to_sheet(sheet_df):
     category_scores = compute_category_scores_from_dataframe(sheet_df)
 
-    summary_rows = []
-    total = 0
-    for score in category_scores.values():
-        total += score
-    avg_score = round((total / len(category_scores)) * 100, 2) if category_scores else 0.0
+    # Calculate true overall score by summing all valid question scores
+    sheet_df['설명'] = sheet_df['설명'].replace('', pd.NA).ffill()
+    sheet_df['Present Lv.'] = pd.to_numeric(sheet_df['Present Lv.'], errors='coerce')
+    valid_rows = sheet_df[sheet_df['Key Questions'].notna() & sheet_df['Present Lv.'].notna()]
+    total_score = valid_rows['Present Lv.'].sum()
+    question_count = len(valid_rows)
+    max_score = question_count * 5
+    avg_score = round((total_score / max_score) * 100, 2) if max_score > 0 else 0.0
 
-    summary_rows.append(["총점", f"{avg_score:.2f}%"])
+    summary_rows = [["총점", f"{avg_score:.2f}%"]]
     for category, score in category_scores.items():
         summary_rows.append([category, f"{score*100:.2f}%"])
 
