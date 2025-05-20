@@ -73,16 +73,7 @@ def write_combined_summary(all_summaries):
     
     combined_rows = []
     section_headers = {"인적역량", "AI기술역량", "솔루션 역량"}
-    for sheet_name, df_summary in all_summaries.items():
-        for idx, row in df_summary.iterrows():
-            label = row.get('Category')
-            score = row.get('Score (%)')
-            if label in section_headers:
-                continue  # prevent adding section header labels
-            if label is not None and score is not None:
-                combined_rows.append([label, score])
-    
-    # Define updated row mappings for each label (row number = 1-based index)
+    # row_mapping must be defined before this loop
     row_mapping = {
         "AI 전문 인력 구성": 3,
         "프로젝트 경험 및 성공 사례": 4,
@@ -108,6 +99,21 @@ def write_combined_summary(all_summaries):
         "AI기술역량 총점": 29,
         "솔루션 역량 총점": 30
     }
+    for sheet_name, df_summary in all_summaries.items():
+        for idx, row in df_summary.iterrows():
+            label = row.get('Category')
+            score = row.get('Score (%)')
+
+            if not isinstance(label, str):
+                continue
+            label = label.strip()
+
+            if label in section_headers:
+                continue
+            if label not in row_mapping:
+                continue
+            if score is not None:
+                combined_rows.append([label, score])
 
     cell_updates = []
     for row in combined_rows:
