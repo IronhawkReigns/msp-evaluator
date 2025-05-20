@@ -74,39 +74,22 @@ def write_combined_summary(all_summaries):
     combined_rows = []
     for sheet_name, df_summary in all_summaries.items():
         for idx, row in df_summary.iterrows():
-            label = row['Category'].strip() if 'Category' in row else None
-            score = row['Score (%)'] if 'Score (%)' in row else None
+            label = row['Category'] if 'Category' in row else None
+            score = row['Score'] if 'Score' in row else None
             if label is not None and score is not None:
                 combined_rows.append([label, score])
     
-    # Define exact row mappings for each label (row number = 1-based index)
-    row_mapping = {
-        "총점": 2,
-        "AI 전문 인력 구성": 4,
-        "프로젝트 경험 및 성공 사례": 5,
-        "지속적인 교육 및 학습": 6,
-        "프로젝트 관리 및 커뮤니케이션": 7,
-        "AI 윤리 및 책임 의식": 8,
-        "AI 기술 연구 능력": 11,
-        "AI 모델 개발 능력": 12,
-        "AI 플랫폼 및 인프라 구축 능력": 13,
-        "데이터 처리 및 분석 능력": 14,
-        "AI 기술의 융합 및 활용 능력": 15,
-        "AI 기술의 특허 및 인증 보유 현황": 16,
-        "다양성 및 전문성": 19,
-        "안정성": 20,
-        "확장성 및 유연성": 21,
-        "사용자 편의성": 22,
-        "보안성": 23,
-        "기술 지원 및 유지보수": 24,
-        "차별성 및 경쟁력": 25,
-        "개발 로드맵 및 향후 계획": 26
-    }
+    all_values = worksheet.get_all_values()
+    row_mapping = {}
+    for idx, row in enumerate(all_values):
+        if len(row) > 0:
+            label = row[0].strip()
+            row_mapping[label] = idx + 1  # Google Sheets row index is 1-based
 
     cell_updates = []
     for row in combined_rows:
         if isinstance(row, list) and len(row) == 2:
-            label, score = str(row[0]), str(row[1])
+            label, score = str(row[0]).strip(), str(row[1])
             if label in row_mapping:
                 row_num = row_mapping[label]
                 cell_updates.append({
@@ -115,12 +98,11 @@ def write_combined_summary(all_summaries):
                 })
             else:
                 print(f"[DEBUG] Unmatched label: '{label}'")
-                print(f"[WARNING] Label '{label}' not in hardcoded row mapping.")
 
     if cell_updates:
-        worksheet.batch_update(cell_updates)
         print("[DEBUG] Batch update payload:")
         for update in cell_updates:
             print(f"  - {update['range']}: {update['values'][0][0]}")
+        worksheet.batch_update(cell_updates)
 
 write_combined_summary(all_summaries)
