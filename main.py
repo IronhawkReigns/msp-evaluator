@@ -106,7 +106,7 @@ def write_combined_summary(all_summaries):
     cell_updates = []
     for row in combined_rows:
         if isinstance(row, list) and len(row) == 2:
-            label, score = str(row[0]), str(row[1])
+            label, score = str(row[0]).strip(), str(row[1])
             if label in row_mapping:
                 row_num = row_mapping[label]
                 cell_updates.append({
@@ -114,34 +114,12 @@ def write_combined_summary(all_summaries):
                     "values": [[score]]
                 })
             else:
-                print(f"[WARNING] Label '{label}' not in hardcoded row mapping.")
-
-    # Section header rows and their row numbers
-    section_headers = {
-        "인적역량 총점": 3,
-        "AI기술역량 총점": 10,
-        "솔루션 역량 총점": 18
-    }
-
-    # Compute per-section averages and add to cell_updates
-    for header_label, row_index in section_headers.items():
-        # Filter rows for that section based on their index ranges
-        if header_label == "인적역량 총점":
-            rows = [r for r in cell_updates if 4 <= int(r["range"][1:]) <= 8]
-        elif header_label == "AI기술역량 총점":
-            rows = [r for r in cell_updates if 11 <= int(r["range"][1:]) <= 16]
-        elif header_label == "솔루션 역량 총점":
-            rows = [r for r in cell_updates if 19 <= int(r["range"][1:]) <= 26]
-        values = [float(r["values"][0][0].replace("%", "")) for r in rows if "%" in r["values"][0][0]]
-        if values:
-            avg = sum(values) / len(values)
-            formatted = f"{avg:.2f}%"
-            cell_updates.append({
-                "range": f"B{row_index}",
-                "values": [[formatted]]
-            })
+                print(f"[DEBUG] Unmatched label: '{label}'")
 
     if cell_updates:
+        print("[DEBUG] Batch update payload:")
+        for update in cell_updates:
+            print(f"  - {update['range']}: {update['values'][0][0]}")
         worksheet.batch_update(cell_updates)
 
 write_combined_summary(all_summaries)
