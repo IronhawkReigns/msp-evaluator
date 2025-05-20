@@ -69,7 +69,7 @@ def write_combined_summary(all_summaries):
     # This is a placeholder for sheet access, replace with actual sheet object
     client = connect_to_sheets()
     interview_sheet = client.open("Test")
-    worksheet = interview_sheet.worksheet("데이터 요약 (Auto)")
+    worksheet = interview_sheet.worksheet("데이터 요약")
     
     combined_rows = []
     for sheet_name, df_summary in all_summaries.items():
@@ -79,28 +79,31 @@ def write_combined_summary(all_summaries):
             if label is not None and score is not None:
                 combined_rows.append([label, score])
     
-    # Define exact row mappings for each label (row number = 1-based index)
+    # Define updated row mappings for each label (row number = 1-based index)
     row_mapping = {
         "총점": 2,
-        "AI 전문 인력 구성": 4,
-        "프로젝트 경험 및 성공 사례": 5,
-        "지속적인 교육 및 학습": 6,
-        "프로젝트 관리 및 커뮤니케이션": 7,
-        "AI 윤리 및 책임 의식": 8,
-        "AI 기술 연구 능력": 11,
-        "AI 모델 개발 능력": 12,
-        "AI 플랫폼 및 인프라 구축 능력": 13,
-        "데이터 처리 및 분석 능력": 14,
-        "AI 기술의 융합 및 활용 능력": 15,
-        "AI 기술의 특허 및 인증 보유 현황": 16,
-        "다양성 및 전문성": 19,
-        "안정성": 20,
-        "확장성 및 유연성": 21,
-        "사용자 편의성": 22,
-        "보안성": 23,
-        "기술 지원 및 유지보수": 24,
-        "차별성 및 경쟁력": 25,
-        "개발 로드맵 및 향후 계획": 26
+        "인적역량 총점": 4,
+        "AI 전문 인력 구성": 5,
+        "프로젝트 경험 및 성공 사례": 6,
+        "지속적인 교육 및 학습": 7,
+        "프로젝트 관리 및 커뮤니케이션": 8,
+        "AI 윤리 및 책임 의식": 9,
+        "AI기술역량 총점": 11,
+        "AI 기술 연구 능력": 12,
+        "AI 모델 개발 능력": 13,
+        "AI 플랫폼 및 인프라 구축 능력": 14,
+        "데이터 처리 및 분석 능력": 15,
+        "AI 기술의 융합 및 활용 능력": 16,
+        "AI 기술의 특허 및 인증 보유 현황": 17,
+        "솔루션 역량 총점": 19,
+        "다양성 및 전문성": 20,
+        "안정성": 21,
+        "확장성 및 유연성": 22,
+        "사용자 편의성": 23,
+        "보안성": 24,
+        "기술 지원 및 유지보수": 25,
+        "차별성 및 경쟁력": 26,
+        "개발 로드맵 및 향후 계획": 27
     }
 
     cell_updates = []
@@ -118,11 +121,11 @@ def write_combined_summary(all_summaries):
 
     # Section-level 평균 계산
     sections = {
-        "인적역량 총점": [4, 5, 6, 7, 8],
-        "AI기술역량 총점": [11, 12, 13, 14, 15, 16],
-        "솔루션 역량 총점": [19, 20, 21, 22, 23, 24, 25, 26]
+        "인적역량 총점": [5, 6, 7, 8, 9],
+        "AI기술역량 총점": [12, 13, 14, 15, 16, 17],
+        "솔루션 역량 총점": [20, 21, 22, 23, 24, 25, 26, 27]
     }
-    section_rows = {"인적역량 총점": 3, "AI기술역량 총점": 10, "솔루션 역량 총점": 18}
+    section_rows = {"인적역량 총점": 4, "AI기술역량 총점": 11, "솔루션 역량 총점": 19}
 
     for section, member_rows in sections.items():
         values = []
