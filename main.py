@@ -74,8 +74,8 @@ def write_combined_summary(all_summaries):
     combined_rows = []
     for sheet_name, df_summary in all_summaries.items():
         for idx, row in df_summary.iterrows():
-            label = row['Category'] if 'Category' in row else None
-            score = row['Score'] if 'Score' in row else None
+            label = row['Category'].strip() if 'Category' in row else None
+            score = row['Score (%)'] if 'Score (%)' in row else None
             if label is not None and score is not None:
                 combined_rows.append([label, score])
     
@@ -106,7 +106,7 @@ def write_combined_summary(all_summaries):
     cell_updates = []
     for row in combined_rows:
         if isinstance(row, list) and len(row) == 2:
-            label, score = str(row[0]).strip(), str(row[1])
+            label, score = str(row[0]), str(row[1])
             if label in row_mapping:
                 row_num = row_mapping[label]
                 cell_updates.append({
@@ -115,11 +115,12 @@ def write_combined_summary(all_summaries):
                 })
             else:
                 print(f"[DEBUG] Unmatched label: '{label}'")
+                print(f"[WARNING] Label '{label}' not in hardcoded row mapping.")
 
     if cell_updates:
+        worksheet.batch_update(cell_updates)
         print("[DEBUG] Batch update payload:")
         for update in cell_updates:
             print(f"  - {update['range']}: {update['values'][0][0]}")
-        worksheet.batch_update(cell_updates)
 
 write_combined_summary(all_summaries)
