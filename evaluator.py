@@ -89,6 +89,28 @@ def append_category_scores_to_sheet(sheet_df):
     sheet_df['설명'] = sheet_df['설명'].replace('', pd.NA).ffill()
     sheet_df['Present Lv.'] = pd.to_numeric(sheet_df['Present Lv.'], errors='coerce')
     valid_rows = sheet_df[sheet_df['Key Questions'].notna() & sheet_df['Present Lv.'].notna()].copy()
+    allowed_categories = {
+        "AI 전문 인력 구성",
+        "프로젝트 경험 및 성공 사례",
+        "지속적인 교육 및 학습",
+        "프로젝트 관리 및 커뮤니케이션",
+        "AI 윤리 및 책임 의식",
+        "AI 기술 연구 능력",
+        "AI 모델 개발 능력",
+        "AI 플랫폼 및 인프라 구축 능력",
+        "데이터 처리 및 분석 능력",
+        "AI 기술의 융합 및 활용 능력",
+        "AI 기술의 특허 및 인증 보유 현황",
+        "다양성 및 전문성",
+        "안정성",
+        "확장성 및 유연성",
+        "사용자 편의성",
+        "보안성",
+        "기술 지원 및 유지보수",
+        "차별성 및 경쟁력",
+        "개발 로드맵 및 향후 계획"
+    }
+    valid_rows = valid_rows[valid_rows['설명'].isin(allowed_categories)]
 
     grouped = valid_rows.groupby('설명', sort=False)
 
