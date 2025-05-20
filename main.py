@@ -106,6 +106,19 @@ def write_combined_summary(all_summaries):
         "개발 로드맵 및 향후 계획": 27
     }
 
+    # Write only the top-level scores using revised logic
+    total_keys = {"총점", "인적역량 총점", "AI기술역량 총점", "솔루션 역량 총점"}
+    for sheet_name, df_summary in all_summaries.items():
+        for _, row in df_summary.iterrows():
+            category = row["Category"]
+            score = row["Score (%)"]
+            if category in total_keys and category in row_mapping:
+                row_num = row_mapping[category]
+                cell_updates.append({
+                    "range": f"B{row_num}",
+                    "values": [[score]]
+                })
+
     cell_updates = []
     for row in combined_rows:
         if isinstance(row, list) and len(row) == 2:
