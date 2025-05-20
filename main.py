@@ -52,9 +52,9 @@ for sheet_name in target_sheets:
         interview_result = str(row.get("Interview Result", "")).strip()
         current_level = str(row.get("Present Lv.", "")).strip()
 
-        # Skip if there's no interview result, or already evaluated
-        if interview_result == "" or current_level not in {"", "nan", "NaN"}:
-            print(f"Skipping row {idx+1} (no new input or already scored)", flush=True)
+        # Skip if there's no interview result
+        if interview_result == "":
+            print(f"Skipping row {idx+1} (no interview result)", flush=True)
             scores.append(current_level)
             continue
 
@@ -152,17 +152,21 @@ def write_combined_summary(all_summaries):
                     "values": [[f"{percentage:.2f}%"]]
                 })
 
-        valid_total_rows = df_full[df_full['Key Questions'].notna() & df_full['Present Lv.'].notna()]
+    all_scores = []
+    for sheet_name in target_sheets:
+        df_full, _ = load_evaluation_data(sheet_name=sheet_name)
+        df_full['설명'] = df_full['설명'].replace('', pd.NA).ffill()
+        df_full['Present Lv.'] = pd.to_numeric(df_full['Present Lv.'], errors='coerce')
+        valid_rows = df_full[df_full['Key Questions'].notna() & df_full['Present Lv.'].notna()]
+        all_scores.extend(valid_rows['Present Lv.'].tolist())
 
-        if not valid_total_rows.empty:
-            total_score = valid_total_rows['Present Lv.'].sum()
-            total_count = len(valid_total_rows)
-            if total_count > 0:
-                overall_percentage = round((total_score / (total_count * 5)) * 100, 2)
-                cell_updates.append({
-                    "range": "B27",
-                    "values": [[f"{overall_percentage:.2f}%"]]
-                })
+    if all_scores:
+        overall_score = sum(all_scores)
+        overall_percentage = round((overall_score / (len(all_scores) * 5)) * 100, 2)
+        cell_updates.append({
+            "range": "B27",
+            "values": [[f"{overall_percentage:.2f}%"]]
+        })
 
     if cell_updates:
         worksheet.batch_update(cell_updates)
