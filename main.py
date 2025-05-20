@@ -72,10 +72,13 @@ def write_combined_summary(all_summaries):
     worksheet = interview_sheet.worksheet("데이터 요약")
     
     combined_rows = []
+    section_headers = {"인적역량", "AI기술역량", "솔루션 역량"}
     for sheet_name, df_summary in all_summaries.items():
         for idx, row in df_summary.iterrows():
-            label = row['Category'] if 'Category' in row else None
-            score = row['Score (%)'] if 'Score (%)' in row else None
+            label = row.get('Category')
+            score = row.get('Score (%)')
+            if label in section_headers:
+                continue  # prevent adding section header labels
             if label is not None and score is not None:
                 combined_rows.append([label, score])
     
@@ -106,7 +109,6 @@ def write_combined_summary(all_summaries):
         "솔루션 역량 총점": 30
     }
 
-    section_headers = {"인적역량", "AI기술역량", "솔루션 역량"}
     cell_updates = []
     for row in combined_rows:
         if isinstance(row, list) and len(row) == 2:
