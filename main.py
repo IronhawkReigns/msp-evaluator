@@ -26,9 +26,9 @@ for sheet_name in target_sheets:
         interview_result = str(row.get("Interview Result", "")).strip()
         current_level = str(row.get("Present Lv.", "")).strip()
 
-        # Skip if there's no interview result, or already evaluated
-        if interview_result == "" or current_level not in {"", "nan", "NaN"}:
-            print(f"Skipping row {idx+1} (no new input or already scored)", flush=True)
+        # Skip if there's no interview result
+        if interview_result == "":
+            print(f"Skipping row {idx+1} (no interview result)", flush=True)
             scores.append(current_level)
             continue
 
