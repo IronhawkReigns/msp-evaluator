@@ -51,8 +51,8 @@ for sheet_name in target_sheets:
     df["Present Lv."] = scores
     update_scores_to_sheet(df, sheet)
 
-    # Compute and write category summary
-    df_summary = append_category_scores_to_sheet(df)
+    # Compute and write category summary with weighted average
+    df_summary = append_category_scores_to_sheet(df, use_weighted_average=True)
     all_summaries[sheet_name] = df_summary
     print(f"[DEBUG] {sheet_name} → Summary shape: {df_summary.shape}")
 
