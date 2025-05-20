@@ -53,21 +53,15 @@ def evaluate_answer(question, answer):
 
     response = requests.post(API_URL, json=body, headers=headers)
     result = response.json()
-    attempts = 0
-    while attempts < 3:
-        try:
-            content = result["result"]["message"]["content"].strip()
-            match = re.search(r"\b([1-5])\b", content)
-            if match:
-                return int(match.group(1))
-            else:
-                return f"Unexpected content: {content}"
-        except (TypeError, KeyError):
-            print(f"[DEBUG] Invalid or incomplete API response: {result}")
-            time.sleep(2)
-            attempts += 1
-            result = response.json()  # Optional re-fetch logic here if needed
-    return f"Error in API response after retry: {result}"
+    if "result" in result:
+        message = result["result"]["message"]["content"].strip()
+        match = re.search(r"\b([1-5])\b", message)
+        if match:
+            return int(match.group(1))
+        else:
+            return f"Unexpected content: {message}"
+    else:
+        return f"Error in API response: {result}"
 
 
 # --- Category summary functions ---
@@ -91,39 +85,24 @@ def compute_category_scores_from_dataframe(df):
 
     return category_scores
 
-def append_category_scores_to_sheet(sheet_df):
+def append_category_scores_to_sheet(sheet_df, use_weighted_average=False):
+    category_scores = compute_category_scores_from_dataframe(sheet_df)
+
     sheet_df['설명'] = sheet_df['설명'].replace('', pd.NA).ffill()
     sheet_df['Present Lv.'] = pd.to_numeric(sheet_df['Present Lv.'], errors='coerce')
-    valid_rows = sheet_df[sheet_df['Key Questions'].notna() & sheet_df['Present Lv.'].notna()].copy()
+    valid_rows = sheet_df[sheet_df['Key Questions'].notna() & sheet_df['Present Lv.'].notna()]
 
-    # Define parent categories and their subcategories
-    parent_categories = {
-        "인적역량 총점": ["AI 전문 인력 구성", "프로젝트 경험 및 성공 사례", "지속적인 교육 및 학습", 
-                       "프로젝트 관리 및 커뮤니케이션", "AI 윤리 및 책임 의식"],
-        "AI기술역량 총점": ["AI 기술 연구 능력", "AI 모델 개발 능력", "AI 플랫폼 및 인프라 구축 능력", 
-                         "데이터 처리 및 분석 능력", "AI 기술의 융합 및 활용 능력", "AI 기술의 특허 및 인증 보유 현황"],
-        "솔루션 역량 총점": ["다양성 및 전문성", "안정성", "확장성 및 유연성", "사용자 편의성", 
-                          "보안성", "기술 지원 및 유지보수", "차별성 및 경쟁력", "개발 로드맵 및 향후 계획"]
-    }
+    if use_weighted_average:
+        total_score = valid_rows['Present Lv.'].sum()
+        question_count = len(valid_rows)
+        max_score = question_count * 5
+        avg_score = round((total_score / max_score) * 100, 2) if max_score > 0 else 0.0
+    else:
+        avg_score = round((sum(category_scores.values()) / len(category_scores)) * 100, 2) if category_scores else 0.0
 
-    category_scores = {}
-    for parent, subcats in parent_categories.items():
-        # Sum scores for all questions under subcategories of the parent
-        parent_scores = valid_rows[valid_rows['설명'].isin(subcats)]['Present Lv.'].sum()
-        total_questions = valid_rows[valid_rows['설명'].isin(subcats)]['설명'].count()
-        max_score = total_questions * 5
-        percentage = round((parent_scores / max_score) * 100, 2) if max_score > 0 else 0.0
-        category_scores[parent] = percentage
-
-    # Add overall total score
-    total_score_sum = valid_rows['Present Lv.'].sum()
-    total_max_score = len(valid_rows) * 5
-    overall_percentage = round((total_score_sum / total_max_score) * 100, 2) if total_max_score > 0 else 0.0
-    category_scores["총점"] = overall_percentage
-
-    # Build summary DataFrame
-    summary_rows = []
+    summary_rows = [["총점", f"{avg_score:.2f}%"]]
     for category, score in category_scores.items():
-        summary_rows.append([category, f"{score}%"])
-    
-    return pd.DataFrame(summary_rows, columns=["Category", "Score (%)"])
+        summary_rows.append([category, f"{score*100:.2f}%"])
+
+    summary_df = pd.DataFrame(summary_rows, columns=["Category", "Score (%)"])
+    return summary_df
