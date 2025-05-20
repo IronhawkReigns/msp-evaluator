@@ -13,6 +13,31 @@ rubric_lookup = {
     if pd.notna(row["Key Questions"]) and pd.notna(row["Rubric"])
 }
 
+# Allowed categories and section headers as constants
+ALLOWED_CATEGORIES = {
+    "AI 전문 인력 구성",
+    "프로젝트 경험 및 성공 사례",
+    "지속적인 교육 및 학습",
+    "프로젝트 관리 및 커뮤니케이션",
+    "AI 윤리 및 책임 의식",
+    "AI 기술 연구 능력",
+    "AI 모델 개발 능력",
+    "AI 플랫폼 및 인프라 구축 능력",
+    "데이터 처리 및 분석 능력",
+    "AI 기술의 융합 및 활용 능력",
+    "AI 기술의 특허 및 인증 보유 현황",
+    "다양성 및 전문성",
+    "안정성",
+    "확장성 및 유연성",
+    "사용자 편의성",
+    "보안성",
+    "기술 지원 및 유지보수",
+    "차별성 및 경쟁력",
+    "개발 로드맵 및 향후 계획"
+}
+
+SECTION_HEADERS = {"인적역량", "AI기술역량", "솔루션 역량"}
+
 def evaluate_answer(question, answer):
     CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
     REQUEST_ID = f"msp-evaluator-{random.randint(100000,999999)}"
@@ -89,28 +114,7 @@ def append_category_scores_to_sheet(sheet_df):
     sheet_df['설명'] = sheet_df['설명'].replace('', pd.NA).ffill()
     sheet_df['Present Lv.'] = pd.to_numeric(sheet_df['Present Lv.'], errors='coerce')
     valid_rows = sheet_df[sheet_df['Key Questions'].notna() & sheet_df['Present Lv.'].notna()].copy()
-    allowed_categories = {
-        "AI 전문 인력 구성",
-        "프로젝트 경험 및 성공 사례",
-        "지속적인 교육 및 학습",
-        "프로젝트 관리 및 커뮤니케이션",
-        "AI 윤리 및 책임 의식",
-        "AI 기술 연구 능력",
-        "AI 모델 개발 능력",
-        "AI 플랫폼 및 인프라 구축 능력",
-        "데이터 처리 및 분석 능력",
-        "AI 기술의 융합 및 활용 능력",
-        "AI 기술의 특허 및 인증 보유 현황",
-        "다양성 및 전문성",
-        "안정성",
-        "확장성 및 유연성",
-        "사용자 편의성",
-        "보안성",
-        "기술 지원 및 유지보수",
-        "차별성 및 경쟁력",
-        "개발 로드맵 및 향후 계획"
-    }
-    valid_rows = valid_rows[valid_rows['설명'].isin(allowed_categories)]
+    valid_rows = valid_rows[valid_rows['설명'].isin(ALLOWED_CATEGORIES)]
 
     grouped = valid_rows.groupby('설명', sort=False)
 
@@ -130,10 +134,9 @@ def append_category_scores_to_sheet(sheet_df):
     max_score = question_count * 5
     avg_score = round((total_score / max_score) * 100, 2) if max_score > 0 else 0.0
 
-    section_headers = {"인적역량", "AI기술역량", "솔루션 역량"}
     summary_rows = [["총점", f"{avg_score:.2f}%", question_count]]
     for category, score in category_scores.items():
-        if category in section_headers:
+        if category in SECTION_HEADERS:
             continue
         summary_rows.append([category, f"{score * 100:.2f}%", question_counts[category]])
 
