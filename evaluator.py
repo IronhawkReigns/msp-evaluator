@@ -53,15 +53,21 @@ def evaluate_answer(question, answer):
 
     response = requests.post(API_URL, json=body, headers=headers)
     result = response.json()
-    if "result" in result:
-        message = result["result"]["message"]["content"].strip()
-        match = re.search(r"\b([1-5])\b", message)
-        if match:
-            return int(match.group(1))
-        else:
-            return f"Unexpected content: {message}"
-    else:
-        return f"Error in API response: {result}"
+    attempts = 0
+    while attempts < 3:
+        try:
+            content = result["result"]["message"]["content"].strip()
+            match = re.search(r"\b([1-5])\b", content)
+            if match:
+                return int(match.group(1))
+            else:
+                return f"Unexpected content: {content}"
+        except (TypeError, KeyError):
+            print(f"[DEBUG] Invalid or incomplete API response: {result}")
+            time.sleep(2)
+            attempts += 1
+            result = response.json()  # Optional re-fetch logic here if needed
+    return f"Error in API response after retry: {result}"
 
 
 # --- Category summary functions ---
