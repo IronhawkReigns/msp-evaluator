@@ -75,7 +75,7 @@ def write_combined_summary(all_summaries):
     for sheet_name, df_summary in all_summaries.items():
         for idx, row in df_summary.iterrows():
             label = row['Category'] if 'Category' in row else None
-            score = row['Score'] if 'Score' in row else None
+            score = row['Score (%)'] if 'Score (%)' in row else None
             if label is not None and score is not None:
                 combined_rows.append([label, score])
     
