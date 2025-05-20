@@ -90,7 +90,7 @@ def append_category_scores_to_sheet(sheet_df, use_weighted_average=False):
 
     sheet_df['설명'] = sheet_df['설명'].replace('', pd.NA).ffill()
     sheet_df['Present Lv.'] = pd.to_numeric(sheet_df['Present Lv.'], errors='coerce')
-    valid_rows = sheet_df[sheet_df['Key Questions'].notna() & sheet_df['Present Lv'].notna()]
+    valid_rows = sheet_df[sheet_df['Key Questions'].notna() & sheet_df['Present Lv.'].notna()]
 
     if use_weighted_average:
         total_score = valid_rows['Present Lv.'].sum()
