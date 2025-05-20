@@ -103,7 +103,7 @@ def write_combined_summary(all_summaries):
     for sheet_name, df_summary in all_summaries.items():
         for idx, row in df_summary.iterrows():
             label = row.get('Category')
-            score = row.get('Score (%)')
+            score = row.get('Score')
 
             if not isinstance(label, str):
                 continue
@@ -145,11 +145,11 @@ def write_combined_summary(all_summaries):
             if not section_rows.empty:
                 total = section_rows['Present Lv.'].sum()
                 count = len(section_rows)
-                percentage = round((total / (count * 5)) * 100, 2)
+                score = round((total / (count * 5)) * 100, 2)
                 row_num = ROW_MAPPING[section_label]
                 cell_updates.append({
                     "range": f"B{row_num}",
-                    "values": [[f"{percentage:.2f}%"]]
+                    "values": [[f"{score:.2f}"]]
                 })
 
     all_scores = []
@@ -162,10 +162,10 @@ def write_combined_summary(all_summaries):
 
     if all_scores:
         overall_score = sum(all_scores)
-        overall_percentage = round((overall_score / (len(all_scores) * 5)) * 100, 2)
+        overall_score_value = round((overall_score / (len(all_scores) * 5)) * 100, 2)
         cell_updates.append({
             "range": "B27",
-            "values": [[f"{overall_percentage:.2f}%"]]
+            "values": [[f"{overall_score_value:.2f}"]]
         })
 
     if cell_updates:
