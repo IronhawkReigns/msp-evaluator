@@ -134,11 +134,11 @@ def append_category_scores_to_sheet(sheet_df):
     max_score = question_count * 5
     avg_score = round((total_score / max_score) * 100, 2) if max_score > 0 else 0.0
 
-    summary_rows = [["총점", f"{avg_score:.2f}%", question_count]]
+    summary_rows = [["총점", f"{avg_score:.2f}", question_count]]
     for category, score in category_scores.items():
         if category in SECTION_HEADERS:
             continue
-        summary_rows.append([category, f"{score * 100:.2f}%", question_counts[category]])
+        summary_rows.append([category, f"{score * 100:.2f}", question_counts[category]])
 
-    summary_df = pd.DataFrame(summary_rows, columns=["Category", "Score (%)", "Questions"])
+    summary_df = pd.DataFrame(summary_rows, columns=["Category", "Score", "Questions"])
     return summary_df
