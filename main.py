@@ -140,8 +140,9 @@ def write_combined_summary(all_summaries):
         df_full, _ = load_evaluation_data(sheet_name=sheet_name)
         df_full['설명'] = df_full['설명'].replace('', pd.NA).ffill()
         df_full['Present Lv.'] = pd.to_numeric(df_full['Present Lv.'], errors='coerce')
+        section_rows = None
         for section_label, subcategories in section_mappings.items():
-            section_rows = df_full[df_full['설명'].isin(subcategories) & df_full['Present Lv.'].notna()]
+            section_rows = df_full[df_full['Key Questions'].notna() & df_full['설명'].isin(subcategories) & df_full['Present Lv.'].notna()]
             if not section_rows.empty:
                 total = section_rows['Present Lv.'].sum()
                 count = len(section_rows)
@@ -157,7 +158,8 @@ def write_combined_summary(all_summaries):
     for sheet_name in all_summaries:
         df_full, _ = load_evaluation_data(sheet_name=sheet_name)
         df_full['Present Lv.'] = pd.to_numeric(df_full['Present Lv.'], errors='coerce')
-        total_rows.append(df_full[df_full['Present Lv.'].notna()])
+        valid_total_rows = df_full[df_full['Key Questions'].notna() & df_full['Present Lv.'].notna()]
+        total_rows.append(valid_total_rows)
 
     if total_rows:
         all_valid = pd.concat(total_rows)
