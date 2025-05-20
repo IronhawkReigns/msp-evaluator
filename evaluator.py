@@ -109,8 +109,14 @@ def append_category_scores_to_sheet(sheet_df):
     overall_percentage = round((total_score_sum / total_max_score) * 100, 2) if total_max_score > 0 else 0.0
 
     summary_rows = [["총점", f"{overall_percentage:.2f}%"]]
-    for category, score in category_scores.items():
+    question_counts = {}
+
+    for category, group in grouped:
+        question_counts[category] = len(group)
+        score = category_scores[category]
         summary_rows.append([category, f"{score * 100:.2f}%"])
 
     summary_df = pd.DataFrame(summary_rows, columns=["Category", "Score (%)"])
+    summary_df["Questions"] = summary_df["Category"].map(question_counts).fillna(0).astype(int)
+
     return summary_df
