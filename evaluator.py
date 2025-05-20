@@ -70,7 +70,7 @@ def compute_category_scores_from_dataframe(df):
     df['Present Lv.'] = pd.to_numeric(df['Present Lv.'], errors='coerce')
 
     # Keep only rows with valid questions and scores
-    valid_rows = df[df['Key Questions'].notna() & df['Present Lv.'].notna()].copy()
+    valid_rows = df[df['Key Questions'].notna() & df['Present Lv. '].notna()].copy()
 
     category_scores = {}
     grouped = valid_rows.groupby('설명', sort=False)
@@ -85,17 +85,20 @@ def compute_category_scores_from_dataframe(df):
 
     return category_scores
 
-def append_category_scores_to_sheet(sheet_df):
+def append_category_scores_to_sheet(sheet_df, use_weighted_average=False):
     category_scores = compute_category_scores_from_dataframe(sheet_df)
 
-    # Calculate true overall score by summing all valid question scores
     sheet_df['설명'] = sheet_df['설명'].replace('', pd.NA).ffill()
     sheet_df['Present Lv.'] = pd.to_numeric(sheet_df['Present Lv.'], errors='coerce')
-    valid_rows = sheet_df[sheet_df['Key Questions'].notna() & sheet_df['Present Lv.'].notna()]
-    total_score = valid_rows['Present Lv.'].sum()
-    question_count = len(valid_rows)
-    max_score = question_count * 5
-    avg_score = round((total_score / max_score) * 100, 2) if max_score > 0 else 0.0
+    valid_rows = sheet_df[sheet_df['Key Questions'].notna() & sheet_df['Present Lv'].notna()]
+
+    if use_weighted_average:
+        total_score = valid_rows['Present Lv.'].sum()
+        question_count = len(valid_rows)
+        max_score = question_count * 5
+        avg_score = round((total_score / max_score) * 100, 2) if max_score > 0 else 0.0
+    else:
+        avg_score = round((sum(category_scores.values()) / len(category_scores)) * 100, 2) if category_scores else 0.0
 
     summary_rows = [["총점", f"{avg_score:.2f}%"]]
     for category, score in category_scores.items():
