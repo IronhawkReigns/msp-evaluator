@@ -79,17 +79,34 @@ def write_combined_summary(all_summaries):
             if label is not None and score is not None:
                 combined_rows.append([label, score])
     
-    all_values = worksheet.get_all_values()
-    row_mapping = {}
-    for idx, row in enumerate(all_values):
-        if len(row) > 0:
-            label = row[0].strip()
-            row_mapping[label] = idx + 1  # Google Sheets row index is 1-based
+    # Define exact row mappings for each label (row number = 1-based index)
+    row_mapping = {
+        "총점": 2,
+        "AI 전문 인력 구성": 4,
+        "프로젝트 경험 및 성공 사례": 5,
+        "지속적인 교육 및 학습": 6,
+        "프로젝트 관리 및 커뮤니케이션": 7,
+        "AI 윤리 및 책임 의식": 8,
+        "AI 기술 연구 능력": 11,
+        "AI 모델 개발 능력": 12,
+        "AI 플랫폼 및 인프라 구축 능력": 13,
+        "데이터 처리 및 분석 능력": 14,
+        "AI 기술의 융합 및 활용 능력": 15,
+        "AI 기술의 특허 및 인증 보유 현황": 16,
+        "다양성 및 전문성": 19,
+        "안정성": 20,
+        "확장성 및 유연성": 21,
+        "사용자 편의성": 22,
+        "보안성": 23,
+        "기술 지원 및 유지보수": 24,
+        "차별성 및 경쟁력": 25,
+        "개발 로드맵 및 향후 계획": 26
+    }
 
     cell_updates = []
     for row in combined_rows:
         if isinstance(row, list) and len(row) == 2:
-            label, score = str(row[0]).strip(), str(row[1])
+            label, score = str(row[0]), str(row[1])
             if label in row_mapping:
                 row_num = row_mapping[label]
                 cell_updates.append({
@@ -97,12 +114,34 @@ def write_combined_summary(all_summaries):
                     "values": [[score]]
                 })
             else:
-                print(f"[DEBUG] Unmatched label: '{label}'")
+                print(f"[WARNING] Label '{label}' not in hardcoded row mapping.")
+
+    # Section-level 평균 계산
+    sections = {
+        "인적역량 총점": [4, 5, 6, 7, 8],
+        "AI기술역량 총점": [11, 12, 13, 14, 15, 16],
+        "솔루션 역량 총점": [19, 20, 21, 22, 23, 24, 25, 26]
+    }
+    section_rows = {"인적역량 총점": 3, "AI기술역량 총점": 10, "솔루션 역량 총점": 18}
+
+    for section, member_rows in sections.items():
+        values = []
+        for row in member_rows:
+            match = next((c for c in cell_updates if c["range"] == f"B{row}"), None)
+            if match:
+                try:
+                    percent = float(match["values"][0][0].replace("%", ""))
+                    values.append(percent)
+                except:
+                    continue
+        if values:
+            avg = round(sum(values) / len(values), 2)
+            cell_updates.append({
+                "range": f"B{section_rows[section]}",
+                "values": [[f"{avg:.2f}%"]]
+            })
 
     if cell_updates:
-        print("[DEBUG] Batch update payload:")
-        for update in cell_updates:
-            print(f"  - {update['range']}: {update['values'][0][0]}")
         worksheet.batch_update(cell_updates)
 
 write_combined_summary(all_summaries)
