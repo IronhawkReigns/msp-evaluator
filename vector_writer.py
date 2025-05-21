@@ -1,10 +1,12 @@
 import chromadb
+import os
 from chromadb import PersistentClient
 from sentence_transformers import SentenceTransformer
 from sheets_reader import INTERVIEW_SHEET_DOC_NAME, connect_to_sheets, get_company_data_from_sheet, get_summary_scores
 
 # Initialize Chroma client and collection
-client = PersistentClient(path="./chroma_store")
+CHROMA_PATH = os.path.abspath("chroma_store")
+client = PersistentClient(path=CHROMA_PATH)
 collection = client.get_or_create_collection("msp_chunks")
 
 # Load embedding model
