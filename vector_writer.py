@@ -1,9 +1,10 @@
 import chromadb
+from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 from sheets_reader import INTERVIEW_SHEET_DOC_NAME, connect_to_sheets, get_company_data_from_sheet, get_summary_scores
 
 # Initialize Chroma client and collection
-client = chromadb.Client()
+client = chromadb.Client(Settings(chroma_db_impl="duckdb+parquet", persist_directory="./chroma_store"))
 collection = client.get_or_create_collection("msp_chunks")
 
 # Load embedding model
