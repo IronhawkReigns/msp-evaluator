@@ -41,3 +41,11 @@ def run_from_msp_name(company_name: str):
     summary = get_summary_scores(company_name)
     add_msp_data_to_chroma(company_name, company_data, summary)
     print(f"{company_name} successfully written to ChromaDB.")
+
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def root():
+    return {"message": "MSP Evaluator API is live"}
