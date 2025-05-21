@@ -125,3 +125,48 @@ def write_combined_summary(summary_dict, sheet_name="데이터 요약"):
         format_cell_range(worksheet, "A1:B2", bold_format)
     except Exception as e:
         print(f"Could not apply formatting: {e}")
+
+
+# Function to extract company data from a sheet by MSP name
+def get_company_data_from_sheet(msp_name: str):
+    df, _ = load_evaluation_data(sheet_name=msp_name)
+    data = {}
+
+    for _, row in df.iterrows():
+        question = row.get("Key Questions")
+        answer = row.get("Interview Result")
+        score = row.get("Present Lv.")
+
+        if pd.isna(question) or pd.isna(answer):
+            continue
+
+        data[question.strip()] = {
+            "answer": str(answer).strip(),
+            "score": int(score) if not pd.isna(score) else None
+        }
+
+    return data
+
+def get_summary_scores(msp_name: str):
+    df, _ = load_evaluation_data(sheet_name=msp_name)
+    summary = {
+        "total_score": None,
+        "human_score": None,
+        "ai_score": None,
+        "solution_score": None
+    }
+    for _, row in df.iterrows():
+        question = row.get("Key Questions", "")
+        score = row.get("Present Lv.")
+        if pd.isna(question) or pd.isna(score):
+            continue
+        question_str = str(question).strip()
+        if question_str == "총점":
+            summary["total_score"] = score
+        elif question_str == "인적역량 총점":
+            summary["human_score"] = score
+        elif question_str == "AI기술역량 총점":
+            summary["ai_score"] = score
+        elif question_str == "솔루션 역량 총점":
+            summary["solution_score"] = score
+    return summary
