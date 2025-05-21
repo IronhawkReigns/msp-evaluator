@@ -21,7 +21,7 @@ def load_evaluation_data():
     client = connect_to_sheets()
     interview_sheet = client.open(INTERVIEW_SHEET_DOC_NAME)
 
-    fixed_tabs = ["인적역량", "AI기술역량", "솔루션역량"]
+    fixed_tabs = ["인적역량", "AI기술역량", "솔루션 역량"]
     combined_df = pd.DataFrame()
 
     for tab in fixed_tabs:
