@@ -63,25 +63,12 @@ def get_company_data_from_sheet(msp_name: str):
 def get_summary_scores(msp_name: str):
     client = connect_to_sheets()
     sheet = client.open(INTERVIEW_SHEET_DOC_NAME).worksheet("데이터 요약")
-    records = sheet.get_all_records()
 
     summary = {
-        "total_score": None,
-        "human_score": None,
-        "ai_score": None,
-        "solution_score": None
+        "total_score": float(sheet.acell("B27").value),
+        "human_score": float(sheet.acell("B28").value),
+        "ai_score": float(sheet.acell("B29").value),
+        "solution_score": float(sheet.acell("B30").value)
     }
-
-    for row in records:
-        label = row.get("Key Questions") or row.get("항목")
-        score = row.get("Score (%)") or row.get("Present Lv.") or row.get("점수")
-        if label == "총점":
-            summary["total_score"] = score
-        elif label == "인적역량 총점":
-            summary["human_score"] = score
-        elif label == "AI기술역량 총점":
-            summary["ai_score"] = score
-        elif label == "솔루션 역량 총점":
-            summary["solution_score"] = score
 
     return summary
