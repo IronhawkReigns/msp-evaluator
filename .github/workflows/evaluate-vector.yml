@@ -11,6 +11,13 @@ on:
 jobs:
   insert_to_vector_db:
     runs-on: ubuntu-latest
+
+    env:
+      CLOVA_API_KEY: ${{ secrets.CLOVA_API_KEY }}
+      GOOGLE_SHEET_CREDENTIALS_JSON: ${{ secrets.GOOGLE_SHEET_CREDENTIALS_JSON }}
+      INTERVIEW_SHEET_DOC_NAME: ${{ secrets.INTERVIEW_SHEET_DOC_NAME }}
+      TARGET_SHEET_NAMES: ${{ secrets.TARGET_SHEET_NAMES }}
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
