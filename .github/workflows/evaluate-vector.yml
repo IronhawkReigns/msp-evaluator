@@ -1,172 +1,28 @@
-import os
-import json
-import pandas as pd
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+name: Evaluate Vector Insertion
 
-# Load configs
-GOOGLE_SHEET_CREDENTIALS_JSON = os.getenv("GOOGLE_SHEET_CREDENTIALS_JSON")
-INTERVIEW_SHEET_DOC_NAME = os.getenv("INTERVIEW_SHEET_DOC_NAME")
-INTERVIEW_SHEET = os.getenv("INTERVIEW_SHEET_NAME")
+on:
+  workflow_dispatch:
+    inputs:
+      msp_name:
+        description: 'Name of the MSP to insert into vector DB'
+        required: true
+        type: string
 
-# Authenticate and connect to Google Sheets
-def connect_to_sheets():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
-    client = gspread.authorize(creds)
-    return client
+jobs:
+  insert_to_vector_db:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-# Read the interview sheet
-def load_evaluation_data(sheet_name=None):
-    client = connect_to_sheets()
-    interview_sheet = client.open(INTERVIEW_SHEET_DOC_NAME)
-    worksheet = interview_sheet.worksheet(sheet_name or INTERVIEW_SHEET)
-    interview_records = worksheet.get_all_records()
-    df_interview = pd.DataFrame(interview_records)
-    df_interview["Key Questions"] = df_interview["Key Questions"].str.strip()
-    return df_interview, worksheet
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-# Write back the score column
-def update_scores_to_sheet(df, sheet):
-    data_to_update = df.fillna("").values.tolist()
-    header = df.columns.tolist()
-    sheet.update([header] + data_to_update)
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-
-# Write only the Score (%) column to an existing "데이터 요약" sheet
-def create_and_write_summary_sheet(df_summary, new_sheet_name="데이터 요약"):
-    client = connect_to_sheets()
-    interview_sheet = client.open(INTERVIEW_SHEET_DOC_NAME)
-
-    try:
-        worksheet = interview_sheet.worksheet(new_sheet_name)
-    except gspread.exceptions.WorksheetNotFound:
-        worksheet = interview_sheet.add_worksheet(title=new_sheet_name, rows="100", cols="5")
-
-        # Clean and simplify the summary DataFrame before writing
-    df_summary = df_summary.rename(columns={
-        "Key Questions": "Category",
-        "Present Lv.": "Score (%)"
-    })[["Score (%)"]]
-
-    # Prepare list of scores
-    score_values = df_summary["Score (%)"].fillna("").tolist()
-
-    # Compute 총점 (average of all category scores)
-    numeric_scores = [
-        float(str(score).replace('%', '')) for score in score_values
-        if str(score).replace('%', '').replace('.', '').isdigit()
-    ]
-    total_score = round(sum(numeric_scores) / len(numeric_scores), 2) if numeric_scores else 0.0
-    score_values.insert(0, f"{total_score:.2f}%")  # insert at top
-
-    # Write to column B starting from B2 (row 2)
-    cell_range = f"B2:B{len(score_values) + 1}"
-    worksheet.update(cell_range, [[v] for v in score_values])
-
-
-# Combine summaries from multiple sheets into a unified summary sheet
-def write_combined_summary(summary_dict, sheet_name="데이터 요약"):
-    print(f"[DEBUG] Opening summary sheet: {sheet_name}")
-    client = connect_to_sheets()
-    interview_sheet = client.open(INTERVIEW_SHEET_DOC_NAME)
-
-    # Always create a new auto-generated sheet for testing
-    auto_summary_name = f"{sheet_name} (Auto)"
-    try:
-        interview_sheet.del_worksheet(interview_sheet.worksheet(auto_summary_name))
-    except gspread.exceptions.WorksheetNotFound:
-        pass
-    worksheet = interview_sheet.add_worksheet(title=auto_summary_name, rows="100", cols="5")
-
-    combined_rows = [["Category", "Score (%)"]]
-    total_scores = []
-
-    for sheet_title, df_summary in summary_dict.items():
-        if not df_summary.empty:
-            # Add section-level summary
-            section_score = df_summary.iloc[0, 0]
-            combined_rows.append([f"{sheet_title} 총점", section_score])
-            try:
-                total_scores.append(float(str(section_score).replace('%', '')))
-            except ValueError:
-                pass
-
-            # Add each category score under this section
-            for idx in range(1, len(df_summary)):
-                combined_rows.append(df_summary.iloc[idx].tolist())
-
-    # Insert overall average score at the top
-    if total_scores:
-        avg_score = round(sum(total_scores) / len(total_scores), 2)
-        combined_rows.insert(1, ["총점", f"{avg_score:.2f}%"])
-
-    print(f"[DEBUG] Combined row count: {len(combined_rows)}")
-    print(f"[DEBUG] Full combined_rows content (up to 15): {combined_rows[:15]}")
-
-    # Sanitize combined_rows to ensure every row is a list of 2 strings
-    sanitized_rows = []
-    for row in combined_rows:
-        if isinstance(row, list) and len(row) == 2:
-            sanitized_rows.append([str(row[0]), str(row[1])])
-        else:
-            print(f"[WARNING] Malformed row skipped: {row}")
-
-    print(f"[DEBUG] Final sanitized rows (up to 10): {sanitized_rows[:10]}")
-
-    # Clear the sheet and write new data
-    worksheet.clear()
-    worksheet.update("A1", sanitized_rows)
-
-    # Bold the headers
-    try:
-        from gspread_formatting import CellFormat, TextFormat, format_cell_range
-        bold_format = CellFormat(textFormat=TextFormat(bold=True))
-        format_cell_range(worksheet, "A1:B2", bold_format)
-    except Exception as e:
-        print(f"Could not apply formatting: {e}")
-
-
-# Function to extract company data from a sheet by MSP name
-def get_company_data_from_sheet(msp_name: str):
-    df, _ = load_evaluation_data(sheet_name=msp_name)
-    data = {}
-
-    for _, row in df.iterrows():
-        question = row.get("Key Questions")
-        answer = row.get("Interview Result")
-        score = row.get("Present Lv.")
-
-        if pd.isna(question) or pd.isna(answer):
-            continue
-
-        data[question.strip()] = {
-            "answer": str(answer).strip(),
-            "score": int(score) if not pd.isna(score) else None
-        }
-
-    return data
-
-def get_summary_scores(msp_name: str):
-    df, _ = load_evaluation_data(sheet_name=msp_name)
-    summary = {
-        "total_score": None,
-        "human_score": None,
-        "ai_score": None,
-        "solution_score": None
-    }
-    for _, row in df.iterrows():
-        question = row.get("Key Questions", "")
-        score = row.get("Present Lv.")
-        if pd.isna(question) or pd.isna(score):
-            continue
-        question_str = str(question).strip()
-        if question_str == "총점":
-            summary["total_score"] = score
-        elif question_str == "인적역량 총점":
-            summary["human_score"] = score
-        elif question_str == "AI기술역량 총점":
-            summary["ai_score"] = score
-        elif question_str == "솔루션 역량 총점":
-            summary["solution_score"] = score
-    return summary
+      - name: Insert MSP to ChromaDB
+        run: |
+          python -c "from vector_writer import run_from_msp_name; run_from_msp_name('${{ github.event.inputs.msp_name }}')"
