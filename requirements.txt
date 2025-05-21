@@ -6,3 +6,4 @@ gspread
 streamlit
 fastapi
 uvicorn
+oauth2client
