@@ -1,5 +1,4 @@
 chromadb
-sentence-transformers
 pandas
 openpyxl
 gspread
@@ -7,3 +6,6 @@ streamlit
 fastapi
 uvicorn
 oauth2client
+--extra-index-url https://download.pytorch.org/whl/cpu
+sentence-transformers
+torch==2.0.1+cpu
