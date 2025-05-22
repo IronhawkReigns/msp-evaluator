@@ -2,4 +2,5 @@
 *.pyc
 __pycache__/
 secrets.json
-.env
+.envCriteria.xlsx
+Criteria.xlsx
