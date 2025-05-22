@@ -100,14 +100,22 @@
                 const deleteBtn = document.createElement("button");
                 deleteBtn.textContent = "Delete";
                 deleteBtn.onclick = () => {
-                    // Remove this entry from originalData by finding its index
-                    const idx = originalData.indexOf(entry);
-                    if (idx > -1) {
-                        originalData.splice(idx, 1);
-                    }
-                    // Remove from filtered data and re-render
-                    data.splice(index, 1);
-                    renderTable(data);
+                    fetch(`/ui/delete/${entry.id}`, {
+                        method: "DELETE"
+                    }).then(response => {
+                        if (response.ok) {
+                            // Remove the entry from the local state
+                            originalData = originalData.filter(e => e.id !== entry.id);
+                            const keyword = document.getElementById("searchInput").value.toLowerCase();
+                            const filtered = originalData.filter(entry =>
+                                entry.msp_name.toLowerCase().includes(keyword) ||
+                                entry.question.toLowerCase().includes(keyword)
+                            );
+                            renderTable(filtered);
+                        } else {
+                            alert("Failed to delete item.");
+                        }
+                    });
                 };
                 actionsCell.appendChild(deleteBtn);
 
@@ -122,13 +130,21 @@
 
         function deleteCompanyData(companyName) {
             if (confirm(`Are you sure you want to delete all data for MSP "${companyName}"?`)) {
-                originalData = originalData.filter(entry => entry.msp_name !== companyName);
-                const filtered = document.getElementById("searchInput").value.toLowerCase();
-                const displayed = originalData.filter(entry =>
-                    entry.msp_name.toLowerCase().includes(filtered) ||
-                    entry.question.toLowerCase().includes(filtered)
-                );
-                renderTable(displayed);
+                fetch(`/ui/delete_company/${encodeURIComponent(companyName)}`, {
+                    method: "DELETE"
+                }).then(response => {
+                    if (response.ok) {
+                        originalData = originalData.filter(entry => entry.msp_name !== companyName);
+                        const filtered = document.getElementById("searchInput").value.toLowerCase();
+                        const displayed = originalData.filter(entry =>
+                            entry.msp_name.toLowerCase().includes(filtered) ||
+                            entry.question.toLowerCase().includes(filtered)
+                        );
+                        renderTable(displayed);
+                    } else {
+                        alert("Failed to delete company data.");
+                    }
+                });
             }
         }
 
