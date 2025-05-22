@@ -1,10 +1,10 @@
+from dotenv import load_dotenv
+load_dotenv()
 import os
 import json
 import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from dotenv import load_dotenv
-load_dotenv()
 
 # Load configs
 GOOGLE_SHEET_CREDENTIALS_JSON = os.getenv("GOOGLE_SHEET_CREDENTIALS_JSON")
@@ -19,17 +19,58 @@ def connect_to_sheets():
     return client
 
 # Read the interview sheet
-def load_evaluation_data(sheet_name=None):
+def load_evaluation_data():
     client = connect_to_sheets()
     interview_sheet = client.open(INTERVIEW_SHEET_DOC_NAME)
-    worksheet = interview_sheet.worksheet(sheet_name or INTERVIEW_SHEET)
-    interview_records = worksheet.get_all_records()
-    df_interview = pd.DataFrame(interview_records)
-    df_interview["Key Questions"] = df_interview["Key Questions"].str.strip()
-    return df_interview, worksheet
+
+    fixed_tabs = ["인적역량", "AI기술역량", "솔루션 역량"]
+    combined_df = pd.DataFrame()
+
+    for tab in fixed_tabs:
+        worksheet = interview_sheet.worksheet(tab)
+        records = worksheet.get_all_records()
+        df = pd.DataFrame(records)
+        df["Key Questions"] = df["Key Questions"].str.strip()
+        combined_df = pd.concat([combined_df, df], ignore_index=True)
+
+    return combined_df, None
 
 # Write back the score column
 def update_scores_to_sheet(df, sheet):
     data_to_update = df.fillna("").values.tolist()
     header = df.columns.tolist()
     sheet.update([header] + data_to_update)
+
+
+# Function to extract company data from a sheet by MSP name
+def get_company_data_from_sheet(msp_name: str):
+    df, _ = load_evaluation_data()
+    data = {}
+
+    for _, row in df.iterrows():
+        question = row.get("Key Questions")
+        answer = row.get("Interview Result")
+        score = row.get("Present Lv.")
+
+        if pd.isna(question) or pd.isna(answer):
+            continue
+
+        data[question.strip()] = {
+            "answer": str(answer).strip(),
+            "score": int(score) if not pd.isna(score) else None
+        }
+
+    return data
+
+def get_summary_scores(msp_name: str):
+    client = connect_to_sheets()
+    sheet = client.open(INTERVIEW_SHEET_DOC_NAME).worksheet("데이터 요약")
+
+    summary = {
+        "total_score": float(sheet.acell("B27").value),
+        "human_score": float(sheet.acell("B28").value),
+        "ai_score": float(sheet.acell("B29").value),
+        "solution_score": float(sheet.acell("B30").value)
+    }
+
+    return summary
