@@ -1,18 +1,16 @@
-# api_server.py
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 from vector_writer import run_from_msp_name
-import os
-from dotenv import load_dotenv
-
-# Load .env variables
-load_dotenv()
 
 app = FastAPI()
 
+class CompanyInput(BaseModel):
+    name: str
+
 @app.post("/run/{msp_name}")
-def run_evaluation(msp_name: str):
+def run_msp_vector_pipeline(msp_name: str):
     try:
         run_from_msp_name(msp_name)
-        return {"message": f"{msp_name} written to ChromaDB successfully."}
+        return {"message": f"Vector DB update completed for {msp_name}"}
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
