@@ -43,3 +43,16 @@ def get_all_chunks():
             "score": meta["score"]
         })
     return JSONResponse(content=data)
+
+@app.delete("/ui/delete/{entry_id}")
+def delete_entry(entry_id: str):
+    collection.delete(ids=[entry_id])
+    return {"status": "success"}
+
+@app.delete("/ui/delete_company/{company_name}")
+def delete_company(company_name: str):
+    results = collection.get(where={"msp_name": company_name})
+    ids_to_delete = results["ids"]
+    if ids_to_delete:
+        collection.delete(ids=ids_to_delete)
+    return {"status": "deleted", "count": len(ids_to_delete)}
