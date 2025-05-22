@@ -1,9 +1,12 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from vector_writer import run_from_msp_name
-import os
+
 import chromadb
 from chromadb import PersistentClient
 
