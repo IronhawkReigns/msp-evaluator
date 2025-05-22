@@ -1,7 +1,7 @@
 import os
 import signal
 import time
-from sheets_reader import load_evaluation_data, update_scores_to_sheet, create_and_write_summary_sheet, write_combined_summary, connect_to_sheets
+from sheets_reader import load_evaluation_data, update_scores_to_sheet, connect_to_sheets
 from evaluator import evaluate_answer, append_category_scores_to_sheet
 
 ROW_MAPPING = {
