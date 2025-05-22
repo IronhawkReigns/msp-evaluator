@@ -3,6 +3,8 @@ import json
 import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from dotenv import load_dotenv
+load_dotenv()
 
 # Load configs
 GOOGLE_SHEET_CREDENTIALS_JSON = os.getenv("GOOGLE_SHEET_CREDENTIALS_JSON")
