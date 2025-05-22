@@ -92,7 +92,7 @@ Naver Cloud Platform의 AI & Hybrid Consulting 프로젝트로 개발된 클라�
 
 ## 유의사항
 
-- 벡터 DB에서 `id`가 중복되면 삽입이 실패할 수 있음 (예: 동일 질문 해시)
+- 벡터 DB에서 `id`가 중복되면 삽입이 실패할 수 있음 (예: 동일 질문 hash)
 - Google Apps Script 외부 호출(`UrlFetchApp.fetch`)은 권한 허용 필요
 - "RUN"을 빠르게 연속으로 입력할 경우 중복 트리거 발생 가능성 있음
 
@@ -109,4 +109,4 @@ GitHub: [IronhawkReigns](https://github.com/IronhawkReigns)
 
 ## 문의
 
-오류 제보 또는 개선 제안은 [GitHub Issue](https://github.com/IronhawkReigns/msp-evaluator/issues) 또는 이메일로 연락 주세요.
+오류 제보 또는 개선 제안은 [GitHub Issue](https://github.com/IronhawkReigns/msp-evaluator/issues) 또는 이메일로 언제든 연락 부탁드립니다.
