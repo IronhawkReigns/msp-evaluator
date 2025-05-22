@@ -5,42 +5,77 @@
 </head>
 <body>
     <h1>Stored MSP Questions</h1>
+    <input type="text" id="searchInput" placeholder="Search questions..." />
     <table border="1">
         <thead>
             <tr>
                 <th>MSP Name</th>
                 <th>Question</th>
                 <th>Score</th>
+                <th>Actions</th>
             </tr>
         </thead>
-        <tbody id="data-body">
-        </tbody>
+        <tbody id="data-body"></tbody>
     </table>
 
     <script>
+        let originalData = [];
+
+        function renderTable(data) {
+            const tbody = document.getElementById("data-body");
+            tbody.innerHTML = "";
+
+            data.forEach((entry, index) => {
+                const row = document.createElement("tr");
+
+                const mspCell = document.createElement("td");
+                mspCell.textContent = entry.msp_name;
+
+                const questionCell = document.createElement("td");
+                questionCell.textContent = entry.question;
+
+                const scoreCell = document.createElement("td");
+                scoreCell.textContent = entry.score;
+
+                const actionsCell = document.createElement("td");
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "Delete";
+                deleteBtn.onclick = () => {
+                    // Remove this entry from originalData by finding its index
+                    const idx = originalData.indexOf(entry);
+                    if (idx > -1) {
+                        originalData.splice(idx, 1);
+                    }
+                    // Remove from filtered data and re-render
+                    data.splice(index, 1);
+                    renderTable(data);
+                };
+                actionsCell.appendChild(deleteBtn);
+
+                row.appendChild(mspCell);
+                row.appendChild(questionCell);
+                row.appendChild(scoreCell);
+                row.appendChild(actionsCell);
+
+                tbody.appendChild(row);
+            });
+        }
+
         fetch("/ui/data")
             .then(response => response.json())
             .then(data => {
-                const tbody = document.getElementById("data-body");
-                data.forEach(entry => {
-                    const row = document.createElement("tr");
-
-                    const mspCell = document.createElement("td");
-                    mspCell.textContent = entry.msp_name;
-
-                    const questionCell = document.createElement("td");
-                    questionCell.textContent = entry.question;
-
-                    const scoreCell = document.createElement("td");
-                    scoreCell.textContent = entry.score;
-
-                    row.appendChild(mspCell);
-                    row.appendChild(questionCell);
-                    row.appendChild(scoreCell);
-
-                    tbody.appendChild(row);
-                });
+                originalData = data;
+                renderTable(originalData);
             });
+
+        document.getElementById("searchInput").addEventListener("input", function () {
+            const keyword = this.value.toLowerCase();
+            const filtered = originalData.filter(entry =>
+                entry.msp_name.toLowerCase().includes(keyword) ||
+                entry.question.toLowerCase().includes(keyword)
+            );
+            renderTable(filtered);
+        });
     </script>
 </body>
 </html>
