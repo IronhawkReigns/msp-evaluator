@@ -49,7 +49,17 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
 
 def run_from_msp_name(company_name: str):
     print(f"Running vector DB update for: {company_name}")
+    delete_company_from_chroma(company_name)
     company_data = get_company_data_from_sheet(company_name)
     summary = get_summary_scores(company_name)
     add_msp_data_to_chroma(company_name, company_data, summary)
     print(f"{company_name} successfully written to ChromaDB.")
+
+def delete_company_from_chroma(company_name: str):
+    existing = collection.get(where={"msp_name": company_name}, include=["ids"])
+    ids_to_delete = existing["ids"]
+    if ids_to_delete:
+        collection.delete(ids=ids_to_delete)
+        print(f"Deleted {len(ids_to_delete)} entries for {company_name} from ChromaDB.")
+    else:
+        print(f"No entries found for {company_name} in ChromaDB.")
