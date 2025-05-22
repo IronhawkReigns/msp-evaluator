@@ -1,8 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from vector_writer import run_from_msp_name
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, JSONResponse
+from vector_writer import run_from_msp_name
+import os
+import chromadb
+from chromadb import PersistentClient
 
 app = FastAPI()
 
@@ -16,28 +19,27 @@ def run_msp_vector_pipeline(msp_name: str):
         return {"message": f"Vector DB update completed for {msp_name}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+# Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-@app.get("/ui", response_class=HTMLResponse)
-async def serve_ui():
-    with open("static/index.html", "r", encoding="utf-8") as f:
-        return f.read()
+@app.get("/ui")
+def serve_ui():
+    return FileResponse("static/index.html")
 
-from chromadb import PersistentClient
+# Load ChromaDB
+CHROMA_PATH = os.path.abspath("chroma_store")
+client = PersistentClient(path=CHROMA_PATH)
+collection = client.get_or_create_collection("msp_chunks")
 
-@app.get("/list_msp_entries")
-def list_entries():
-    client = PersistentClient(path="chroma_store")
-    collection = client.get_or_create_collection("msp_chunks")
+@app.get("/ui/data")
+def get_all_chunks():
     results = collection.get(include=["metadatas"])
-
-    entries = []
+    data = []
     for meta in results["metadatas"]:
-        entries.append({
-            "msp_name": meta.get("msp_name"),
-            "question": meta.get("question"),
-            "score": meta.get("score")
+        data.append({
+            "msp_name": meta["msp_name"],
+            "question": meta["question"],
+            "score": meta["score"]
         })
-
-    return entries
+    return JSONResponse(content=data)
