@@ -1,0 +1,28 @@
+<!-- static/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ChromaDB MSP Viewer</title>
+</head>
+<body>
+    <h1>MSP Vector DB Viewer</h1>
+    <button onclick="loadMSPs()">Load MSPs</button>
+    <div id="msp-list"></div>
+
+    <script>
+        async function loadMSPs() {
+            const res = await fetch("/list_msp_entries");
+            const data = await res.json();
+
+            const container = document.getElementById("msp-list");
+            container.innerHTML = "";
+            data.forEach(entry => {
+                const div = document.createElement("div");
+                div.innerHTML = `<strong>${entry.msp_name}</strong> — ${entry.question}`;
+                container.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>
