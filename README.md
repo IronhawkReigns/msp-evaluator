@@ -1,6 +1,6 @@
 # MSP Evaluator
 
-Naver Cloud 인턴십 프로젝트로 개발된 클라우드 MSP(Managed Service Provider) 자동 평가 도구입니다.
+Naver Cloud Platform의 AI & Hybrid Consulting 프로젝트로 개발된 클라우드 MSP(Managed Service Provider) 자동 평가 도구입니다.
 
 인터뷰 기반의 평가 과정을 자동화하고, 평가 데이터를 저장 및 관리할 수 있도록 설계되었습니다.  
 1단계(GitHub Actions 기반 자동화)와 2단계(Vector DB + FastAPI 기반 인터랙티브 시스템)로 구성되어 있습니다.
