@@ -64,6 +64,7 @@
 <body>
     <h1>Stored MSP Questions</h1>
     <input type="text" id="searchInput" placeholder="Search questions..." />
+    <button onclick="deleteCompanyPrompt()">Delete Company Data</button>
     <table border="1">
         <thead>
             <tr>
@@ -117,6 +118,25 @@
 
                 tbody.appendChild(row);
             });
+        }
+
+        function deleteCompanyData(companyName) {
+            if (confirm(`Are you sure you want to delete all data for MSP "${companyName}"?`)) {
+                originalData = originalData.filter(entry => entry.msp_name !== companyName);
+                const filtered = document.getElementById("searchInput").value.toLowerCase();
+                const displayed = originalData.filter(entry =>
+                    entry.msp_name.toLowerCase().includes(filtered) ||
+                    entry.question.toLowerCase().includes(filtered)
+                );
+                renderTable(displayed);
+            }
+        }
+
+        function deleteCompanyPrompt() {
+            const name = prompt("Enter the MSP name to delete all its data:");
+            if (name) {
+                deleteCompanyData(name.trim());
+            }
         }
 
         fetch("/ui/data")
