@@ -19,7 +19,7 @@ def connect_to_sheets():
     return client
 
 # Read the interview sheet
-def load_evaluation_data():
+def load_evaluation_data(sheet_name=None):
     client = connect_to_sheets()
     interview_sheet = client.open(INTERVIEW_SHEET_DOC_NAME)
 
