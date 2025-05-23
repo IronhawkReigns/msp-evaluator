@@ -64,6 +64,14 @@
 <body>
     <h1>Stored MSP Questions</h1>
     <input type="text" id="searchInput" placeholder="Search questions..." />
+    <select id="minScoreFilter">
+        <option value="">Min Score</option>
+        <option value="1">1+</option>
+        <option value="2">2+</option>
+        <option value="3">3+</option>
+        <option value="4">4+</option>
+        <option value="5">5</option>
+    </select>
     <button onclick="deleteCompanyPrompt()">Delete Company Data</button>
     <table border="1">
         <thead>
@@ -80,11 +88,15 @@
     <script>
         let originalData = [];
 
-        function renderTable(data) {
+        function renderTable(data, minScore = "") {
             const tbody = document.getElementById("data-body");
             tbody.innerHTML = "";
 
-            data.forEach((entry, index) => {
+            const filteredData = minScore
+                ? data.filter(entry => Number(entry.score) >= Number(minScore))
+                : data;
+
+            filteredData.forEach((entry, index) => {
                 const row = document.createElement("tr");
 
                 const mspCell = document.createElement("td");
@@ -107,11 +119,13 @@
                             // Remove the entry from the local state
                             originalData = originalData.filter(e => e.id !== entry.id);
                             const keyword = document.getElementById("searchInput").value.toLowerCase();
+                            const minScore = document.getElementById("minScoreFilter").value;
                             const filtered = originalData.filter(entry =>
-                                entry.msp_name.toLowerCase().includes(keyword) ||
-                                entry.question.toLowerCase().includes(keyword)
+                                (entry.msp_name.toLowerCase().includes(keyword) ||
+                                 entry.question.toLowerCase().includes(keyword)) &&
+                                (!minScore || Number(entry.score) >= Number(minScore))
                             );
-                            renderTable(filtered);
+                            renderTable(filtered, minScore);
                         } else {
                             alert("Failed to delete item.");
                         }
@@ -136,11 +150,13 @@
                     if (response.ok) {
                         originalData = originalData.filter(entry => entry.msp_name !== companyName);
                         const filtered = document.getElementById("searchInput").value.toLowerCase();
+                        const minScore = document.getElementById("minScoreFilter").value;
                         const displayed = originalData.filter(entry =>
-                            entry.msp_name.toLowerCase().includes(filtered) ||
-                            entry.question.toLowerCase().includes(filtered)
+                            (entry.msp_name.toLowerCase().includes(filtered) ||
+                             entry.question.toLowerCase().includes(filtered)) &&
+                            (!minScore || Number(entry.score) >= Number(minScore))
                         );
-                        renderTable(displayed);
+                        renderTable(displayed, minScore);
                     } else {
                         alert("Failed to delete company data.");
                     }
@@ -159,17 +175,29 @@
             .then(response => response.json())
             .then(data => {
                 originalData = data;
-                renderTable(originalData);
+                const keyword = document.getElementById("searchInput").value.toLowerCase();
+                const minScore = document.getElementById("minScoreFilter").value;
+                const filtered = originalData.filter(entry =>
+                    (entry.msp_name.toLowerCase().includes(keyword) ||
+                     entry.question.toLowerCase().includes(keyword)) &&
+                    (!minScore || Number(entry.score) >= Number(minScore))
+                );
+                renderTable(filtered, minScore);
             });
 
-        document.getElementById("searchInput").addEventListener("input", function () {
-            const keyword = this.value.toLowerCase();
+        document.getElementById("searchInput").addEventListener("input", applyFilters);
+        document.getElementById("minScoreFilter").addEventListener("change", applyFilters);
+
+        function applyFilters() {
+            const keyword = document.getElementById("searchInput").value.toLowerCase();
+            const minScore = document.getElementById("minScoreFilter").value;
             const filtered = originalData.filter(entry =>
-                entry.msp_name.toLowerCase().includes(keyword) ||
-                entry.question.toLowerCase().includes(keyword)
+                (entry.msp_name.toLowerCase().includes(keyword) ||
+                 entry.question.toLowerCase().includes(keyword)) &&
+                (!minScore || Number(entry.score) >= Number(minScore))
             );
-            renderTable(filtered);
-        });
+            renderTable(filtered, minScore);
+        }
     </script>
 </body>
 </html>
