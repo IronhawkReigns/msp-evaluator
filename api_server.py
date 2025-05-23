@@ -146,14 +146,13 @@ async def ask_question(request: Request):
         try:
             if not clova_response.choices or not clova_response.choices[0].message.content:
                 print("CLOVA 응답 없음 또는 content 필드 비어 있음")
-                return {"answer": ""}
-
+                answer = ""
+            else:
+                answer = clova_response.choices[0].message.content.strip()
             # Debug
             print("==== CLOVA RAW RESPONSE ====")
             print(json.dumps(clova_response.model_dump(), indent=2, ensure_ascii=False))
-
-            answer = clova_response.choices[0].message.content.strip()
-            return {"answer": answer}
+            return {"answer": answer or "", "raw": clova_response.model_dump()}
         except Exception as e:
             print("CLOVA 응답 처리 중 예외:", str(e))
             raise HTTPException(status_code=500, detail=f"응답 처리 실패: {str(e)}")
