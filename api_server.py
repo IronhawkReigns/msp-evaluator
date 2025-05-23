@@ -117,6 +117,7 @@ async def ask_question(request: Request):
     client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
     model = "HCX-005"
 
+    import json
     try:
         clova_response = client.chat.completions.create(
             model=model,
@@ -128,7 +129,19 @@ async def ask_question(request: Request):
             temperature=0.7,
             max_tokens=500
         )
-        answer = clova_response.choices[0].message.content.strip()
-        return {"answer": answer}
+        try:
+            if not clova_response.choices or not clova_response.choices[0].message.content:
+                print("⚠️ CLOVA 응답 없음 또는 content 필드 비어 있음")
+                return {"answer": "CLOVA 응답을 처리할 수 없습니다. 다시 시도해주세요."}
+
+            # 디버깅용 전체 응답 출력
+            print("==== CLOVA RAW RESPONSE ====")
+            print(json.dumps(clova_response.model_dump(), indent=2, ensure_ascii=False))
+
+            answer = clova_response.choices[0].message.content.strip()
+            return {"answer": answer}
+        except Exception as e:
+            print("❌ CLOVA 응답 처리 중 예외:", str(e))
+            raise HTTPException(status_code=500, detail=f"응답 처리 실패: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"HyperCLOVA error: {str(e)}")
