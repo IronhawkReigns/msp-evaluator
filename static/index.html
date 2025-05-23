@@ -130,16 +130,16 @@
                 ? data.filter(entry => Number(entry.score) >= Number(minScore))
                 : data;
 
-            // Group by MSP and score
+            // Group by question (per msp_name, question, score)
             const grouped = {};
             filteredData.forEach(entry => {
-                const key = `${entry.msp_name}|${entry.score}`;
+                const key = `${entry.msp_name}|${entry.question}|${entry.score}`;
                 if (!grouped[key]) grouped[key] = [];
-                grouped[key].push(entry.question);
+                grouped[key].push(entry);
             });
 
-            Object.entries(grouped).forEach(([key, questions]) => {
-                const [mspName, score] = key.split('|');
+            Object.entries(grouped).forEach(([key, entries]) => {
+                const [mspName, question, score] = key.split('|');
                 const row = document.createElement("tr");
 
                 const mspCell = document.createElement("td");
@@ -149,23 +149,30 @@
                 scoreCell.textContent = score;
 
                 const questionCell = document.createElement("td");
-                questionCell.colSpan = 2;
-                const details = document.createElement("details");
-                const summary = document.createElement("summary");
-                summary.textContent = `View ${questions.length} question(s)`;
-                const list = document.createElement("ul");
-                questions.forEach(q => {
-                    const li = document.createElement("li");
-                    li.textContent = q;
-                    list.appendChild(li);
-                });
-                details.appendChild(summary);
-                details.appendChild(list);
-                questionCell.appendChild(details);
+                questionCell.textContent = question;
+
+                const chunkCell = document.createElement("td");
+                if (entries.length > 1) {
+                    const details = document.createElement("details");
+                    const summary = document.createElement("summary");
+                    summary.textContent = `View ${entries.length} chunks`;
+                    const list = document.createElement("ul");
+                    entries.forEach(entry => {
+                        const li = document.createElement("li");
+                        li.textContent = entry.chunk || "(no additional chunk info)";
+                        list.appendChild(li);
+                    });
+                    details.appendChild(summary);
+                    details.appendChild(list);
+                    chunkCell.appendChild(details);
+                } else {
+                    chunkCell.textContent = entries[0].chunk || "";
+                }
 
                 row.appendChild(mspCell);
                 row.appendChild(scoreCell);
                 row.appendChild(questionCell);
+                row.appendChild(chunkCell);
                 tbody.appendChild(row);
             });
         }
