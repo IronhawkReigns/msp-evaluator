@@ -50,12 +50,15 @@ def get_filtered_chunks(question: str = None, min_score: int = 0):
     for meta in results["metadatas"]:
         if question and question != meta["question"]:
             continue
+        answer = meta.get("answer", "")
+        if not isinstance(answer, str) or not answer.strip():
+            continue
         if meta["score"] is not None and int(meta["score"]) >= min_score:
             data.append({
                 "msp_name": meta["msp_name"],
                 "question": meta["question"],
                 "score": meta["score"],
-                "answer": meta.get("answer", "")
+                "answer": answer
             })
     return JSONResponse(content=data)
 
