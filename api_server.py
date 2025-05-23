@@ -91,6 +91,7 @@ async def ask_question(request: Request):
         raise HTTPException(status_code=400, detail="Missing question")
 
     # Retrieve top 3 relevant chunks from ChromaDB
+    import traceback
     try:
         query_results = collection.query(
             query_texts=[question],
@@ -129,6 +130,8 @@ async def ask_question(request: Request):
             f"- 선정 이유: 필요 시 명확한 증빙이 있는 경우에만 언급"
         )
     except Exception as e:
+        print("=== Vector search failed ===")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
 
     # Call HyperCLOVA API (new style using OpenAI client)
