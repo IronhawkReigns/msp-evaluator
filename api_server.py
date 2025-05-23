@@ -106,7 +106,7 @@ async def ask_question(request: Request):
         context = "\n\n".join(context_blocks)
         prompt = (
             f"{context}\n\n"
-            f"위에 제공된 Q&A 정보만을 기반으로 '{question}'에 가장 잘 부합하는 상위 3개 회사를 선정해주세요.\n"
+            f"위에 제공된 Q&A 정보만을 기반으로 '{question}'에 가장 잘 부합하는 상위 2개 회사를 선정해주세요.\n"
             f"추론하거나 일반적인 기대를 기반으로 답하지 마세요. 명확한 정보가 없는 경우, 해당 회사를 제외하십시오.\n"
             f"각 Q&A 항목의 score도 참고해 주세요. 높은 score는 강한 관련성을 의미합니다.\n\n"
             f"응답은 다음 형식으로 작성해주세요:\n"
