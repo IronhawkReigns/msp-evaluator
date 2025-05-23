@@ -110,28 +110,25 @@ async def ask_question(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
 
-    # Call HyperCLOVA API
+    # Call HyperCLOVA API (new style using OpenAI client)
+    from openai import OpenAI
     CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
-    api_url = "https://clovastudio.stream.ntruss.com/testapp/v1/chat-completions/HCX-005"
-    headers = {
-        "Authorization": f"Bearer {CLOVA_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "messages": [
-            {"role": "system", "content": "정확하고 간결하게 답변해 주세요."},
-            {"role": "user", "content": prompt}
-        ],
-        "top_p": 0.8,
-        "top_k": 0,
-        "temperature": 0.7,
-        "max_tokens": 500
-    }
+    API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
+    client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
+    model = "HCX-005"
 
     try:
-        response = requests.post(api_url, headers=headers, json=payload)
-        result = response.json()
-        answer = result["choices"][0]["message"]["content"]
+        clova_response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "정확하고 간결하게 답변해 주세요."},
+                {"role": "user", "content": prompt}
+            ],
+            top_p=0.8,
+            temperature=0.7,
+            max_tokens=500
+        )
+        answer = clova_response.choices[0].message.content.strip()
         return {"answer": answer}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"HyperCLOVA error: {str(e)}")
