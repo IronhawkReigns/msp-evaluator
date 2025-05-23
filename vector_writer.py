@@ -42,7 +42,7 @@ def chunk_text(text: str):
         conn.close()
 
         if result["status"]["code"] == "20000":
-            return result["result"]["topicSeg"]
+            return [' '.join(segment) for segment in result["result"]["topicSeg"]]
         else:
             print(f"Segmentation API error: {result}")
             return [text]
