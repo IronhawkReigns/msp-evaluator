@@ -104,6 +104,8 @@ async def ask_question(request: Request):
         )
         grouped_chunks = defaultdict(list)
         for meta in query_results["metadatas"][0]:
+            if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
+                continue
             if meta["score"] is not None and int(meta["score"]) >= min_score:
                 grouped_chunks[meta["msp_name"]].append(
                     f"Q: {meta['question']}\nA: {meta['answer']} (score: {meta['score']})"
