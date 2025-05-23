@@ -2,20 +2,27 @@
 <html>
 <head>
     <title>MSP 검색 도구</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700&display=swap');
+        :root {
+            --primary-green: #03c75a;
+            --navy: #1e1e1e;
+            --background: #f9f9f9;
+            --card-bg: #ffffff;
+            --border-color: #e3e3e3;
+        }
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Noto Sans KR', sans-serif;
             margin: 0;
             padding: 40px;
-            background-color: #f7f9fc;
-            color: #333;
+            background-color: var(--background);
+            color: var(--navy);
         }
 
         h1 {
             text-align: center;
             font-size: 28px;
-            color: #1a1a1a;
+            color: var(--navy);
             margin-bottom: 30px;
         }
 
@@ -34,7 +41,7 @@
             margin: 10px auto;
             padding: 12px 16px;
             font-size: 16px;
-            border: 1px solid #d0d7de;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             background-color: #fff;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
@@ -46,7 +53,7 @@
             padding: 12px 24px;
             font-size: 16px;
             font-weight: 600;
-            background-color: #2563eb;
+            background-color: var(--primary-green);
             color: #fff;
             border: none;
             border-radius: 8px;
@@ -56,11 +63,11 @@
         }
 
         #submitBtn:hover {
-            background-color: #1e40af;
+            background-color: #02b152;
         }
 
         #responseBox {
-            background-color: #ffffff;
+            background-color: var(--card-bg);
             padding: 24px 32px;
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
@@ -69,32 +76,23 @@
             white-space: pre-wrap;
         }
 
-        #rankedResults {
-            padding-left: 0;
+        ol#rankedResults {
+            padding-left: 20px;
             margin: 0;
         }
 
-        #rankedResults div {
+        ol#rankedResults li {
             padding: 10px 0;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--border-color);
             font-size: 16px;
             line-height: 1.6;
-        }
-
-        #naverHeader {
-            font-family: 'Noto Sans KR', sans-serif;
-            font-weight: bold;
-            font-size: 20px;
-            color: #03C75A;
-            position: fixed;
-            top: 20px;
-            left: 40px;
-            z-index: 1000;
         }
     </style>
 </head>
 <body>
-    <div id="naverHeader">NAVER Cloud</div>
+    <div style="position: absolute; top: 20px; left: 20px; font-size: 18px; font-weight: 700; color: var(--primary-green);">
+        NAVER Cloud
+    </div>
     <h1>MSP 검색 도구</h1>
     <label for="minScore" style="display: block; text-align: center; margin-top: 20px;">최소 점수 선택:</label>
     <select id="minScore" style="display: block; margin: 0 auto 20px auto; padding: 8px; font-size: 16px;">
@@ -108,7 +106,7 @@
     <input type="text" id="queryInput" placeholder="질문을 입력하세요..." />
     <button id="submitBtn">검색</button>
     <div id="responseBox">
-        <div id="rankedResults"></div>
+        <ol id="rankedResults"></ol>
     </div>
 
     <script>
@@ -121,12 +119,12 @@
             const query = queryInput.value.trim();
             const minScore = scoreSelect.value;
             if (!query) {
-                list.innerHTML = "<div>질문을 입력해주세요.</div>";
+                list.innerHTML = "<li>질문을 입력해주세요.</li>";
                 return;
             }
 
             submitBtn.disabled = true;
-            list.innerHTML = "<div>응답을 불러오는 중입니다...</div>";
+            list.innerHTML = "<li>응답을 불러오는 중입니다...</li>";
 
             fetch("/query/ask", {
                 method: "POST",
@@ -140,13 +138,13 @@
                 const lines = data.answer.split("\n").filter(line => line.trim());
                 list.innerHTML = "";
                 lines.forEach(line => {
-                    const div = document.createElement("div");
-                    div.textContent = line;
-                    list.appendChild(div);
+                    const li = document.createElement("li");
+                    li.textContent = line;
+                    list.appendChild(li);
                 });
             })
             .catch(err => {
-                list.innerHTML = `<div>에러 발생: ${err.message}</div>`;
+                list.innerHTML = `<li>에러 발생: ${err.message}</li>`;
             })
             .finally(() => {
                 submitBtn.disabled = false;
