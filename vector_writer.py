@@ -62,8 +62,7 @@ from chromadb.config import Settings
 collection = client.get_or_create_collection(
     name="msp_chunks",
     metadata={"hnsw:space": "cosine"},
-    embedding_function=None,
-    settings=Settings(embedding_dimension=1024)
+    embedding_function=None
 )
 
 
