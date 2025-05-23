@@ -92,10 +92,9 @@ async def ask_question(request: Request):
         grouped_chunks = defaultdict(list)
         for meta in query_results["metadatas"][0]:
             if meta["score"] is not None and int(meta["score"]) >= min_score:
-                if question.strip() in meta["question"]:
-                    grouped_chunks[meta["msp_name"]].append(
-                        f"Q: {meta['question']}\nA: {meta['answer']} (score: {meta['score']})"
-                    )
+                grouped_chunks[meta["msp_name"]].append(
+                    f"Q: {meta['question']}\nA: {meta['answer']} (score: {meta['score']})"
+                )
 
         if not grouped_chunks:
             return {"answer": "해당 조건에 맞는 평가 데이터를 찾을 수 없습니다."}
