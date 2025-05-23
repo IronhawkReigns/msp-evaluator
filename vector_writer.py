@@ -65,6 +65,8 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
     metadatas = []
     ids = []
 
+    # Print summary types for debugging
+    print(f"Summary types for debugging: {[ (k, type(v)) for k, v in summary.items() ]}")
     for idx, (question, entry) in enumerate(company_data.items()):
         answer = entry["answer"]
         score = entry["score"]
@@ -73,17 +75,21 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
             document = f"Q: {question}\nA: {chunk}"
             embedding = model.encode(document)
             uid = f"{company_name}_{idx}_{cidx}"
+            # Clean summary, log and skip problematic keys
+            cleaned_summary = {}
+            for k, v in summary.items():
+                if isinstance(v, (str, int, float, bool)) or v is None:
+                    cleaned_summary[k] = v
+                else:
+                    print(f"[Metadata Error] Key '{k}' has invalid type {type(v)}. Value: {v}")
+                    # Optionally: cleaned_summary[k] = str(v)
+
             metadata = {
                 "msp_name": company_name,
                 "question": question,
                 "answer": chunk,
                 "score": score,
-                **{
-                    k: v if isinstance(v, (str, int, float, bool)) or v is None else (
-                        print(f"Unexpected type in metadata for key '{k}': {type(v)} -> {v}") or str(v)
-                    )
-                    for k, v in summary.items()
-                }
+                **cleaned_summary
             }
             documents.append(document)
             embeddings.append(embedding)
