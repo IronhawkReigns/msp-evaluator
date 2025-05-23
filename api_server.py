@@ -104,8 +104,11 @@ async def ask_question(request: Request):
         context = "\n\n".join(context_blocks)
         prompt = (
             f"{context}\n\n"
-            f"위의 MSP 후보들 중에서 '{question}' 기준으로 상위 3개 회사를 선정하고, 각각 그 이유를 설명해주세요. "
-            f"응답 형식은 순위와 회사명, 간단한 설명으로 구성해주세요."
+            f"위의 MSP 후보들 중에서 '{question}' 기준으로 상위 3개 회사를 선정해주세요.\n"
+            f"응답은 다음 형식으로 작성해주세요:\n"
+            f"1. [회사명]:\n   - 선정 이유\n"
+            f"2. [회사명]:\n   - 선정 이유\n"
+            f"3. [회사명]:\n   - 선정 이유\n"
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
@@ -131,17 +134,17 @@ async def ask_question(request: Request):
         )
         try:
             if not clova_response.choices or not clova_response.choices[0].message.content:
-                print("⚠️ CLOVA 응답 없음 또는 content 필드 비어 있음")
+                print("CLOVA 응답 없음 또는 content 필드 비어 있음")
                 return {"answer": "CLOVA 응답을 처리할 수 없습니다. 다시 시도해주세요."}
 
-            # 디버깅용 전체 응답 출력
+            # Debug
             print("==== CLOVA RAW RESPONSE ====")
             print(json.dumps(clova_response.model_dump(), indent=2, ensure_ascii=False))
 
             answer = clova_response.choices[0].message.content.strip()
             return {"answer": answer}
         except Exception as e:
-            print("❌ CLOVA 응답 처리 중 예외:", str(e))
+            print("CLOVA 응답 처리 중 예외:", str(e))
             raise HTTPException(status_code=500, detail=f"응답 처리 실패: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"HyperCLOVA error: {str(e)}")
