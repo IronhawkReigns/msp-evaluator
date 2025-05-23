@@ -56,8 +56,31 @@ CHROMA_PATH = os.path.abspath("chroma_store")
 client = PersistentClient(path=CHROMA_PATH)
 collection = client.get_or_create_collection("msp_chunks")
 
+
 # Load embedding model
-model = SentenceTransformer("all-MiniLM-L6-v2")
+def clova_embedding(text: str):
+    host = "clovastudio.stream.ntruss.com"
+    request_id = str(uuid.uuid4().hex)
+    api_key = f"Bearer {os.getenv('CLOVA_API_KEY')}"
+
+    headers = {
+        "Content-Type": "application/json; charset=utf-8",
+        "Authorization": api_key,
+        "X-NCP-CLOVASTUDIO-REQUEST-ID": request_id
+    }
+
+    body = json.dumps({ "text": text })
+    conn = http.client.HTTPSConnection(host)
+    conn.request("POST", "/testapp/v1/api-tools/embedding/v2/", body, headers)
+    response = conn.getresponse()
+    result = json.loads(response.read().decode("utf-8"))
+    conn.close()
+
+    if result["status"]["code"] == "20000":
+        return result["result"]["embedding"]
+    else:
+        print(f"[Embedding API Error] {result}")
+        return None
 
 def add_msp_data_to_chroma(company_name, company_data, summary):
     documents = []
@@ -73,7 +96,9 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
         chunks = chunk_text(answer)
         for cidx, chunk in enumerate(chunks):
             document = f"Q: {question}\nA: {chunk}"
-            embedding = model.encode(document)
+            embedding = clova_embedding(document)
+            if not embedding:
+                continue
             uid = f"{company_name}_{idx}_{cidx}"
             # Clean summary, log and skip problematic keys
             cleaned_summary = {}
