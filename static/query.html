@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MSP RAG Query</title>
+    <title>MSP 검색 도구</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
@@ -79,10 +80,22 @@
             font-size: 16px;
             line-height: 1.6;
         }
+
+        #naverHeader {
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: bold;
+            font-size: 20px;
+            color: #03C75A;
+            position: fixed;
+            top: 20px;
+            left: 40px;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
-    <h1>질문 기반 MSP 평가 검색</h1>
+    <div id="naverHeader">NAVER Cloud</div>
+    <h1>MSP 검색 도구</h1>
     <label for="minScore" style="display: block; text-align: center; margin-top: 20px;">최소 점수 선택:</label>
     <select id="minScore" style="display: block; margin: 0 auto 20px auto; padding: 8px; font-size: 16px;">
         <option value="0">0 이상</option>
