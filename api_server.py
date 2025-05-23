@@ -17,6 +17,15 @@ app = FastAPI()
 class CompanyInput(BaseModel):
     name: str
 
+def query_embed(text: str):
+    from clova_embedding_v2 import EmbeddingExecutor  # Adjust import as needed
+    executor = EmbeddingExecutor(
+        host="clovastudio.stream.ntruss.com",
+        api_key=os.getenv("CLOVA_API_KEY"),
+        request_id="query-" + str(hash(text))  # or use uuid
+    )
+    return executor.execute({"text": text})
+
 @app.post("/run/{msp_name}")
 def run_msp_vector_pipeline(msp_name: str):
     try:
@@ -93,8 +102,9 @@ async def ask_question(request: Request):
     # Retrieve top 3 relevant chunks from ChromaDB
     import traceback
     try:
+        query_vector = query_embed(question)
         query_results = collection.query(
-            query_texts=[question],
+            query_embeddings=[query_vector],
             n_results=10
         )
         grouped_chunks = defaultdict(list)
