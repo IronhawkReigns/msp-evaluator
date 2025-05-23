@@ -12,7 +12,7 @@ def chunk_text(text: str):
     CLOVA_SEGMENTATION_API_URL = "https://clovastudio.stream.ntruss.com/testapp/v1/api-tools/segmentation"
     HEADERS = {
         "Authorization": f"Bearer {os.getenv('CLOVA_API_KEY')}",
-        "X-NCP-CLOVASTUDIO-REQUEST-ID": str(uuid.uuid4().hex),
+        "X-NCP-CLOVASTUDIO-REQUEST-ID": "20cc0852bff04af399b61a31980a6c48",
         "Content-Type": "application/json"
     }
     payload = {
