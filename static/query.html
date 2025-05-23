@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MSP RAG Query</title>
+    <style>
+        body {
+            font-family: Arial;
+            padding: 40px;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        #queryInput {
+            width: 60%;
+            padding: 12px;
+            margin: 10px auto;
+            display: block;
+            font-size: 16px;
+        }
+
+        #submitBtn {
+            display: block;
+            margin: 10px auto 30px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+        #responseBox {
+            margin-top: 30px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>질문 기반 MSP 평가 검색</h1>
+    <label for="minScore" style="display: block; text-align: center; margin-top: 20px;">최소 점수 선택:</label>
+    <select id="minScore" style="display: block; margin: 0 auto 20px auto; padding: 8px; font-size: 16px;">
+        <option value="0">0 이상</option>
+        <option value="1">1 이상</option>
+        <option value="2">2 이상</option>
+        <option value="3">3 이상</option>
+        <option value="4">4 이상</option>
+        <option value="5">5 이상</option>
+    </select>
+    <input type="text" id="queryInput" placeholder="질문을 입력하세요..." />
+    <button id="submitBtn">검색</button>
+    <div id="responseBox">
+        <ol id="rankedResults"></ol>
+    </div>
+
+    <script>
+        const queryInput = document.getElementById("queryInput");
+        const submitBtn = document.getElementById("submitBtn");
+        const scoreSelect = document.getElementById("minScore");
+        const list = document.getElementById("rankedResults");
+
+        submitBtn.addEventListener("click", () => {
+            const query = queryInput.value.trim();
+            const minScore = scoreSelect.value;
+            if (!query) {
+                list.innerHTML = "<li>질문을 입력해주세요.</li>";
+                return;
+            }
+
+            submitBtn.disabled = true;
+            list.innerHTML = "<li>응답을 불러오는 중입니다...</li>";
+
+            fetch("/query/ask", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ question: query, min_score: parseInt(minScore) })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const lines = data.answer.split("\n").filter(line => line.trim());
+                list.innerHTML = "";
+                lines.forEach(line => {
+                    const li = document.createElement("li");
+                    li.textContent = line;
+                    list.appendChild(li);
+                });
+            })
+            .catch(err => {
+                list.innerHTML = `<li>에러 발생: ${err.message}</li>`;
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>
