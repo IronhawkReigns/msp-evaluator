@@ -78,7 +78,7 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
                 "question": question,
                 "answer": chunk,
                 "score": score,
-                **summary
+                **{k: v if isinstance(v, (str, int, float, bool)) or v is None else str(v) for k, v in summary.items()}
             }
             documents.append(document)
             embeddings.append(embedding)
