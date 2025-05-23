@@ -135,8 +135,11 @@
             })
             .then(res => res.json())
             .then(data => {
-                const lines = data.answer.split("\n").filter(line => line.trim());
                 list.innerHTML = "";
+                const lines = data.answer
+                  .split("\n")
+                  .filter(line => line.trim())
+                  .map(line => line.replace(/^\d+[\).]?\s*/, "")); // Remove leading numbers
                 lines.forEach(line => {
                     const li = document.createElement("li");
                     li.textContent = line;
