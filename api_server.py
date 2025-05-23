@@ -173,8 +173,8 @@ async def ask_question(request: Request):
                 {"role": "system", "content": "정확하고 간결하게 답변해 주세요."},
                 {"role": "user", "content": prompt}
             ],
-            top_p=0.8,
-            temperature=0.7,
+            top_p=0.6,
+            temperature=0.3,
             max_tokens=500
         )
         try:
