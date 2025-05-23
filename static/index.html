@@ -114,6 +114,7 @@
                 <th>MSP Name</th>
                 <th>Score</th>
                 <th colspan="2">Questions</th>
+                <th>Delete</th>
             </tr>
         </thead>
         <tbody id="data-body"></tbody>
@@ -152,27 +153,19 @@
                 questionCell.textContent = question;
 
                 const chunkCell = document.createElement("td");
-                if (entries.length > 1) {
-                    const details = document.createElement("details");
-                    const summary = document.createElement("summary");
-                    summary.textContent = `View ${entries.length} chunks`;
-                    const list = document.createElement("ul");
-                    entries.forEach(entry => {
-                        const li = document.createElement("li");
-                        li.textContent = entry.chunk || "(no additional chunk info)";
-                        list.appendChild(li);
-                    });
-                    details.appendChild(summary);
-                    details.appendChild(list);
-                    chunkCell.appendChild(details);
-                } else {
-                    chunkCell.textContent = entries[0].chunk || "";
-                }
+                chunkCell.textContent = `${entries.length} chunk${entries.length > 1 ? "s" : ""}`;
+
+                const deleteBtnCell = document.createElement("td");
+                const delBtn = document.createElement("button");
+                delBtn.textContent = "Delete";
+                delBtn.onclick = () => deleteQuestion(mspName, question);
+                deleteBtnCell.appendChild(delBtn);
 
                 row.appendChild(mspCell);
                 row.appendChild(scoreCell);
                 row.appendChild(questionCell);
                 row.appendChild(chunkCell);
+                row.appendChild(deleteBtnCell);
                 tbody.appendChild(row);
             });
         }
@@ -194,6 +187,21 @@
                         renderTable(displayed, minScore);
                     } else {
                         alert("Failed to delete company data.");
+                    }
+                });
+            }
+        }
+
+        function deleteQuestion(mspName, question) {
+            if (confirm(`Delete all chunks for "${question}" under MSP "${mspName}"?`)) {
+                fetch(`/ui/delete_question/${encodeURIComponent(mspName)}/${encodeURIComponent(question)}`, {
+                    method: "DELETE"
+                }).then(response => {
+                    if (response.ok) {
+                        originalData = originalData.filter(entry => !(entry.msp_name === mspName && entry.question === question));
+                        applyFilters();
+                    } else {
+                        alert("Failed to delete question data.");
                     }
                 });
             }
