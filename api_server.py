@@ -92,7 +92,9 @@ async def ask_question(request: Request):
         grouped_chunks = defaultdict(list)
         for meta in query_results["metadatas"][0]:
             if meta["score"] is not None and int(meta["score"]) >= min_score:
-                grouped_chunks[meta["msp_name"]].append(f"Q: {meta['question']}\nA: {meta['answer']}")
+                grouped_chunks[meta["msp_name"]].append(
+                    f"Q: {meta['question']}\nA: {meta['answer']} (score: {meta['score']})"
+                )
 
         if not grouped_chunks:
             return {"answer": "해당 조건에 맞는 평가 데이터를 찾을 수 없습니다."}
@@ -104,11 +106,13 @@ async def ask_question(request: Request):
         context = "\n\n".join(context_blocks)
         prompt = (
             f"{context}\n\n"
-            f"위의 MSP 후보들 중에서 '{question}' 기준으로 상위 3개 회사를 선정해주세요.\n"
+            f"위에 제공된 Q&A 정보만을 기반으로 '{question}'에 가장 잘 부합하는 상위 3개 회사를 선정해주세요.\n"
+            f"추론하거나 일반적인 기대를 기반으로 답하지 마세요. 명확한 정보가 없는 경우, 해당 회사를 제외하십시오.\n"
+            f"각 Q&A 항목의 score도 참고해 주세요. 높은 score는 강한 관련성을 의미합니다.\n\n"
             f"응답은 다음 형식으로 작성해주세요:\n"
-            f"1. [회사명]:\n   - 선정 이유\n"
-            f"2. [회사명]:\n   - 선정 이유\n"
-            f"3. [회사명]:\n   - 선정 이유\n"
+            f"- 1위: [회사명] — 선정 이유\n"
+            f"- 2위: [회사명] — 선정 이유\n"
+            f"- 3위: [회사명] — 선정 이유\n"
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
