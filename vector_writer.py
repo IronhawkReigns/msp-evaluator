@@ -57,14 +57,15 @@ client = PersistentClient(path=CHROMA_PATH)
 
 # Set collection settings to expect 1024-dimension embeddings
 from chromadb.config import Settings
+from chromadb.utils import embedding_functions
 
-# Set collection settings to expect 1024-dimension embeddings
 collection = client.get_or_create_collection(
     name="msp_chunks",
     metadata={"hnsw:space": "cosine"},
-    embedding_function=None
+    embedding_function=None,
+    # 👇 add the required dimension explicitly
+    embedding_dim=1024
 )
-
 
 # Load embedding model
 def clova_embedding(text: str):
