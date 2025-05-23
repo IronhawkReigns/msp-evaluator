@@ -4,74 +4,80 @@
     <title>MSP RAG Query</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
             padding: 40px;
-            background: linear-gradient(to right, #f0f2f5, #e0eafc);
+            background-color: #f7f9fc;
             color: #333;
         }
 
         h1 {
             text-align: center;
-            font-size: 32px;
-            color: #2c3e50;
+            font-size: 28px;
+            color: #1a1a1a;
+            margin-bottom: 30px;
         }
 
         label {
+            font-size: 16px;
+            margin-bottom: 8px;
             text-align: center;
             display: block;
-            font-size: 18px;
-            margin-top: 20px;
-            color: #34495e;
         }
 
-        select, input[type="text"] {
-            width: 60%;
-            padding: 12px;
-            margin: 10px auto;
+        select,
+        input[type="text"] {
             display: block;
+            width: 60%;
+            max-width: 500px;
+            margin: 10px auto;
+            padding: 12px 16px;
             font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
             background-color: #fff;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
         }
 
         #submitBtn {
             display: block;
-            margin: 10px auto 30px auto;
+            margin: 20px auto;
             padding: 12px 24px;
             font-size: 16px;
-            background-color: #2980b9;
-            color: white;
+            font-weight: 600;
+            background-color: #2563eb;
+            color: #fff;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
             transition: background-color 0.3s ease;
         }
 
         #submitBtn:hover {
-            background-color: #3498db;
+            background-color: #1e40af;
         }
 
         #responseBox {
-            margin-top: 30px;
             background-color: #ffffff;
-            padding: 24px;
+            padding: 24px 32px;
             border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
             max-width: 850px;
-            margin-left: auto;
-            margin-right: auto;
+            margin: 40px auto 0;
             white-space: pre-wrap;
         }
 
         ol#rankedResults {
             padding-left: 20px;
+            margin: 0;
         }
 
         ol#rankedResults li {
             padding: 10px 0;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 16px;
+            line-height: 1.6;
         }
     </style>
 </head>
