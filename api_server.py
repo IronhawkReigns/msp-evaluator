@@ -146,7 +146,7 @@ async def ask_question(request: Request):
         try:
             if not clova_response.choices or not clova_response.choices[0].message.content:
                 print("CLOVA 응답 없음 또는 content 필드 비어 있음")
-                return {"answer": "CLOVA 응답을 처리할 수 없습니다. 다시 시도해주세요."}
+                return {"answer": ""}
 
             # Debug
             print("==== CLOVA RAW RESPONSE ====")
