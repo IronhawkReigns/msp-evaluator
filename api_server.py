@@ -83,34 +83,26 @@ async def ask_question(request: Request):
     if not question:
         raise HTTPException(status_code=400, detail="Missing question")
 
-    # Retrieve top 8 relevant chunks from ChromaDB
+    # Retrieve top 3 relevant chunks from ChromaDB
     try:
         query_results = collection.query(
             query_texts=[question],
-            n_results=8
+            n_results=10
         )
-        import json
-        print("Retrieved metadatas for debugging:", json.dumps(query_results["metadatas"], indent=2, ensure_ascii=False))
-
         grouped_chunks = defaultdict(list)
-        for i, meta in enumerate(query_results["metadatas"][0]):
-            score = int(meta.get("score", 0))
-            relevance = query_results["distances"][0][i] if "distances" in query_results else 0
-            if score >= min_score:
-                grouped_chunks[meta["msp_name"]].append({
-                    "score": score,
-                    "relevance": relevance,
-                    "qa": f"Q: {meta['question']}\nA: {meta['answer']} (score: {score})"
-                })
+        for meta in query_results["metadatas"][0]:
+            if meta["score"] is not None and int(meta["score"]) >= min_score:
+                if question.strip() in meta["question"]:
+                    grouped_chunks[meta["msp_name"]].append(
+                        f"Q: {meta['question']}\nA: {meta['answer']} (score: {meta['score']})"
+                    )
 
         if not grouped_chunks:
             return {"answer": "해당 조건에 맞는 평가 데이터를 찾을 수 없습니다."}
 
         context_blocks = []
-        for msp, entries in grouped_chunks.items():
-            sorted_entries = sorted(entries, key=lambda x: (-x["score"], x["relevance"]))
-            qa_texts = [entry["qa"] for entry in sorted_entries]
-            context_blocks.append(f"[{msp}]\n" + "\n".join(qa_texts))
+        for msp, qa_list in grouped_chunks.items():
+            context_blocks.append(f"[{msp}]\n" + "\n".join(qa_list))
 
         context = "\n\n".join(context_blocks)
         prompt = (
