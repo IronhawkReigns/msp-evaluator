@@ -48,9 +48,12 @@ def get_filtered_chunks(question: str = None, min_score: int = 0):
     results = collection.get(include=["metadatas"])
     data = []
     for meta in results["metadatas"]:
+        print(f"Meta object: {meta}")  # Log the metadata object
+        answer = meta.get("answer", "")
+        print(f"Answer type: {type(answer)}, value: {answer}")  # Debug output
+
         if question and question != meta["question"]:
             continue
-        answer = meta.get("answer", "")
         if not isinstance(answer, str) or not answer.strip():
             continue
         if meta["score"] is not None and int(meta["score"]) >= min_score:
