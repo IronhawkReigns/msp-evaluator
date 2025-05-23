@@ -68,12 +68,12 @@
             white-space: pre-wrap;
         }
 
-        ol#rankedResults {
-            padding-left: 20px;
+        #rankedResults {
+            padding-left: 0;
             margin: 0;
         }
 
-        ol#rankedResults li {
+        #rankedResults div {
             padding: 10px 0;
             border-bottom: 1px solid #e5e7eb;
             font-size: 16px;
@@ -95,7 +95,7 @@
     <input type="text" id="queryInput" placeholder="질문을 입력하세요..." />
     <button id="submitBtn">검색</button>
     <div id="responseBox">
-        <ol id="rankedResults"></ol>
+        <div id="rankedResults"></div>
     </div>
 
     <script>
@@ -108,12 +108,12 @@
             const query = queryInput.value.trim();
             const minScore = scoreSelect.value;
             if (!query) {
-                list.innerHTML = "<li>질문을 입력해주세요.</li>";
+                list.innerHTML = "<div>질문을 입력해주세요.</div>";
                 return;
             }
 
             submitBtn.disabled = true;
-            list.innerHTML = "<li>응답을 불러오는 중입니다...</li>";
+            list.innerHTML = "<div>응답을 불러오는 중입니다...</div>";
 
             fetch("/query/ask", {
                 method: "POST",
@@ -127,13 +127,13 @@
                 const lines = data.answer.split("\n").filter(line => line.trim());
                 list.innerHTML = "";
                 lines.forEach(line => {
-                    const li = document.createElement("li");
-                    li.textContent = line;
-                    list.appendChild(li);
+                    const div = document.createElement("div");
+                    div.textContent = line;
+                    list.appendChild(div);
                 });
             })
             .catch(err => {
-                list.innerHTML = `<li>에러 발생: ${err.message}</li>`;
+                list.innerHTML = `<div>에러 발생: ${err.message}</div>`;
             })
             .finally(() => {
                 submitBtn.disabled = false;
