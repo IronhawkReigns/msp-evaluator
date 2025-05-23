@@ -15,24 +15,30 @@
             margin-bottom: 20px;
         }
 
-        input[type="text"] {
+        input[type="text"], #minScoreFilter {
             display: block;
             margin: 0 auto 20px auto;
-            padding: 10px;
-            width: 300px;
-            border-radius: 5px;
+            padding: 12px 15px;
+            width: 320px;
+            border-radius: 8px;
             border: 1px solid #ccc;
             font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         #minScoreFilter {
-            display: block;
-            margin: 0 auto 20px auto;
-            padding: 10px;
-            width: 150px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 16px;
+            width: 170px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        input[type="text"]:focus, #minScoreFilter:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 8px rgba(0,123,255,0.4);
         }
 
         table {
@@ -43,14 +49,16 @@
         }
 
         th, td {
-            padding: 12px;
+            padding: 14px 16px;
             border: 1px solid #ddd;
             text-align: left;
+            vertical-align: top;
         }
 
         th {
             background-color: #007bff;
             color: white;
+            font-weight: 700;
         }
 
         tr:nth-child(even) {
@@ -69,23 +77,22 @@
         button:hover {
             background-color: #c82333;
         }
-        /* Nested table styles */
-        details > summary {
-            font-weight: bold;
+
+        details summary {
             cursor: pointer;
-            padding: 8px 0;
+            font-weight: 600;
+            outline: none;
+            user-select: none;
         }
-        details > table {
-            margin-top: 8px;
-            width: 100%;
-            border-collapse: collapse;
+
+        details ul {
+            margin: 8px 0 0 20px;
+            padding-left: 0;
         }
-        details > table th, details > table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-        details > table tr:nth-child(even) {
-            background-color: #f9f9f9;
+
+        details ul li {
+            margin-bottom: 6px;
+            list-style-type: disc;
         }
     </style>
 </head>
@@ -105,9 +112,8 @@
         <thead>
             <tr>
                 <th>MSP Name</th>
-                <th>Question</th>
                 <th>Score</th>
-                <th>Actions</th>
+                <th colspan="2">Questions</th>
             </tr>
         </thead>
         <tbody id="data-body"></tbody>
@@ -124,103 +130,43 @@
                 ? data.filter(entry => Number(entry.score) >= Number(minScore))
                 : data;
 
-            // Group data by question
+            // Group by MSP and score
             const grouped = {};
             filteredData.forEach(entry => {
-                if (!grouped[entry.question]) {
-                    grouped[entry.question] = [];
-                }
-                grouped[entry.question].push(entry);
+                const key = `${entry.msp_name}|${entry.score}`;
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(entry.question);
             });
 
-            Object.keys(grouped).forEach(question => {
-                const entries = grouped[question];
+            Object.entries(grouped).forEach(([key, questions]) => {
+                const [mspName, score] = key.split('|');
+                const row = document.createElement("tr");
 
-                // Create a row with a single cell spanning all columns containing the details block
-                const questionRow = document.createElement("tr");
+                const mspCell = document.createElement("td");
+                mspCell.textContent = mspName;
+
+                const scoreCell = document.createElement("td");
+                scoreCell.textContent = score;
+
                 const questionCell = document.createElement("td");
-                questionCell.colSpan = 4;
-
+                questionCell.colSpan = 2;
                 const details = document.createElement("details");
                 const summary = document.createElement("summary");
-                summary.textContent = question;
-                details.appendChild(summary);
-
-                const nestedTable = document.createElement("table");
-
-                // Create header row for nested table
-                const nestedThead = document.createElement("thead");
-                const headerRow = document.createElement("tr");
-
-                const thMsp = document.createElement("th");
-                thMsp.textContent = "MSP Name";
-                const thQuestion = document.createElement("th");
-                thQuestion.textContent = "Question";
-                const thScore = document.createElement("th");
-                thScore.textContent = "Score";
-                const thActions = document.createElement("th");
-                thActions.textContent = "Actions";
-
-                headerRow.appendChild(thMsp);
-                headerRow.appendChild(thQuestion);
-                headerRow.appendChild(thScore);
-                headerRow.appendChild(thActions);
-
-                nestedThead.appendChild(headerRow);
-                nestedTable.appendChild(nestedThead);
-
-                const nestedTbody = document.createElement("tbody");
-
-                entries.forEach(entry => {
-                    const row = document.createElement("tr");
-
-                    const mspCell = document.createElement("td");
-                    mspCell.textContent = entry.msp_name;
-
-                    const questionCell = document.createElement("td");
-                    questionCell.textContent = entry.question;
-
-                    const scoreCell = document.createElement("td");
-                    scoreCell.textContent = entry.score;
-
-                    const actionsCell = document.createElement("td");
-                    const deleteBtn = document.createElement("button");
-                    deleteBtn.textContent = "Delete";
-                    deleteBtn.onclick = () => {
-                        fetch(`/ui/delete/${entry.id}`, {
-                            method: "DELETE"
-                        }).then(response => {
-                            if (response.ok) {
-                                // Remove the entry from the local state
-                                originalData = originalData.filter(e => e.id !== entry.id);
-                                const keyword = document.getElementById("searchInput").value.toLowerCase();
-                                const minScore = document.getElementById("minScoreFilter").value;
-                                const filtered = originalData.filter(entry =>
-                                    (entry.msp_name.toLowerCase().includes(keyword) ||
-                                     entry.question.toLowerCase().includes(keyword)) &&
-                                    (!minScore || Number(entry.score) >= Number(minScore))
-                                );
-                                renderTable(filtered, minScore);
-                            } else {
-                                alert("Failed to delete item.");
-                            }
-                        });
-                    };
-                    actionsCell.appendChild(deleteBtn);
-
-                    row.appendChild(mspCell);
-                    row.appendChild(questionCell);
-                    row.appendChild(scoreCell);
-                    row.appendChild(actionsCell);
-
-                    nestedTbody.appendChild(row);
+                summary.textContent = `View ${questions.length} question(s)`;
+                const list = document.createElement("ul");
+                questions.forEach(q => {
+                    const li = document.createElement("li");
+                    li.textContent = q;
+                    list.appendChild(li);
                 });
-
-                nestedTable.appendChild(nestedTbody);
-                details.appendChild(nestedTable);
+                details.appendChild(summary);
+                details.appendChild(list);
                 questionCell.appendChild(details);
-                questionRow.appendChild(questionCell);
-                tbody.appendChild(questionRow);
+
+                row.appendChild(mspCell);
+                row.appendChild(scoreCell);
+                row.appendChild(questionCell);
+                tbody.appendChild(row);
             });
         }
 
