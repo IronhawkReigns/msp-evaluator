@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MSP Vector DB Viewer</title>
+    <title>MSP 검색 도구</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Noto Sans KR', sans-serif;
             margin: 40px;
-            background-color: #f4f4f4;
+            background-color: #ffffff;
             color: #333;
         }
 
         h1 {
             text-align: center;
             margin-bottom: 20px;
+            color: #03c75a;
+            font-weight: 900;
         }
 
         input[type="text"], #minScoreFilter {
@@ -37,8 +39,8 @@
         }
 
         input[type="text"]:focus, #minScoreFilter:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 8px rgba(0,123,255,0.4);
+            border-color: #03c75a;
+            box-shadow: 0 0 8px rgba(3,199,90,0.3);
         }
 
         table {
@@ -56,7 +58,7 @@
         }
 
         th {
-            background-color: #007bff;
+            background-color: #03c75a;
             color: white;
             font-weight: 700;
         }
@@ -68,14 +70,15 @@
         button {
             padding: 6px 12px;
             border: none;
-            background-color: #dc3545;
+            background-color: #03c75a;
             color: white;
             border-radius: 4px;
             cursor: pointer;
+            font-family: 'Noto Sans KR', sans-serif;
         }
 
         button:hover {
-            background-color: #c82333;
+            background-color: #029f4c;
         }
 
         details summary {
@@ -95,9 +98,13 @@
             list-style-type: disc;
         }
     </style>
+    </style>
 </head>
 <body>
-    <h1>Stored MSP Questions</h1>
+    <div style="position: absolute; top: 20px; left: 30px; font-family: 'Noto Sans KR', sans-serif; font-size: 20px; font-weight: bold; color: #03c75a;">
+        NAVER Cloud
+    </div>
+    <h1>MSP 검색 도구</h1>
     <input type="text" id="searchInput" placeholder="Search questions..." />
     <select id="minScoreFilter">
         <option value="">Min Score</option>
