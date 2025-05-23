@@ -11,6 +11,10 @@ import http.client
 import json
 
 def chunk_text(text: str):
+    text = text.strip()
+    if not text:
+        return []
+
     host = "clovastudio.stream.ntruss.com"
     request_id = str(uuid.uuid4().hex)
     api_key = f"Bearer {os.getenv('CLOVA_API_KEY')}"
