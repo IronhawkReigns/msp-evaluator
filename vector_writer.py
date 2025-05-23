@@ -7,15 +7,21 @@ from sentence_transformers import SentenceTransformer
 
 import requests
 import uuid
+import http.client
+import json
 
 def chunk_text(text: str):
-    CLOVA_SEGMENTATION_API_URL = "https://clovastudio.stream.ntruss.com/testapp/v1/api-tools/segmentation"
-    HEADERS = {
-        "Authorization": f"Bearer {os.getenv('CLOVA_API_KEY')}",
-        "X-NCP-CLOVASTUDIO-REQUEST-ID": "20cc0852bff04af399b61a31980a6c48",
-        "Content-Type": "application/json"
+    host = "clovastudio.stream.ntruss.com"
+    request_id = str(uuid.uuid4().hex)
+    api_key = f"Bearer {os.getenv('CLOVA_API_KEY')}"
+
+    headers = {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Authorization': api_key,
+        'X-NCP-CLOVASTUDIO-REQUEST-ID': request_id
     }
-    payload = {
+
+    completion_request = {
         "postProcessMaxSize": 1000,
         "alpha": 0.0,
         "segCnt": -1,
@@ -23,14 +29,22 @@ def chunk_text(text: str):
         "text": text,
         "postProcess": False
     }
+
     try:
-        response = requests.post(CLOVA_SEGMENTATION_API_URL, headers=HEADERS, json=payload)
-        response.raise_for_status()
-        result = response.json()
-        return result["result"]["topicSeg"]
+        conn = http.client.HTTPSConnection(host)
+        conn.request('POST', '/testapp/v1/api-tools/segmentation', json.dumps(completion_request), headers)
+        response = conn.getresponse()
+        result = json.loads(response.read().decode(encoding='utf-8'))
+        conn.close()
+
+        if result["status"]["code"] == "20000":
+            return result["result"]["topicSeg"]
+        else:
+            print(f"Segmentation API error: {result}")
+            return [text]
     except Exception as e:
         print(f"Error calling segmentation API: {e}")
-        return [text]  # fallback: return original text as single chunk
+        return [text]
 from sheets_reader import INTERVIEW_SHEET_DOC_NAME, connect_to_sheets, get_company_data_from_sheet, get_summary_scores
 
 # Initialize Chroma client and collection
