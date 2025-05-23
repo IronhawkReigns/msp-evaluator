@@ -18,13 +18,8 @@ class CompanyInput(BaseModel):
     name: str
 
 def query_embed(text: str):
-    from clova_embedding_v2 import EmbeddingExecutor  # Adjust import as needed
-    executor = EmbeddingExecutor(
-        host="clovastudio.stream.ntruss.com",
-        api_key=os.getenv("CLOVA_API_KEY"),
-        request_id="query-" + str(hash(text))  # or use uuid
-    )
-    return executor.execute({"text": text})
+    from vector_writer import clova_embedding
+    return clova_embedding(text)
 
 @app.post("/run/{msp_name}")
 def run_msp_vector_pipeline(msp_name: str):
