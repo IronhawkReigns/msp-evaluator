@@ -54,7 +54,8 @@ def get_filtered_chunks(question: str = None, min_score: int = 0):
             data.append({
                 "msp_name": meta["msp_name"],
                 "question": meta["question"],
-                "score": meta["score"]
+                "score": meta["score"],
+                "answer": meta.get("answer", "")
             })
     return JSONResponse(content=data)
 
