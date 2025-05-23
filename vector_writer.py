@@ -78,7 +78,12 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
                 "question": question,
                 "answer": chunk,
                 "score": score,
-                **{k: v if isinstance(v, (str, int, float, bool)) or v is None else str(v) for k, v in summary.items()}
+                **{
+                    k: v if isinstance(v, (str, int, float, bool)) or v is None else (
+                        print(f"Unexpected type in metadata for key '{k}': {type(v)} -> {v}") or str(v)
+                    )
+                    for k, v in summary.items()
+                }
             }
             documents.append(document)
             embeddings.append(embedding)
