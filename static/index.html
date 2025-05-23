@@ -160,7 +160,7 @@
                 questionCell.textContent = question;
 
                 const chunkCell = document.createElement("td");
-                chunkCell.textContent = "chunked";
+                chunkCell.textContent = `${entries.length} chunk${entries.length > 1 ? "s" : ""}`;
 
                 const deleteBtnCell = document.createElement("td");
                 const delBtn = document.createElement("button");
