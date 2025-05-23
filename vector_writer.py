@@ -63,8 +63,6 @@ collection = client.get_or_create_collection(
     name="msp_chunks",
     metadata={"hnsw:space": "cosine"},
     embedding_function=None,
-    # 👇 add the required dimension explicitly
-    embedding_dim=1024
 )
 
 # Load embedding model
