@@ -69,6 +69,24 @@
         button:hover {
             background-color: #c82333;
         }
+        /* Nested table styles */
+        details > summary {
+            font-weight: bold;
+            cursor: pointer;
+            padding: 8px 0;
+        }
+        details > table {
+            margin-top: 8px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        details > table th, details > table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        details > table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
     </style>
 </head>
 <body>
@@ -106,49 +124,103 @@
                 ? data.filter(entry => Number(entry.score) >= Number(minScore))
                 : data;
 
-            filteredData.forEach((entry, index) => {
-                const row = document.createElement("tr");
+            // Group data by question
+            const grouped = {};
+            filteredData.forEach(entry => {
+                if (!grouped[entry.question]) {
+                    grouped[entry.question] = [];
+                }
+                grouped[entry.question].push(entry);
+            });
 
-                const mspCell = document.createElement("td");
-                mspCell.textContent = entry.msp_name;
+            Object.keys(grouped).forEach(question => {
+                const entries = grouped[question];
 
+                // Create a row with a single cell spanning all columns containing the details block
+                const questionRow = document.createElement("tr");
                 const questionCell = document.createElement("td");
-                questionCell.textContent = entry.question;
+                questionCell.colSpan = 4;
 
-                const scoreCell = document.createElement("td");
-                scoreCell.textContent = entry.score;
+                const details = document.createElement("details");
+                const summary = document.createElement("summary");
+                summary.textContent = question;
+                details.appendChild(summary);
 
-                const actionsCell = document.createElement("td");
-                const deleteBtn = document.createElement("button");
-                deleteBtn.textContent = "Delete";
-                deleteBtn.onclick = () => {
-                    fetch(`/ui/delete/${entry.id}`, {
-                        method: "DELETE"
-                    }).then(response => {
-                        if (response.ok) {
-                            // Remove the entry from the local state
-                            originalData = originalData.filter(e => e.id !== entry.id);
-                            const keyword = document.getElementById("searchInput").value.toLowerCase();
-                            const minScore = document.getElementById("minScoreFilter").value;
-                            const filtered = originalData.filter(entry =>
-                                (entry.msp_name.toLowerCase().includes(keyword) ||
-                                 entry.question.toLowerCase().includes(keyword)) &&
-                                (!minScore || Number(entry.score) >= Number(minScore))
-                            );
-                            renderTable(filtered, minScore);
-                        } else {
-                            alert("Failed to delete item.");
-                        }
-                    });
-                };
-                actionsCell.appendChild(deleteBtn);
+                const nestedTable = document.createElement("table");
 
-                row.appendChild(mspCell);
-                row.appendChild(questionCell);
-                row.appendChild(scoreCell);
-                row.appendChild(actionsCell);
+                // Create header row for nested table
+                const nestedThead = document.createElement("thead");
+                const headerRow = document.createElement("tr");
 
-                tbody.appendChild(row);
+                const thMsp = document.createElement("th");
+                thMsp.textContent = "MSP Name";
+                const thQuestion = document.createElement("th");
+                thQuestion.textContent = "Question";
+                const thScore = document.createElement("th");
+                thScore.textContent = "Score";
+                const thActions = document.createElement("th");
+                thActions.textContent = "Actions";
+
+                headerRow.appendChild(thMsp);
+                headerRow.appendChild(thQuestion);
+                headerRow.appendChild(thScore);
+                headerRow.appendChild(thActions);
+
+                nestedThead.appendChild(headerRow);
+                nestedTable.appendChild(nestedThead);
+
+                const nestedTbody = document.createElement("tbody");
+
+                entries.forEach(entry => {
+                    const row = document.createElement("tr");
+
+                    const mspCell = document.createElement("td");
+                    mspCell.textContent = entry.msp_name;
+
+                    const questionCell = document.createElement("td");
+                    questionCell.textContent = entry.question;
+
+                    const scoreCell = document.createElement("td");
+                    scoreCell.textContent = entry.score;
+
+                    const actionsCell = document.createElement("td");
+                    const deleteBtn = document.createElement("button");
+                    deleteBtn.textContent = "Delete";
+                    deleteBtn.onclick = () => {
+                        fetch(`/ui/delete/${entry.id}`, {
+                            method: "DELETE"
+                        }).then(response => {
+                            if (response.ok) {
+                                // Remove the entry from the local state
+                                originalData = originalData.filter(e => e.id !== entry.id);
+                                const keyword = document.getElementById("searchInput").value.toLowerCase();
+                                const minScore = document.getElementById("minScoreFilter").value;
+                                const filtered = originalData.filter(entry =>
+                                    (entry.msp_name.toLowerCase().includes(keyword) ||
+                                     entry.question.toLowerCase().includes(keyword)) &&
+                                    (!minScore || Number(entry.score) >= Number(minScore))
+                                );
+                                renderTable(filtered, minScore);
+                            } else {
+                                alert("Failed to delete item.");
+                            }
+                        });
+                    };
+                    actionsCell.appendChild(deleteBtn);
+
+                    row.appendChild(mspCell);
+                    row.appendChild(questionCell);
+                    row.appendChild(scoreCell);
+                    row.appendChild(actionsCell);
+
+                    nestedTbody.appendChild(row);
+                });
+
+                nestedTable.appendChild(nestedTbody);
+                details.appendChild(nestedTable);
+                questionCell.appendChild(details);
+                questionRow.appendChild(questionCell);
+                tbody.appendChild(questionRow);
             });
         }
 
