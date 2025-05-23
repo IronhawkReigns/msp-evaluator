@@ -54,7 +54,17 @@ from sheets_reader import INTERVIEW_SHEET_DOC_NAME, connect_to_sheets, get_compa
 # Initialize Chroma client and collection
 CHROMA_PATH = os.path.abspath("chroma_store")
 client = PersistentClient(path=CHROMA_PATH)
-collection = client.get_or_create_collection("msp_chunks")
+
+# Set collection settings to expect 1024-dimension embeddings
+from chromadb.config import Settings
+
+# Set collection settings to expect 1024-dimension embeddings
+collection = client.get_or_create_collection(
+    name="msp_chunks",
+    metadata={"hnsw:space": "cosine"},
+    embedding_function=None,
+    settings=Settings(embedding_dimension=1024)
+)
 
 
 # Load embedding model
