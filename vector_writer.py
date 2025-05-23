@@ -94,7 +94,15 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
 
 def run_from_msp_name(company_name: str):
     print(f"Running vector DB update for: {company_name}")
-    company_data = get_company_data_from_sheet(company_name)
-    summary = get_summary_scores(company_name)
-    add_msp_data_to_chroma(company_name, company_data, summary)
-    print(f"{company_name} successfully written to ChromaDB.")
+    try:
+        company_data = get_company_data_from_sheet(company_name)
+        print("Fetched company data")
+        summary = get_summary_scores(company_name)
+        print("Fetched summary scores")
+        add_msp_data_to_chroma(company_name, company_data, summary)
+        print(f"{company_name} successfully written to ChromaDB.")
+    except Exception as e:
+        import traceback
+        print(f"Error occurred while processing {company_name}")
+        traceback.print_exc()
+        raise
