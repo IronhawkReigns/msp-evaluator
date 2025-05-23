@@ -1,203 +1,64 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>MSP Vector DB Viewer</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f4f4f4;
-            color: #333;
-        }
+import os
+from dotenv import load_dotenv
+load_dotenv()
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse
+from vector_writer import run_from_msp_name
 
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+import chromadb
+from chromadb import PersistentClient
 
-        input[type="text"] {
-            display: block;
-            margin: 0 auto 20px auto;
-            padding: 10px;
-            width: 300px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
+app = FastAPI()
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #fff;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
+class CompanyInput(BaseModel):
+    name: str
 
-        th, td {
-            padding: 12px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
+@app.post("/run/{msp_name}")
+def run_msp_vector_pipeline(msp_name: str):
+    try:
+        run_from_msp_name(msp_name)
+        return {"message": f"Vector DB update completed for {msp_name}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-        th {
-            background-color: #007bff;
-            color: white;
-        }
+# Serve static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
+@app.get("/ui")
+def serve_ui():
+    return FileResponse("static/index.html")
 
-        button {
-            padding: 6px 12px;
-            border: none;
-            background-color: #dc3545;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-        }
+# Load ChromaDB
+CHROMA_PATH = os.path.abspath("chroma_store")
+client = PersistentClient(path=CHROMA_PATH)
+collection = client.get_or_create_collection("msp_chunks")
 
-        button:hover {
-            background-color: #c82333;
-        }
-    </style>
-</head>
-<body>
-    <h1>Stored MSP Questions</h1>
-    <input type="text" id="searchInput" placeholder="Search questions..." />
-    <select id="minScoreFilter">
-        <option value="">Min Score</option>
-        <option value="1">1+</option>
-        <option value="2">2+</option>
-        <option value="3">3+</option>
-        <option value="4">4+</option>
-        <option value="5">5</option>
-    </select>
-    <button onclick="deleteCompanyPrompt()">Delete Company Data</button>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>MSP Name</th>
-                <th>Question</th>
-                <th>Score</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="data-body"></tbody>
-    </table>
+@app.get("/ui/data")
+def get_filtered_chunks(question: str = None, min_score: int = 0):
+    results = collection.get(include=["metadatas"])
+    data = []
+    for meta in results["metadatas"]:
+        if question and question != meta["question"]:
+            continue
+        if meta["score"] is not None and int(meta["score"]) >= min_score:
+            data.append({
+                "msp_name": meta["msp_name"],
+                "question": meta["question"],
+                "score": meta["score"]
+            })
+    return JSONResponse(content=data)
 
-    <script>
-        let originalData = [];
+@app.delete("/ui/delete/{entry_id}")
+def delete_entry(entry_id: str):
+    collection.delete(ids=[entry_id])
+    return {"status": "success"}
 
-        function renderTable(data, minScore = "") {
-            const tbody = document.getElementById("data-body");
-            tbody.innerHTML = "";
-
-            const filteredData = minScore
-                ? data.filter(entry => Number(entry.score) >= Number(minScore))
-                : data;
-
-            filteredData.forEach((entry, index) => {
-                const row = document.createElement("tr");
-
-                const mspCell = document.createElement("td");
-                mspCell.textContent = entry.msp_name;
-
-                const questionCell = document.createElement("td");
-                questionCell.textContent = entry.question;
-
-                const scoreCell = document.createElement("td");
-                scoreCell.textContent = entry.score;
-
-                const actionsCell = document.createElement("td");
-                const deleteBtn = document.createElement("button");
-                deleteBtn.textContent = "Delete";
-                deleteBtn.onclick = () => {
-                    fetch(`/ui/delete/${entry.id}`, {
-                        method: "DELETE"
-                    }).then(response => {
-                        if (response.ok) {
-                            // Remove the entry from the local state
-                            originalData = originalData.filter(e => e.id !== entry.id);
-                            const keyword = document.getElementById("searchInput").value.toLowerCase();
-                            const minScore = document.getElementById("minScoreFilter").value;
-                            const filtered = originalData.filter(entry =>
-                                (entry.msp_name.toLowerCase().includes(keyword) ||
-                                 entry.question.toLowerCase().includes(keyword)) &&
-                                (!minScore || Number(entry.score) >= Number(minScore))
-                            );
-                            renderTable(filtered, minScore);
-                        } else {
-                            alert("Failed to delete item.");
-                        }
-                    });
-                };
-                actionsCell.appendChild(deleteBtn);
-
-                row.appendChild(mspCell);
-                row.appendChild(questionCell);
-                row.appendChild(scoreCell);
-                row.appendChild(actionsCell);
-
-                tbody.appendChild(row);
-            });
-        }
-
-        function deleteCompanyData(companyName) {
-            if (confirm(`Are you sure you want to delete all data for MSP "${companyName}"?`)) {
-                fetch(`/ui/delete_company/${encodeURIComponent(companyName)}`, {
-                    method: "DELETE"
-                }).then(response => {
-                    if (response.ok) {
-                        originalData = originalData.filter(entry => entry.msp_name !== companyName);
-                        const filtered = document.getElementById("searchInput").value.toLowerCase();
-                        const minScore = document.getElementById("minScoreFilter").value;
-                        const displayed = originalData.filter(entry =>
-                            (entry.msp_name.toLowerCase().includes(filtered) ||
-                             entry.question.toLowerCase().includes(filtered)) &&
-                            (!minScore || Number(entry.score) >= Number(minScore))
-                        );
-                        renderTable(displayed, minScore);
-                    } else {
-                        alert("Failed to delete company data.");
-                    }
-                });
-            }
-        }
-
-        function deleteCompanyPrompt() {
-            const name = prompt("Enter the MSP name to delete all its data:");
-            if (name) {
-                deleteCompanyData(name.trim());
-            }
-        }
-
-        fetch("/ui/data")
-            .then(response => response.json())
-            .then(data => {
-                originalData = data;
-                const keyword = document.getElementById("searchInput").value.toLowerCase();
-                const minScore = document.getElementById("minScoreFilter").value;
-                const filtered = originalData.filter(entry =>
-                    (entry.msp_name.toLowerCase().includes(keyword) ||
-                     entry.question.toLowerCase().includes(keyword)) &&
-                    (!minScore || Number(entry.score) >= Number(minScore))
-                );
-                renderTable(filtered, minScore);
-            });
-
-        document.getElementById("searchInput").addEventListener("input", applyFilters);
-        document.getElementById("minScoreFilter").addEventListener("change", applyFilters);
-
-        function applyFilters() {
-            const keyword = document.getElementById("searchInput").value.toLowerCase();
-            const minScore = document.getElementById("minScoreFilter").value;
-            const filtered = originalData.filter(entry =>
-                (entry.msp_name.toLowerCase().includes(keyword) ||
-                 entry.question.toLowerCase().includes(keyword)) &&
-                (!minScore || Number(entry.score) >= Number(minScore))
-            );
-            renderTable(filtered, minScore);
-        }
-    </script>
-</body>
-</html>
+@app.delete("/ui/delete_company/{company_name}")
+def delete_company(company_name: str):
+    results = collection.get(where={"msp_name": company_name})
+    ids_to_delete = results["ids"]
+    if ids_to_delete:
+        collection.delete(ids=ids_to_delete)
+    return {"status": "deleted", "count": len(ids_to_delete)}
