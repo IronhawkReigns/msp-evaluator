@@ -143,6 +143,9 @@ select:focus, input[type="text"]:focus {
       return;
     }
 
+    const results = document.getElementById("results");
+    results.innerHTML = "<p>파트너사 검색 중...</p>";
+
     const res = await fetch("/query/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -150,7 +153,6 @@ select:focus, input[type="text"]:focus {
     });
 
     const data = await res.json();
-    const results = document.getElementById("results");
     results.innerHTML = "";
 
     if (data.answer) {
