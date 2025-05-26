@@ -145,7 +145,8 @@ async def ask_question(request: Request):
             f"[주의사항]\n"
             f"- 추론 금지: 주어진 정보에 명확히 나타나지 않은 내용은 절대 추정하거나 일반적인 기대를 바탕으로 판단하지 마세요.\n"
             f"- 정보 부족 시 해당 회사를 제외하고, 명확한 연결고리가 있는 경우에만 선정하세요.\n"
-            f"- score는 질문과의 관련성을 나타내는 보조 지표일 뿐이며, 반드시 높은 점수가 직접적인 답변을 의미하지는 않습니다.\n\n"
+            f"- score는 질문과의 관련성을 나타내는 보조 지표일 뿐이며, 반드시 높은 점수가 직접적인 답변을 의미하지는 않습니다.\n"
+            f"- 맞춤법과 문법에 유의하여 오타 없이 작성할 것\n\n"
 
             f"[평가 기준]\n"
             f"1. 질문에 명시적으로 답하고 있는가?\n"
@@ -188,7 +189,7 @@ async def ask_question(request: Request):
         clova_response = client.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": "정확하고 간결하게 답변해 주세요."},
+                {"role": "system", "content": "정확한 맞춤법과 문법을 사용하여 간결하고 신뢰성 있게 응답해 주세요."},
                 {"role": "user", "content": prompt}
             ],
             top_p=0.6,
