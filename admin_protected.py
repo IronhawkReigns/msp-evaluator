@@ -42,7 +42,7 @@ async def login(request: Request):
     env_username = os.getenv("ADMIN_USERNAME")
     env_password = os.getenv("ADMIN_PASSWORD")
     if username != env_username or password != env_password:
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+        return RedirectResponse(url="/login?error=invalid", status_code=303)
     
     response = RedirectResponse(url=next_url, status_code=302)
     response.set_cookie(
