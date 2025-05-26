@@ -254,7 +254,7 @@
     try {
       const res = await fetch("/auth/check");
       if (res.status === 401) {
-        window.location.href = "/login?next=/";
+        window.location.href = "/login?next=/admin";
       }
     } catch (err) {
       console.error("Auth check failed:", err);
