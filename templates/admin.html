@@ -2,368 +2,52 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>관리자 대시보드</title>
+  <title>관리자 로그인</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
-
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-    background: linear-gradient(135deg, #e8fef3 0%, #f0fbf6 100%);
-    color: #1e1e1e;
-  }
-
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: calc(100% - 56px);
-    position: absolute;
-    top: 20px;
-    left: 28px;
-    right: 28px;
-    background: none;
-    box-shadow: none;
-    padding: 0;
-  }
-
-  .header-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: #03c75a;
-    font-family: 'Noto Sans KR', sans-serif !important;
-    text-decoration: none;
-  }
-
-  .header-title:hover {
-    text-decoration: none;
-    cursor: pointer;
-  }
-
-  a.logout {
-    font-size: 14px;
-    font-weight: 600;
-    color: #666;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-    text-decoration: none;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    transition: color 0.2s ease;
-  }
-
-  a.logout:hover {
-    color: #03c75a;
-  }
-
-  .card {
-    background-color: #fff;
-    padding: 2rem;
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-    max-width: 720px;
-    margin: 120px auto 2rem auto;
-    box-sizing: border-box;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-  }
-
-  h1, h2, p, ul li {
-    font-family: 'NanumSquareNeo', sans-serif !important;
-  }
-  h1 {
-    font-size: 30px;
-    color: #018d6c;
-    margin: 0 0 24px 0;
-    font-weight: 900;
-    text-align: center;
-  }
-
-  h2 {
-    margin-top: 2.5rem;
-    margin-bottom: 0.8rem;
-    color: #222;
-    font-weight: 700;
-    border-bottom: 1px solid #e1e4e8;
-    padding-bottom: 0.3rem;
-  }
-
-  p#result-message,
-  p#rebuild-message {
-    margin-top: 0.8rem;
-    font-weight: 600;
-    line-height: 1.4;
-  }
-
-  p#result-message {
-    color: #03c75a;
-  }
-
-  p#rebuild-message {
-    color: #027a33;
-  }
-
-  select,
-  button {
-    font-size: 15px;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-    padding: 12px 16px;
-    border-radius: 12px;
-    border: 1px solid #ccc;
-    background-color: #fff;
-    transition: box-shadow 0.3s ease, background-color 0.3s ease;
-    outline: none;
-    margin-top: 1rem;
-    width: 100%;
-  }
-
-  select:hover,
-  select:focus,
-  button:hover,
-  button:focus {
-    box-shadow: 0 0 0 3px rgba(3, 199, 90, 0.25);
-    background-color: #f9fff9;
-    cursor: pointer;
-  }
-
-  button {
-    font-weight: 600;
-    color: white;
-    background-color: #03c75a;
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(3, 199, 90, 0.4);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease;
-    min-width: 200px;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-  }
-
-  button:hover {
-    background-color: #029c3b;
-    transform: translateY(-2px);
-  }
-
-  button:active {
-    transform: translateY(0);
-    box-shadow: 0 3px 8px rgba(2, 156, 59, 0.4);
-  }
-
-  button.delete {
-    background-color: #e74c3c;
-    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
-  }
-
-  button.delete:hover {
-    background-color: #c0392b;
-  }
-
-  hr {
-    border: none;
-    border-bottom: 1px solid #e1e4e8;
-    margin: 2rem 0;
-  }
-
-  ul {
-    padding-left: 1.5rem;
-    margin-bottom: 2rem;
-  }
-
-  ul li {
-    margin-bottom: 0.6rem;
-  }
-
-  a {
-    color: #03c75a;
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.3s ease;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-  }
-
-  a:hover {
-    color: #027a33;
-  }
-
-  #company-select {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    width: 100%;
-    padding: 18px;
-    font-size: 15px;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-    border-radius: 12px;
-    border: 1px solid #d0d7de;
-    background-color: #fff;
-    background-image: url("data:image/svg+xml;utf8,<svg fill='%2303c75a' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 16px 16px;
-    transition: box-shadow 0.3s ease;
-    margin-top: 1rem;
-  }
-
-  #company-select:focus {
-    box-shadow: 0 0 0 3px rgba(3, 199, 90, 0.25);
-    outline: none;
-  }
-</style>
+    body {
+      font-family: sans-serif;
+      background-color: #f9fafb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 40px 16px;
+      box-sizing: border-box;
+    }
+    .form-box {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      width: 100%;
+      max-width: 400px;
+    }
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: #03c75a; /* Naver green */
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-    <div class="header">
-      <a class="header-title" href="https://www.ncloud.com" target="_blank" rel="noopener noreferrer">NAVER Cloud</a>
-      <a href="/logout" class="logout">로그아웃</a>
-    </div>
-  <div class="card">
-    <p>안녕하세요, <strong>{{ user.name }}</strong>님!</p>
-    <p>이 페이지에서 파트너사의 벡터 데이터를 관리할 수 있습니다.</p>
-
-    <ul style="margin-top: 2rem; padding-left: 1.2rem;">
-      <li><a href="/ui">벡터 DB 뷰어 열기</a></li>
-    </ul>
-
-    <hr>
-
-    <h2>파트너사 삭제</h2>
-    <p>벡터 DB에서 삭제할 회사를 선택하세요:</p>
-
-    <select id="company-select">
-      <option value="" disabled selected>회사 선택</option>
-    </select>
-
-    <button onclick="deleteCompany()" class="delete">
-      선택한 회사 삭제
-    </button>
-
-    <p id="result-message"></p>
-
-    <hr>
-
-    <h2>파트너사 벡터 재생성</h2>
-    <p>선택한 회사의 벡터를 다시 생성합니다:</p>
-
-    <button onclick="rebuildVector()" class="rebuild">
-      선택한 회사 벡터 재생성
-    </button>
-
-    <p id="rebuild-message"></p>
-
-    <hr>
-    <h2>최근 벡터 생성 시간</h2>
-    <ul id="log-list" style="padding-left: 1.2rem;"></ul>
-
-    <script>
-      async function fetchCompanies() {
-        try {
-          const res = await fetch("/ui/data");
-          const data = await res.json();
-          const select = document.getElementById("company-select");
-
-          const seen = new Set();
-          data.forEach(entry => {
-            const name = entry.msp_name;
-            if (!seen.has(name)) {
-              seen.add(name);
-              const option = document.createElement("option");
-              option.value = name;
-              option.textContent = name;
-              select.appendChild(option);
-            }
-          });
-        } catch (e) {
-          console.error("회사 목록 불러오기 실패:", e);
-        }
-      }
-
-      async function deleteCompany() {
-        const name = document.getElementById("company-select").value;
-        if (!name) return;
-        try {
-          const res = await fetch(`/ui/delete_company/${name}`, {
-            method: "DELETE"
-          });
-          const result = await res.json();
-          document.getElementById("result-message").textContent = `${name} 삭제됨 (총 ${result.count}개 항목)`;
-        } catch (e) {
-          document.getElementById("result-meYesssage").textContent = "삭제 실패";
-          console.error("삭제 에러:", e);
-        }
-      }
-
-      async function rebuildVector() {
-        const name = document.getElementById("company-select").value;
-        if (!name) return;
-        try {
-          const res = await fetch(`/run/${name}`);
-          if (res.ok) {
-            document.getElementById("rebuild-message").textContent = `${name} 벡터 재생성 완료`;
-          } else {
-            throw new Error();
-          }
-        } catch (e) {
-          document.getElementById("rebuild-message").textContent = "벡터 재생성 실패";
-          console.error("재생성 에러:", e);
-        }
-      }
-
-      async function showTimestamps() {
-        try {
-          const res = await fetch("/ui/data");
-          const data = await res.json();
-          const logList = document.getElementById("log-list");
-          logList.innerHTML = "";
-
-          const grouped = {};
-          data.forEach(entry => {
-            const name = entry.msp_name;
-            const updated = entry.last_updated;
-            if (updated && (!grouped[name] || new Date(updated) > new Date(grouped[name]))) {
-              grouped[name] = updated;
-            }
-          });
-
-          const names = Object.keys(grouped);
-          if (names.length === 0) {
-            const li = document.createElement("li");
-            li.textContent = "최근 벡터 생성 내역이 없습니다.";
-            logList.appendChild(li);
-            return;
-          }
-
-          names.forEach(name => {
-            const li = document.createElement("li");
-            const timestamp = grouped[name];
-            const date = new Date(timestamp);
-            const formatted = date.toLocaleString("ko-KR", {
-              timeZone: "Asia/Seoul",
-              year: "numeric", month: "2-digit", day: "2-digit",
-              hour: "2-digit", minute: "2-digit"
-            });
-            li.textContent = `${name} → 마지막 벡터 생성: ${formatted}`;
-            logList.appendChild(li);
-          });
-        } catch (e) {
-          console.error("벡터 생성 시간 로딩 실패:", e);
-        }
-      }
-
-      fetchCompanies();
-      showTimestamps();
-    </script>
-    <script>
-      function logout() {
-          fetch("/logout")
-              .then(() => {
-                  window.location.href = "/login";
-              })
-              .catch(err => {
-                  console.error("Logout failed:", err);
-              });
-      }
-    </script>
-  </div>
+  <form class="form-box" method="post" action="/auth/login">
+    <h2 style="margin-bottom: 1rem;">관리자 로그인</h2>
+    <input type="text" name="username" placeholder="아이디" required>
+    <input type="password" name="password" placeholder="비밀번호" required>
+    <button type="submit">로그인</button>
+  </form>
 </body>
 </html>
