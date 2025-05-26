@@ -1,290 +1,232 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MSP Vector DB 뷰어</title>
+    <title>MSP 검색 도구</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-green: #03c75a;
+            --navy: #1e1e1e;
+            --background: #f4f6f8;
+            --card-bg: #ffffff;
+            --border-color: #dcdfe4;
+        }
+
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            margin: 40px;
-            background-color: #ffffff;
-            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background);
+            color: var(--navy);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 60px auto;
+            padding: 40px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 20px;
-            color: black;
-            font-weight: 900;
+            font-size: 28px;
+            margin-bottom: 24px;
+            color: var(--navy);
         }
 
-        input[type="text"], #minScoreFilter {
+        label {
+            font-size: 16px;
             display: block;
-            margin: 0 auto 20px auto;
-            padding: 12px 15px;
-            width: 320px;
+            margin-bottom: 6px;
+            color: #555;
+        }
+
+        select,
+        input[type="text"] {
+            width: 100%;
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            border: 1px solid #ccc;
+            background-color: #fff;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        select:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 6px rgba(3, 199, 90, 0.3);
+        }
+
+        #submitBtn {
+            width: 100%;
+            padding: 14px 0;
             font-size: 16px;
             font-weight: 600;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            outline: none;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        #minScoreFilter {
-            width: 170px;
-            background-color: #f9f9f9;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        input[type="text"]:focus, #minScoreFilter:focus {
-            border-color: #03c75a;
-            box-shadow: 0 0 8px rgba(3,199,90,0.3);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #fff;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        th, td {
-            padding: 14px 16px;
-            border: 1px solid #ddd;
-            text-align: left;
-            vertical-align: top;
-        }
-
-        th {
-            background-color: #03c75a;
-            color: white;
-            font-weight: 700;
-        }
-
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        button {
-            padding: 6px 12px;
+            background-color: var(--primary-green);
+            color: #fff;
             border: none;
-            background-color: #ff4d4f;
-            color: white;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
-            font-family: 'Noto Sans KR', sans-serif;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        button:hover {
-            background-color: #cc0000;
+        #submitBtn:hover {
+            background-color: #02b152;
+            box-shadow: 0 4px 12px rgba(3, 199, 90, 0.2);
         }
 
-        details summary {
+        #responseBox {
+            margin-top: 40px;
+            white-space: pre-wrap;
+        }
+
+        .result-card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            margin-bottom: 20px;
+        }
+
+        .result-card p {
+            margin: 6px 0;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .evidence-btn {
+            margin-top: 12px;
+            padding: 6px 12px;
+            font-size: 14px;
             cursor: pointer;
-            font-weight: 600;
-            outline: none;
-            user-select: none;
+            background-color: #f2f2f2;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: #333;
         }
-
-        details ul {
-            margin: 8px 0 0 20px;
-            padding-left: 0;
-        }
-
-        details ul li {
-            margin-bottom: 6px;
-            list-style-type: disc;
-        }
-    </style>
     </style>
 </head>
 <body>
-    <div style="position: absolute; top: 20px; left: 30px; font-family: 'Noto Sans KR', sans-serif; font-size: 20px; font-weight: bold; color: #03c75a;">
+    <div style="position: absolute; top: 20px; left: 20px; font-size: 18px; font-weight: 700; color: var(--primary-green);">
         NAVER Cloud
     </div>
-    <div style="position: absolute; top: 20px; right: 30px;">
-        <button onclick="logout()" style="
-            padding: 6px 12px;
-            font-family: 'Noto Sans KR', sans-serif;
-            font-weight: 600;
-            background-color: #666;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        ">
-            로그아웃
-        </button>
+    <div class="container">
+        <h1>MSP 검색 도구</h1>
+        <label for="minScore">최소 점수 선택</label>
+        <select id="minScore">
+            <option value="0">0 이상</option>
+            <option value="1">1 이상</option>
+            <option value="2">2 이상</option>
+            <option value="3">3 이상</option>
+            <option value="4">4 이상</option>
+            <option value="5">5 이상</option>
+        </select>
+        <input type="text" id="queryInput" placeholder="질문을 입력하세요..." />
+        <button id="submitBtn">검색</button>
+        <div id="responseBox">
+            <div id="rankedResults"></div>
+        </div>
     </div>
-    <h1>MSP Vector DB 뷰어</h1>
-    <input type="text" id="searchInput" placeholder="Search questions..." />
-    <select id="minScoreFilter">
-        <option value="">Min Score</option>
-        <option value="1">1+</option>
-        <option value="2">2+</option>
-        <option value="3">3+</option>
-        <option value="4">4+</option>
-        <option value="5">5</option>
-    </select>
-    <button onclick="deleteCompanyPrompt()">Delete Company Data</button>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>MSP Name</th>
-                <th>Score</th>
-                <th colspan="2">Questions</th>
-                <th>Delete</th>
-            </tr>
-        </thead>
-        <tbody id="data-body"></tbody>
-    </table>
 
     <script>
-        let originalData = [];
+        const queryInput = document.getElementById("queryInput");
+        const submitBtn = document.getElementById("submitBtn");
+        const scoreSelect = document.getElementById("minScore");
+        const list = document.getElementById("rankedResults");
 
-        function renderTable(data, minScore = "") {
-            const tbody = document.getElementById("data-body");
-            tbody.innerHTML = "";
-
-            const filteredData = minScore
-                ? data.filter(entry => Number(entry.score) >= Number(minScore))
-                : data;
-
-            // Group by question (per msp_name, question, score)
-            const grouped = {};
-            filteredData.forEach(entry => {
-                const key = `${entry.msp_name}|${entry.question}|${entry.score}`;
-                if (!grouped[key]) grouped[key] = [];
-                grouped[key].push(entry);
-            });
-
-            Object.entries(grouped).forEach(([key, entries]) => {
-                const [mspName, question, score] = key.split('|');
-                const row = document.createElement("tr");
-
-                const mspCell = document.createElement("td");
-                mspCell.textContent = mspName;
-
-                const scoreCell = document.createElement("td");
-                scoreCell.textContent = score;
-
-                const questionCell = document.createElement("td");
-                questionCell.textContent = question;
-
-                const chunkCell = document.createElement("td");
-                chunkCell.textContent = `${entries.length} chunk${entries.length > 1 ? "s" : ""}`;
-
-                const deleteBtnCell = document.createElement("td");
-                const delBtn = document.createElement("button");
-                delBtn.textContent = "Delete";
-                delBtn.onclick = () => deleteQuestion(mspName, question);
-                deleteBtnCell.appendChild(delBtn);
-
-                row.appendChild(mspCell);
-                row.appendChild(scoreCell);
-                row.appendChild(questionCell);
-                row.appendChild(chunkCell);
-                row.appendChild(deleteBtnCell);
-                tbody.appendChild(row);
-            });
-        }
-
-        function deleteCompanyData(companyName) {
-            if (confirm(`Are you sure you want to delete all data for MSP "${companyName}"?`)) {
-                fetch(`/ui/delete_company/${encodeURIComponent(companyName)}`, {
-                    method: "DELETE"
-                }).then(response => {
-                    if (response.ok) {
-                        originalData = originalData.filter(entry => entry.msp_name !== companyName);
-                        const filtered = document.getElementById("searchInput").value.toLowerCase();
-                        const minScore = document.getElementById("minScoreFilter").value;
-                        const displayed = originalData.filter(entry =>
-                            (entry.msp_name.toLowerCase().includes(filtered) ||
-                             entry.question.toLowerCase().includes(filtered)) &&
-                            (!minScore || Number(entry.score) >= Number(minScore))
-                        );
-                        renderTable(displayed, minScore);
-                    } else {
-                        alert("Failed to delete company data.");
-                    }
-                });
+        submitBtn.addEventListener("click", () => {
+            const query = queryInput.value.trim();
+            const minScore = scoreSelect.value;
+            if (!query) {
+                list.innerHTML = "<div>질문을 입력해주세요.</div>";
+                return;
             }
-        }
 
-        function deleteQuestion(mspName, question) {
-            if (confirm(`Delete all chunks for "${question}" under MSP "${mspName}"?`)) {
-                fetch(`/ui/delete_question/${encodeURIComponent(mspName)}/${encodeURIComponent(question)}`, {
-                    method: "DELETE"
-                }).then(response => {
-                    if (response.ok) {
-                        originalData = originalData.filter(entry => !(entry.msp_name === mspName && entry.question === question));
-                        applyFilters();
-                    } else {
-                        alert("Failed to delete question data.");
-                    }
-                });
-            }
-        }
+            submitBtn.disabled = true;
+            list.innerHTML = "<div>응답을 불러오는 중입니다...</div>";
 
-        function deleteCompanyPrompt() {
-            const name = prompt("Enter the MSP name to delete all its data:");
-            if (name) {
-                deleteCompanyData(name.trim());
-            }
-        }
-
-        fetch("/ui/data")
-            .then(response => response.json())
+            fetch("/query/ask", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ question: query, min_score: parseInt(minScore) })
+            })
+            .then(res => res.json())
             .then(data => {
-                originalData = data;
-                const keyword = document.getElementById("searchInput").value.toLowerCase();
-                const minScore = document.getElementById("minScoreFilter").value;
-                const filtered = originalData.filter(entry =>
-                    (entry.msp_name.toLowerCase().includes(keyword) ||
-                     entry.question.toLowerCase().includes(keyword)) &&
-                    (!minScore || Number(entry.score) >= Number(minScore))
-                );
-                renderTable(filtered, minScore);
+                list.innerHTML = "";
+                // Split answer into blocks (by two or more newlines)
+                const blocks = data.answer
+                  .split(/\n{2,}/)
+                  .map(block => block.trim())
+                  .filter(block => block.length > 0);
+
+                blocks.forEach(block => {
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "result-card";
+
+                    const lines = block.split("\n").filter(line => line.trim());
+                    const mainLines = [];
+                    const evidenceLines = [];
+
+                    let evidenceStarted = false;
+                    lines.forEach(line => {
+                        if (line.includes("근거:") || line.match(/^ *- *Q\d+/)) {
+                            evidenceStarted = true;
+                        }
+                        (evidenceStarted ? evidenceLines : mainLines).push(line);
+                    });
+
+                    mainLines.forEach(line => {
+                        const p = document.createElement("p");
+                        p.textContent = line;
+                        wrapper.appendChild(p);
+                    });
+
+                    if (evidenceLines.length > 0) {
+                        const toggle = document.createElement("button");
+                        toggle.textContent = "근거 보기";
+                        toggle.className = "evidence-btn";
+                        wrapper.appendChild(toggle);
+
+                        const evidenceDiv = document.createElement("div");
+                        evidenceDiv.style.marginTop = "12px";
+                        evidenceDiv.style.display = "none";
+
+                        evidenceLines.forEach(line => {
+                            const p = document.createElement("p");
+                            p.textContent = line;
+                            p.style.margin = "4px 0";
+                            p.style.fontSize = "15px";
+                            p.style.color = "#555";
+                            evidenceDiv.appendChild(p);
+                        });
+
+                        toggle.addEventListener("click", () => {
+                            const isVisible = evidenceDiv.style.display === "block";
+                            evidenceDiv.style.display = isVisible ? "none" : "block";
+                            toggle.textContent = isVisible ? "근거 보기" : "근거 숨기기";
+                        });
+
+                        wrapper.appendChild(evidenceDiv);
+                    }
+
+                    list.appendChild(wrapper);
+                });
+            })
+            .catch(err => {
+                list.innerHTML = `<div>에러 발생: ${err.message}</div>`;
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
             });
-
-        document.getElementById("searchInput").addEventListener("input", applyFilters);
-        document.getElementById("minScoreFilter").addEventListener("change", applyFilters);
-
-        function applyFilters() {
-            const keyword = document.getElementById("searchInput").value.toLowerCase();
-            const minScore = document.getElementById("minScoreFilter").value;
-            const filtered = originalData.filter(entry =>
-                (entry.msp_name.toLowerCase().includes(keyword) ||
-                 entry.question.toLowerCase().includes(keyword)) &&
-                (!minScore || Number(entry.score) >= Number(minScore))
-            );
-            renderTable(filtered, minScore);
-        }
+        });
     </script>
-<script>
-  async function checkAuth() {
-    try {
-      const res = await fetch("/auth/check");
-      if (res.status === 401) {
-        window.location.href = "/login?next=/admin";
-      }
-    } catch (err) {
-      console.error("Auth check failed:", err);
-    }
-  }
-  checkAuth();
-
-  function logout() {
-      fetch("/logout")
-          .then(() => {
-              window.location.href = "/login";
-          })
-          .catch(err => {
-              console.error("Logout failed:", err);
-          });
-  }
-</script>
 </body>
 </html>
