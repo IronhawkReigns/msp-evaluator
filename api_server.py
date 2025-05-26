@@ -9,7 +9,14 @@ from fastapi.requests import Request
 import requests
 from vector_writer import run_from_msp_name
 from admin_protected import router as admin_router, manager
-from admin_protected import load_user
+
+# Register user_loader at import time to avoid "Missing user_loader callback" error
+@manager.user_loader()
+def load_user(username: str):
+    from admin_protected import fake_users, User
+    user = fake_users.get(username)
+    if user:
+        return User(name=user["name"])
 
 import chromadb
 from chromadb import PersistentClient
