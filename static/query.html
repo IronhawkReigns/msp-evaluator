@@ -61,25 +61,24 @@ body {
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  padding-top: 40px;
 }
 
 .hero {
-  background: linear-gradient(135deg, #e8fef3 0%, #f0fbf6 100%);
+  background: transparent;
+  padding: 0;
   width: 100%;
-  padding: 36px 0 32px;
   display: flex;
   justify-content: center;
 }
 
 .container {
-  background: #ffffff;
-  border-radius: 18px;
-  padding: 48px 36px;
+  background: transparent;
+  border-radius: 0;
+  padding: 48px 24px;
   max-width: 680px;
-  width: 90%;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.06);
-  margin-top: 40px;
+  width: 100%;
+  box-shadow: none;
+  margin-top: 24px;
 }
 
 h1 {
@@ -176,8 +175,7 @@ select:focus, input[type="text"]:focus {
       <img src="/static/navercloud-logo.svg" alt="NAVER Cloud" class="logo" />
       <span class="header-title">NAVER Cloud</span>
     </header>
-    <div class="hero">
-      <div class="container">
+    <div class="container">
       <h1>MSP 검색 도구</h1>
       <label for="minScore">최소 점수 선택</label>
       <select id="minScore">
@@ -189,10 +187,9 @@ select:focus, input[type="text"]:focus {
         <option value="5">5점만</option>
       </select>
       <input type="text" id="questionInput" placeholder="예: 금융 회사와의 프로젝트에 어울리는 보안이 좋은 파트너사 추천해줘" />
-      <button id="submitBtn">🔍 검색</button>
+      <button id="submitBtn">검색</button>
       <div id="results"></div>
     </div>
-  </div>
     <footer class="footer">ⓒ 2025 Naver Cloud MSP 평가 도구</footer>
   </div>
 </body>
