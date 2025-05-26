@@ -47,7 +47,14 @@ async def login(request: Request):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     
     response = RedirectResponse(url=next_url, status_code=302)
-    manager.set_cookie(response, user["name"])
+    response.set_cookie(
+        key=manager.cookie_name,
+        value=manager._create_identifier(user["name"]),
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
+    # manager.set_cookie(response, user["name"])
     return response
 
 @router.get("/admin")
