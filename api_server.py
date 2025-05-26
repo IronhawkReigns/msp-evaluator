@@ -189,7 +189,7 @@ async def ask_question(request: Request):
         clova_response = client.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": "오탈자 없이 정확한 맞춤법과 문법을 사용하고, 자연스럽고 신뢰성 있는 문장으로 간결하게 응답해 주세요. 문장은 명확하고 일관되게 구성해 주세요."},
+                {"role": "system", "content": "클라우드 전문가 수준의 문장으로, 오탈자 없이 정확한 맞춤법과 문법을 사용해 주세요. 문장은 간결하면서도 자연스럽고, 일관되며 신뢰감 있게 작성해 주세요."},
                 {"role": "user", "content": prompt}
             ],
             top_p=0.6,
