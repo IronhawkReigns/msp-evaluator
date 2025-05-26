@@ -1,344 +1,285 @@
-<!DOCTYPE html>
-<html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>관리자 대시보드</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css">
-  <style>
+  <title>MSP 검색 도구</title>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&display=swap');
 
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-    background: linear-gradient(135deg, #e8fef3 0%, #f0fbf6 100%);
-    color: #1e1e1e;
-  }
+ .header {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   width: calc(100% - 56px);
+   position: absolute;
+   top: 20px;
+   left: 28px;
+   right: 28px;
+   background: none;
+   box-shadow: none;
+   padding: 0;
+ }
 
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: calc(100% - 56px);
-    position: absolute;
-    top: 20px;
-    left: 28px;
-    right: 28px;
-    background: none;
-    box-shadow: none;
-    padding: 0;
-  }
+.admin-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  font-family: 'Noto Sans KR', sans-serif;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
 
-  .header-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: #03c75a;
-    font-family: 'Noto Sans KR', sans-serif;
-    text-decoration: none;
-  }
+.admin-link:hover {
+  color: #03c75a;
+}
 
-  .header-title:hover {
-    text-decoration: none;
-    cursor: pointer;
-  }
+ .header-title {
+   font-size: 20px;
+   font-weight: 700;
+   color: #03c75a;
+   font-family: 'Noto Sans KR', sans-serif !important;
+   text-decoration: none;
+ }
 
-  a.logout {
-    font-size: 14px;
-    font-weight: 600;
-    color: #666;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-    text-decoration: none;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    transition: color 0.2s ease;
-  }
+ .header-title:hover {
+   text-decoration: none;
+   cursor: pointer;
+ }
 
-  a.logout:hover {
-    color: #03c75a;
-  }
+.footer {
+  text-align: center;
+  margin-top: 40px;
+  color: #999;
+  font-size: 12px;
+}
 
-  .card {
-    background-color: #fff;
-    padding: 2rem;
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-    max-width: 720px;
-    margin: 120px auto 2rem auto;
-    box-sizing: border-box;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-  }
+:root {
+  --primary: #03c75a;
+  --bg: #f5f7fa;
+  --card-bg: #ffffff;
+  --card-shadow: rgba(0, 0, 0, 0.08);
+  --text: #333;
+  --muted: #666;
+}
 
-  h1, h2, p, ul li {
-    font-family: 'NanumSquareNeo', sans-serif !important;
-  }
-  h1 {
-    font-size: 30px;
-    color: #018d6c;
-    margin: 0 0 24px 0;
-    font-weight: 900;
-    text-align: center;
-  }
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'NanumSquareNeo', sans-serif !important;
+  background: var(--bg);
+  color: var(--text);
+}
 
-  h2 {
-    margin-top: 2.5rem;
-    margin-bottom: 0.8rem;
-    color: #222;
-    font-weight: 700;
-    border-bottom: 1px solid #e1e4e8;
-    padding-bottom: 0.3rem;
-  }
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'NanumSquareNeo', sans-serif !important;
+  background: linear-gradient(135deg, #e8fef3 0%, #f0fbf6 100%);
+  color: #1e1e1e;
+}
 
-  p#result-message,
-  p#rebuild-message {
-    margin-top: 0.8rem;
-    font-weight: 600;
-    line-height: 1.4;
-  }
+.layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  position: relative;
+}
 
-  p#result-message {
-    color: #03c75a;
-  }
+.hero {
+  background: transparent;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
 
-  p#rebuild-message {
-    color: #027a33;
-  }
+.container {
+  background: transparent;
+  border-radius: 0;
+  padding: 48px 24px;
+  max-width: 680px;
+  width: 100%;
+  box-shadow: none;
+  margin-top: 24px;
+}
 
-  select,
-  button {
-    font-size: 15px;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-    padding: 12px 16px;
-    border-radius: 12px;
-    border: 1px solid #ccc;
-    background-color: #fff;
-    transition: box-shadow 0.3s ease, background-color 0.3s ease;
-    outline: none;
-    margin-top: 1rem;
-    width: 100%;
-  }
+ h1 {
+   text-align: center;
+   font-size: 30px;
+   font-weight: 900;
+   margin-bottom: 48px;
+   color: #212121;
+   font-family: 'NanumSquareNeo', sans-serif;
+ }
 
-  select:hover,
-  select:focus,
-  button:hover,
-  button:focus {
-    box-shadow: 0 0 0 3px rgba(3, 199, 90, 0.25);
-    background-color: #f9fff9;
-    cursor: pointer;
-  }
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
 
-  button {
-    font-weight: 600;
-    color: white;
-    background-color: #03c75a;
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(3, 199, 90, 0.4);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease;
-    min-width: 200px;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-  }
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%2303c75a' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  padding-right: 40px;
+  width: 100%;
+  padding: 18px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  border-radius: 12px;
+  border: 1px solid #d0d7de;
+  transition: box-shadow 0.3s ease;
+}
 
-  button:hover {
-    background-color: #029c3b;
-    transform: translateY(-2px);
-  }
+select:focus {
+  box-shadow: 0 0 0 3px rgba(3, 199, 90, 0.25);
+  outline: none;
+}
 
-  button:active {
-    transform: translateY(0);
-    box-shadow: 0 3px 8px rgba(2, 156, 59, 0.4);
-  }
+input[type="text"] {
+  width: 100%;
+  padding: 18px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  border-radius: 12px;
+  border: 1px solid #d0d7de;
+  transition: border 0.3s, box-shadow 0.3s;
+  background-color: #fff;
+}
 
-  button.delete {
-    background-color: #e74c3c;
-    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
-  }
+select:focus, input[type="text"]:focus {
+  border-color: #03c75a;
+  box-shadow: 0 0 0 3px rgba(3, 199, 90, 0.3);
+  outline: none;
+}
 
-  button.delete:hover {
-    background-color: #c0392b;
-  }
+#submitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: bold;
+  background: linear-gradient(90deg, #03c75a, #1ecb8f);
+  box-shadow: 0 4px 10px rgba(3, 199, 90, 0.2);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
 
-  hr {
-    border: none;
-    border-bottom: 1px solid #e1e4e8;
-    margin: 2rem 0;
-  }
+#submitBtn:hover {
+  filter: brightness(1.08);
+}
 
-  ul {
-    padding-left: 1.5rem;
-    margin-bottom: 2rem;
-  }
+.result-card {
+  background: #fcfffc;
+  border: 1px solid #e5e8eb;
+  border-left: 4px solid #03c75a;
+  padding: 24px;
+  border-radius: 10px;
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
 
-  ul li {
-    margin-bottom: 0.6rem;
-  }
+.result-card p {
+  margin: 6px 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
 
-  a {
-    color: #03c75a;
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.3s ease;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-  }
+.evidence-btn {
+  margin-top: 12px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  color: var(--text);
+}
 
-  a:hover {
-    color: #027a33;
-  }
+.evidence-btn:hover {
+  background-color: #e0e0e0;
+}
+input[type="text"],
+select,
+.result-card,
+.result-card p {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.6;
+  font-family: 'NanumSquareNeo', sans-serif !important;
+}
 </style>
-</head>
+
 <body>
-    <div class="header">
+  <div class="layout">
+    <header class="header">
       <a class="header-title" href="https://www.ncloud.com" target="_blank" rel="noopener noreferrer">NAVER Cloud</a>
-      <a href="/logout" class="logout">로그아웃</a>
+      <a class="admin-link" href="/login?next=/admin">Admin</a>
+    </header>
+    <div class="container">
+      <h1>🔍 MSP 검색 도구</h1>
+      <label for="minScore">최소 점수 선택</label>
+      <select id="minScore">
+        <option value="0">0 이상</option>
+        <option value="1">1 이상</option>
+        <option value="2">2 이상</option>
+        <option value="3">3 이상</option>
+        <option value="4">4 이상</option>
+        <option value="5">5점만</option>
+      </select>
+      <input type="text" id="questionInput" placeholder="예: 금융 회사와의 프로젝트에 어울리는 보안이 좋은 파트너사 추천해줘" />
+      <button id="submitBtn">검색</button>
+      <div id="results"></div>
     </div>
-  <div class="card">
-    <p>안녕하세요, <strong>{{ user.name }}</strong>님!</p>
-    <p>이 페이지에서 파트너사의 벡터 데이터를 관리할 수 있습니다.</p>
-
-    <ul style="margin-top: 2rem; padding-left: 1.2rem;">
-      <li><a href="/ui">벡터 DB 뷰어 열기</a></li>
-    </ul>
-
-    <hr>
-
-    <h2>파트너사 삭제</h2>
-    <p>벡터 DB에서 삭제할 회사를 선택하세요:</p>
-
-    <select id="company-select" style="margin-top: 1rem; padding: 0.5rem; width: 100%;">
-      <option value="" disabled selected>회사 선택</option>
-    </select>
-
-    <button onclick="deleteCompany()" class="delete">
-      선택한 회사 삭제
-    </button>
-
-    <p id="result-message"></p>
-
-    <hr>
-
-    <h2>파트너사 벡터 재생성</h2>
-    <p>선택한 회사의 벡터를 다시 생성합니다:</p>
-
-    <button onclick="rebuildVector()" class="rebuild">
-      선택한 회사 벡터 재생성
-    </button>
-
-    <p id="rebuild-message"></p>
-
-    <hr>
-    <h2>최근 벡터 생성 시간</h2>
-    <ul id="log-list" style="padding-left: 1.2rem;"></ul>
-
-    <script>
-      async function fetchCompanies() {
-        try {
-          const res = await fetch("/ui/data");
-          const data = await res.json();
-          const select = document.getElementById("company-select");
-
-          const seen = new Set();
-          data.forEach(entry => {
-            const name = entry.msp_name;
-            if (!seen.has(name)) {
-              seen.add(name);
-              const option = document.createElement("option");
-              option.value = name;
-              option.textContent = name;
-              select.appendChild(option);
-            }
-          });
-        } catch (e) {
-          console.error("회사 목록 불러오기 실패:", e);
-        }
-      }
-
-      async function deleteCompany() {
-        const name = document.getElementById("company-select").value;
-        if (!name) return;
-        try {
-          const res = await fetch(`/ui/delete_company/${name}`, {
-            method: "DELETE"
-          });
-          const result = await res.json();
-          document.getElementById("result-message").textContent = `${name} 삭제됨 (총 ${result.count}개 항목)`;
-        } catch (e) {
-          document.getElementById("result-meYesssage").textContent = "삭제 실패";
-          console.error("삭제 에러:", e);
-        }
-      }
-
-      async function rebuildVector() {
-        const name = document.getElementById("company-select").value;
-        if (!name) return;
-        try {
-          const res = await fetch(`/run/${name}`);
-          if (res.ok) {
-            document.getElementById("rebuild-message").textContent = `${name} 벡터 재생성 완료`;
-          } else {
-            throw new Error();
-          }
-        } catch (e) {
-          document.getElementById("rebuild-message").textContent = "벡터 재생성 실패";
-          console.error("재생성 에러:", e);
-        }
-      }
-
-      async function showTimestamps() {
-        try {
-          const res = await fetch("/ui/data");
-          const data = await res.json();
-          const logList = document.getElementById("log-list");
-          logList.innerHTML = "";
-
-          const grouped = {};
-          data.forEach(entry => {
-            const name = entry.msp_name;
-            const updated = entry.last_updated;
-            if (updated && (!grouped[name] || new Date(updated) > new Date(grouped[name]))) {
-              grouped[name] = updated;
-            }
-          });
-
-          const names = Object.keys(grouped);
-          if (names.length === 0) {
-            const li = document.createElement("li");
-            li.textContent = "최근 벡터 생성 내역이 없습니다.";
-            logList.appendChild(li);
-            return;
-          }
-
-          names.forEach(name => {
-            const li = document.createElement("li");
-            const timestamp = grouped[name];
-            const date = new Date(timestamp);
-            const formatted = date.toLocaleString("ko-KR", {
-              timeZone: "Asia/Seoul",
-              year: "numeric", month: "2-digit", day: "2-digit",
-              hour: "2-digit", minute: "2-digit"
-            });
-            li.textContent = `${name} → 마지막 벡터 생성: ${formatted}`;
-            logList.appendChild(li);
-          });
-        } catch (e) {
-          console.error("벡터 생성 시간 로딩 실패:", e);
-        }
-      }
-
-      fetchCompanies();
-      showTimestamps();
-    </script>
-    <script>
-      function logout() {
-          fetch("/logout")
-              .then(() => {
-                  window.location.href = "/login";
-              })
-              .catch(err => {
-                  console.error("Logout failed:", err);
-              });
-      }
-    </script>
+    <footer class="footer">ⓒ 2025 Naver Cloud MSP 평가 도구</footer>
   </div>
 </body>
-</html>
+
+<script>
+  document.getElementById("submitBtn").addEventListener("click", async () => {
+    const question = document.getElementById("questionInput").value;
+    const min_score = document.getElementById("minScore").value;
+
+    if (!question.trim()) {
+      alert("질문을 입력해 주세요.");
+      return;
+    }
+
+    const results = document.getElementById("results");
+    results.innerHTML = "<p>파트너사 검색 중...</p>";
+
+    const res = await fetch("/query/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, min_score })
+    });
+
+    const data = await res.json();
+    results.innerHTML = "";
+
+    if (data.answer) {
+      const card = document.createElement("div");
+      card.className = "result-card";
+      card.innerHTML = `<p>${data.answer.replace(/\n/g, "<br/>")}</p>`;
+      results.appendChild(card);
+    } else {
+      results.innerHTML = "<p>결과를 찾을 수 없습니다.</p>";
+    }
+  });
+</script>
