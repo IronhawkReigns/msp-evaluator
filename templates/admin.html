@@ -6,31 +6,102 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      font-family: sans-serif;
-      background-color: #f4f5f7;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9fafb;
       padding: 2rem;
+      margin: 0;
     }
+
     .card {
-      background-color: white;
-      padding: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-      max-width: 800px;
-      margin: auto;
+      background-color: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      max-width: 960px;
+      margin: 2rem auto;
     }
+
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
     }
+
+    h1 {
+      font-size: 1.8rem;
+      color: #111;
+      margin: 0;
+    }
+
     a.logout {
       font-size: 0.9rem;
-      color: #999;
+      color: #666;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    a.logout:hover {
+      color: #111;
+    }
+
+    ul {
+      padding-left: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    ul li {
+      margin-bottom: 0.5rem;
+    }
+
+    a {
+      color: #03c75a;
       text-decoration: none;
     }
-    a.logout:hover {
-      color: #000;
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    select,
+    button {
+      font-size: 1rem;
+      padding: 0.5rem;
+      margin-top: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+    }
+
+    button {
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button.delete {
+      background-color: #e74c3c;
+      color: #fff;
+      border: none;
+    }
+
+    button.rebuild {
+      background-color: #03c75a;
+      color: #fff;
+      border: none;
+    }
+
+    h2 {
+      margin-top: 2rem;
+      color: #222;
+    }
+
+    p#result-message,
+    p#rebuild-message {
+      margin-top: 0.5rem;
+      font-weight: 500;
     }
   </style>
 </head>
@@ -58,7 +129,7 @@
       <option value="" disabled selected>회사 선택</option>
     </select>
 
-    <button onclick="deleteCompany()" style="margin-top: 1rem; padding: 0.5rem 1rem; background-color: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer;">
+    <button onclick="deleteCompany()" class="delete">
       선택한 회사 삭제
     </button>
 
@@ -69,7 +140,7 @@
     <h2>파트너사 벡터 재생성</h2>
     <p>선택한 회사의 벡터를 다시 생성합니다:</p>
 
-    <button onclick="rebuildVector()" style="margin-top: 1rem; padding: 0.5rem 1rem; background-color: #03c75a; color: white; border: none; border-radius: 4px; cursor: pointer;">
+    <button onclick="rebuildVector()" class="rebuild">
       선택한 회사 벡터 재생성
     </button>
 
