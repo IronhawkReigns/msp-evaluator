@@ -4,13 +4,29 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&display=swap');
 
-.header {
+ .header {
+   position: absolute;
+   top: 20px;
+   left: 28px;
+   background: none;
+   box-shadow: none;
+   padding: 0;
+ }
+
+.admin-link {
   position: absolute;
   top: 20px;
-  left: 28px;
-  background: none;
-  box-shadow: none;
-  padding: 0;
+  right: 28px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  font-family: 'Noto Sans KR', sans-serif;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.admin-link:hover {
+  color: #03c75a;
 }
 
  .header-title {
@@ -211,7 +227,7 @@ select,
   <div class="layout">
     <header class="header">
       <a class="header-title" href="https://www.ncloud.com" target="_blank" rel="noopener noreferrer">NAVER Cloud</a>
-      <a class="admin-link" href="/admin" style="position: absolute; top: 20px; right: 28px; font-size: 14px; font-weight: 600; color: #999; text-decoration: none;">Admin</a>
+      <a class="admin-link" href="/admin">Admin</a>
     </header>
     <div class="container">
       <h1>🔍 MSP 검색 도구</h1>
