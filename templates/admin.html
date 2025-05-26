@@ -16,26 +16,24 @@
   }
 
   .header {
-    position: absolute;
-    top: 20px;
-    left: 30px;
-    right: 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-  }
-
-  .header div {
-    font-size: 20px;
-    font-weight: bold;
-    color: #03c75a;
+    width: calc(100% - 56px);
+    position: absolute;
+    top: 20px;
+    left: 28px;
+    right: 28px;
+    background: none;
+    box-shadow: none;
+    padding: 0;
   }
 
   .header-title {
-    font-size: 22px;
-    font-weight: 900;
+    font-size: 20px;
+    font-weight: 700;
     color: #03c75a;
-    font-family: 'NanumSquareNeo', sans-serif;
+    font-family: 'Noto Sans KR', sans-serif;
     text-decoration: none;
   }
 
@@ -48,18 +46,17 @@
     font-size: 14px;
     font-weight: 600;
     color: #666;
-    background-color: #fff;
-    border: none;
-    border-radius: 4px;
-    padding: 6px 12px;
-    cursor: pointer;
     font-family: 'Noto Sans KR', sans-serif;
     text-decoration: none;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: color 0.2s ease;
   }
 
   a.logout:hover {
-    background-color: #03c75a;
-    color: white;
+    color: #03c75a;
   }
 
   .card {
