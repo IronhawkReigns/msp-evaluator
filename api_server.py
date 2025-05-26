@@ -17,6 +17,7 @@ from chromadb import PersistentClient
 app = FastAPI()
 
 app.include_router(admin_router)
+print("📦 admin router included")
 
 class CompanyInput(BaseModel):
     name: str
