@@ -4,7 +4,7 @@ load_dotenv()
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.requests import Request
 import requests
 from vector_writer import run_from_msp_name
@@ -46,8 +46,12 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.get("/ui")
-def serve_ui(user=Depends(manager)):
-    return FileResponse("static/index.html")
+def serve_ui(request: Request):
+    try:
+        user = manager(request)
+        return FileResponse("static/index.html")
+    except:
+        return RedirectResponse(url="/login?next=/ui")
 
 
 # Serve query UI
