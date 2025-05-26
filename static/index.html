@@ -70,7 +70,11 @@
             padding: 14px 16px;
             border: 1px solid #ddd;
             text-align: left;
-            vertical-align: top;
+            vertical-align: middle;
+        }
+
+        td {
+            font-size: 14px;
         }
 
         th {
@@ -134,9 +138,9 @@
       로그아웃
     </a>
     <h1>📊 MSP Vector DB 뷰어</h1>
-    <input type="text" id="searchInput" placeholder="Search questions..." />
+    <input type="text" id="searchInput" placeholder="질문 검색..." />
     <select id="minScoreFilter">
-        <option value="">Min Score</option>
+        <option value="">최소 점수</option>
         <option value="1">1+</option>
         <option value="2">2+</option>
         <option value="3">3+</option>
@@ -150,7 +154,7 @@
                 <th>MSP Name</th>
                 <th>Score</th>
                 <th colspan="2">Questions</th>
-                <th>Delete</th>
+                <th></th>
             </tr>
         </thead>
         <tbody id="data-body"></tbody>
@@ -181,6 +185,7 @@
 
                 const mspCell = document.createElement("td");
                 mspCell.textContent = mspName;
+                mspCell.style.fontWeight = "bold";
 
                 const scoreCell = document.createElement("td");
                 scoreCell.textContent = score;
