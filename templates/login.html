@@ -85,5 +85,11 @@
     <input type="password" name="password" placeholder="비밀번호" required>
     <button type="submit">로그인</button>
   </form>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "invalid") {
+      alert("아이디 또는 비밀번호가 일치하지 않습니다.");
+    }
+  </script>
 </body>
 </html>
