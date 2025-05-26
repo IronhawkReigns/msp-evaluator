@@ -5,11 +5,14 @@
   <title>관리자 대시보드</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap');
+
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f9fafb;
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: #f0f2f5;
       padding: 2rem;
       margin: 0;
+      color: #222;
     }
 
     .card {
@@ -17,101 +20,176 @@
       padding: 2rem;
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-      max-width: 960px;
-      margin: 2rem auto;
+      max-width: 720px;
+      margin: 4rem auto 2rem auto;
+      box-sizing: border-box;
     }
 
     .header {
+      position: sticky;
+      top: 0;
+      background-color: #fff;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 2rem;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid #e1e4e8;
+      z-index: 10;
+      box-sizing: border-box;
+      margin: 0 -2rem 2rem -2rem;
     }
 
     h1 {
       font-size: 1.8rem;
-      color: #111;
+      color: #03c75a;
       margin: 0;
+      font-weight: 700;
     }
 
     a.logout {
       font-size: 0.9rem;
-      color: #666;
+      color: #03c75a;
       text-decoration: none;
-      transition: color 0.2s ease;
+      font-weight: 600;
+      transition: color 0.3s ease;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      border: 1.5px solid transparent;
+      background-color: transparent;
     }
 
     a.logout:hover {
-      color: #111;
+      color: #027a33;
+      border-color: #027a33;
+      background-color: #e6f4e9;
     }
 
     ul {
       padding-left: 1.5rem;
       margin-bottom: 2rem;
+      border-bottom: 1px solid #e1e4e8;
+      padding-bottom: 1.5rem;
     }
 
     ul li {
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.6rem;
     }
 
     a {
       color: #03c75a;
       text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s ease;
     }
 
     a:hover {
       text-decoration: underline;
+      color: #027a33;
     }
 
     select,
     button {
       font-size: 1rem;
-      padding: 0.5rem;
+      padding: 0.6rem 1rem;
       margin-top: 1rem;
-      border-radius: 6px;
-      border: 1px solid #ddd;
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      background-color: #fff;
+      transition: box-shadow 0.3s ease, background-color 0.3s ease;
+      outline: none;
+      min-width: 180px;
+      box-sizing: border-box;
+    }
+
+    select:hover,
+    select:focus {
+      box-shadow: 0 4px 10px rgba(3, 199, 90, 0.3);
+      background-color: #f9fff9;
+      cursor: pointer;
     }
 
     button {
       cursor: pointer;
-      transition: all 0.2s ease;
+      font-weight: 600;
+      color: #fff;
+      background-color: #03c75a;
+      border-radius: 24px;
+      box-shadow: 0 4px 12px rgba(3, 199, 90, 0.4);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease;
+      border: none;
+      min-width: 200px;
+      display: inline-block;
     }
 
     button:hover {
-      opacity: 0.9;
+      background-color: #029c3b;
+      box-shadow: 0 6px 16px rgba(2, 156, 59, 0.6);
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 3px 8px rgba(2, 156, 59, 0.4);
     }
 
     button.delete {
       background-color: #e74c3c;
-      color: #fff;
-      border: none;
+      box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+    }
+
+    button.delete:hover {
+      background-color: #c0392b;
+      box-shadow: 0 6px 16px rgba(192, 57, 43, 0.6);
+    }
+
+    button.delete:active {
+      box-shadow: 0 3px 8px rgba(192, 57, 43, 0.4);
     }
 
     button.rebuild {
       background-color: #03c75a;
-      color: #fff;
-      border: none;
+      box-shadow: 0 4px 12px rgba(3, 199, 90, 0.4);
     }
 
     h2 {
-      margin-top: 2rem;
+      margin-top: 2.5rem;
+      margin-bottom: 0.8rem;
       color: #222;
+      font-weight: 700;
+      border-bottom: 1px solid #e1e4e8;
+      padding-bottom: 0.3rem;
     }
 
     p#result-message,
     p#rebuild-message {
-      margin-top: 0.5rem;
-      font-weight: 500;
+      margin-top: 0.8rem;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    p#result-message {
+      color: #03c75a;
+    }
+
+    p#rebuild-message {
+      color: #027a33;
+    }
+
+    hr {
+      border: none;
+      border-bottom: 1px solid #e1e4e8;
+      margin: 2rem 0;
     }
   </style>
 </head>
 <body>
+  <div class="header">
+    <h1>MSP 벡터 DB 관리</h1>
+    <a href="/logout" class="logout">로그아웃</a>
+  </div>
   <div class="card">
-    <div class="header">
-      <h1>MSP 벡터 DB 관리</h1>
-      <a href="/logout" class="logout">로그아웃</a>
-    </div>
-    <p>안녕하세요, <strong>{{ user.name }}</strong>님 👋</p>
+    <p>안녕하세요, <strong>{{ user.name }}</strong>님!</p>
     <p>이 페이지에서 파트너사의 벡터 데이터를 관리할 수 있습니다.</p>
 
     <ul style="margin-top: 2rem; padding-left: 1.2rem;">
@@ -120,7 +198,7 @@
       <li><a href="/ui/delete_company/SampleMSP">샘플 MSP 삭제 실행</a></li>
     </ul>
 
-    <hr style="margin: 2rem 0;">
+    <hr>
 
     <h2>파트너사 삭제</h2>
     <p>벡터 DB에서 삭제할 회사를 선택하세요:</p>
@@ -133,9 +211,9 @@
       선택한 회사 삭제
     </button>
 
-    <p id="result-message" style="margin-top: 1rem; color: green;"></p>
+    <p id="result-message"></p>
 
-    <hr style="margin: 2rem 0;">
+    <hr>
 
     <h2>파트너사 벡터 재생성</h2>
     <p>선택한 회사의 벡터를 다시 생성합니다:</p>
@@ -144,9 +222,9 @@
       선택한 회사 벡터 재생성
     </button>
 
-    <p id="rebuild-message" style="margin-top: 1rem; color: blue;"></p>
+    <p id="rebuild-message"></p>
 
-    <hr style="margin: 2rem 0;">
+    <hr>
     <h2>최근 벡터 생성 시간</h2>
     <ul id="log-list" style="padding-left: 1.2rem;"></ul>
 
@@ -156,11 +234,17 @@
           const res = await fetch("/ui/data");
           const data = await res.json();
           const select = document.getElementById("company-select");
-          Object.keys(data).forEach(name => {
-            const option = document.createElement("option");
-            option.value = name;
-            option.textContent = name;
-            select.appendChild(option);
+
+          const seen = new Set();
+          data.forEach(entry => {
+            const name = entry.msp_name;
+            if (!seen.has(name)) {
+              seen.add(name);
+              const option = document.createElement("option");
+              option.value = name;
+              option.textContent = name;
+              select.appendChild(option);
+            }
           });
         } catch (e) {
           console.error("회사 목록 불러오기 실패:", e);
@@ -204,22 +288,36 @@
           const data = await res.json();
           const logList = document.getElementById("log-list");
           logList.innerHTML = "";
-          for (const name in data) {
-            const li = document.createElement("li");
-            const timestamp = data[name].last_updated || "정보 없음";
-            if(timestamp === "정보 없음") {
-              li.textContent = `${name} → 마지막 벡터 생성: ${timestamp}`;
-            } else {
-              const date = new Date(timestamp);
-              const formatted = date.toLocaleString("ko-KR", {
-                timeZone: "Asia/Seoul",
-                year: "numeric", month: "2-digit", day: "2-digit",
-                hour: "2-digit", minute: "2-digit"
-              });
-              li.textContent = `${name} → 마지막 벡터 생성: ${formatted}`;
+
+          const grouped = {};
+          data.forEach(entry => {
+            const name = entry.msp_name;
+            const updated = entry.last_updated;
+            if (updated && (!grouped[name] || new Date(updated) > new Date(grouped[name]))) {
+              grouped[name] = updated;
             }
+          });
+
+          const names = Object.keys(grouped);
+          if (names.length === 0) {
+            const li = document.createElement("li");
+            li.textContent = "최근 벡터 생성 내역이 없습니다.";
             logList.appendChild(li);
+            return;
           }
+
+          names.forEach(name => {
+            const li = document.createElement("li");
+            const timestamp = grouped[name];
+            const date = new Date(timestamp);
+            const formatted = date.toLocaleString("ko-KR", {
+              timeZone: "Asia/Seoul",
+              year: "numeric", month: "2-digit", day: "2-digit",
+              hour: "2-digit", minute: "2-digit"
+            });
+            li.textContent = `${name} → 마지막 벡터 생성: ${formatted}`;
+            logList.appendChild(li);
+          });
         } catch (e) {
           console.error("벡터 생성 시간 로딩 실패:", e);
         }
