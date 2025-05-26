@@ -8,11 +8,14 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.requests import Request
 import requests
 from vector_writer import run_from_msp_name
+from admin_protected import router as admin_router
 
 import chromadb
 from chromadb import PersistentClient
 
 app = FastAPI()
+
+app.include_router(admin_router)
 
 class CompanyInput(BaseModel):
     name: str
@@ -49,39 +52,41 @@ collection = client.get_or_create_collection("msp_chunks")
 
 @app.get("/ui/data")
 def get_filtered_chunks(question: str = None, min_score: int = 0):
+    # Return flat format for public UI compatibility
     results = collection.get(include=["metadatas"])
     data = []
     for meta in results["metadatas"]:
-        print(f"Meta object: {meta}")  # Log the metadata object
-        answer = meta.get("answer", "")
-        print(f"Answer type: {type(answer)}, value: {answer}")  # Debug output
-
-        if question and question != meta["question"]:
+        if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
             continue
-        if not isinstance(answer, str) or not answer.strip():
+        if question and question != meta["question"]:
             continue
         if meta["score"] is not None and int(meta["score"]) >= min_score:
             data.append({
                 "msp_name": meta["msp_name"],
                 "question": meta["question"],
                 "score": meta["score"],
-                "answer": answer
+                "answer": meta["answer"]
             })
     return JSONResponse(content=data)
 
-@app.delete("/ui/delete/{entry_id}")
-def delete_entry(entry_id: str):
-    collection.delete(ids=[entry_id])
-    return {"status": "success"}
-
-@app.delete("/ui/delete_company/{company_name}")
-def delete_company(company_name: str):
-    results = collection.get(where={"msp_name": company_name})
-    ids_to_delete = results["ids"]
-    if ids_to_delete:
-        collection.delete(ids=ids_to_delete)
-    return {"status": "deleted", "count": len(ids_to_delete)}
-
+# Flat data endpoint for public UI
+@app.get("/ui/data_flat")
+def get_flat_chunks(question: str = None, min_score: int = 0):
+    results = collection.get(include=["metadatas"])
+    data = []
+    for meta in results["metadatas"]:
+        if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
+            continue
+        if question and question != meta["question"]:
+            continue
+        if meta["score"] is not None and int(meta["score"]) >= min_score:
+            data.append({
+                "msp_name": meta["msp_name"],
+                "question": meta["question"],
+                "score": meta["score"],
+                "answer": meta["answer"]
+            })
+    return JSONResponse(content=data)
 
 # Query/Ask endpoint
 @app.post("/query/ask")
