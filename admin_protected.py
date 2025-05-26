@@ -91,3 +91,5 @@ def check_auth(user=Depends(manager)):
 @router.get("/whoami")
 def whoami(user=Depends(manager)):
     return {"user": user.name}
+
+print("✅ admin_protected: user_loader callback registered:", load_user)
