@@ -116,3 +116,53 @@
       background-color: rgba(255, 255, 255, 0.2);
   }
 </style>
+
+<div class="container">
+  <h1>MSP 검색 도구</h1>
+  <label for="minScore">최소 점수 선택</label>
+  <select id="minScore">
+    <option value="0">0 이상</option>
+    <option value="1">1 이상</option>
+    <option value="2">2 이상</option>
+    <option value="3">3 이상</option>
+    <option value="4">4 이상</option>
+    <option value="5">5점만</option>
+  </select>
+
+  <input type="text" id="questionInput" placeholder="보안이 좋은 회사를 찾아줘" />
+
+  <button id="submitBtn">검색</button>
+
+  <div id="results"></div>
+</div>
+
+<script>
+  document.getElementById("submitBtn").addEventListener("click", async () => {
+    const question = document.getElementById("questionInput").value;
+    const min_score = document.getElementById("minScore").value;
+
+    if (!question.trim()) {
+      alert("질문을 입력해 주세요.");
+      return;
+    }
+
+    const res = await fetch("/query/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, min_score })
+    });
+
+    const data = await res.json();
+    const results = document.getElementById("results");
+    results.innerHTML = "";
+
+    if (data.answer) {
+      const card = document.createElement("div");
+      card.className = "result-card";
+      card.innerHTML = `<p>${data.answer.replace(/\n/g, "<br/>")}</p>`;
+      results.appendChild(card);
+    } else {
+      results.innerHTML = "<p>결과를 찾을 수 없습니다.</p>";
+    }
+  });
+</script>
