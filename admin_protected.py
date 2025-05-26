@@ -86,8 +86,15 @@ def delete_entry(entry_id: str, user=Depends(manager)):
     return {"status": "success"}
 
 @router.get("/auth/check")
-def check_auth(user=Depends(manager)):
-    return {"status": "ok"}
+def check_auth(request: Request):
+    token = request.cookies.get(manager.cookie_name)
+    if not token:
+        return {"status": "anonymous"}
+    try:
+        user = manager.get_current_user(token)
+        return {"status": "ok", "user": user.name}
+    except Exception:
+        return {"status": "anonymous"}
 
 
 # Debug route to show current authenticated user
