@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 load_dotenv()
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -35,8 +35,10 @@ def run_msp_vector_pipeline(msp_name: str):
 # Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+from admin_protected import manager
+
 @app.get("/ui")
-def serve_ui():
+def serve_ui(user=Depends(manager)):
     return FileResponse("static/index.html")
 
 
@@ -51,7 +53,7 @@ client = PersistentClient(path=CHROMA_PATH)
 collection = client.get_or_create_collection("msp_chunks")
 
 @app.get("/ui/data")
-def get_filtered_chunks(question: str = None, min_score: int = 0):
+def get_filtered_chunks(question: str = None, min_score: int = 0, user=Depends(manager)):
     # Return flat format for public UI compatibility
     results = collection.get(include=["metadatas"])
     data = []
@@ -71,7 +73,7 @@ def get_filtered_chunks(question: str = None, min_score: int = 0):
 
 # Flat data endpoint for public UI
 @app.get("/ui/data_flat")
-def get_flat_chunks(question: str = None, min_score: int = 0):
+def get_flat_chunks(question: str = None, min_score: int = 0, user=Depends(manager)):
     results = collection.get(include=["metadatas"])
     data = []
     for meta in results["metadatas"]:
