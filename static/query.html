@@ -7,10 +7,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
   background: white;
-  padding: 24px 0;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.03);
+  padding: 16px 0;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+}
+
+.logo {
+  height: 24px;
+  margin-right: 10px;
+}
+
+.header-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #03c75a;
 }
 
 .footer {
@@ -56,7 +66,7 @@ body {
 .hero {
   background: linear-gradient(135deg, #e8fef3 0%, #f0fbf6 100%);
   width: 100%;
-  padding: 80px 0 60px;
+  padding: 60px 0 40px;
   display: flex;
   justify-content: center;
 }
@@ -105,11 +115,16 @@ select:focus, input[type="text"]:focus {
 }
 
 #submitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
   padding: 16px;
   font-size: 16px;
   font-weight: bold;
   background: linear-gradient(90deg, #03c75a, #1ecb8f);
+  box-shadow: 0 4px 10px rgba(3, 199, 90, 0.2);
   color: white;
   border: none;
   border-radius: 12px;
@@ -157,8 +172,8 @@ select:focus, input[type="text"]:focus {
 <body>
   <div class="layout">
     <header class="header">
-      <img src="/static/navercloud-logo.svg" alt="NAVER Cloud" style="height: 20px;" />
-      <span>NAVER Cloud</span>
+      <img src="/static/navercloud-logo.svg" alt="NAVER Cloud" class="logo" />
+      <span class="header-title">NAVER Cloud</span>
     </header>
     <div class="hero">
       <div class="container">
