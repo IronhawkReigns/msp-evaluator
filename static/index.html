@@ -249,5 +249,18 @@
             renderTable(filtered, minScore);
         }
     </script>
+<script>
+  async function checkAuth() {
+    try {
+      const res = await fetch("/ui/delete_company/__auth_test__", { method: "DELETE" });
+      if (res.status === 401) {
+        window.location.href = "/login?next=/";
+      }
+    } catch (err) {
+      console.error("Auth check failed:", err);
+    }
+  }
+  checkAuth();
+</script>
 </body>
 </html>
