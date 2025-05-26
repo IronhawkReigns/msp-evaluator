@@ -8,6 +8,8 @@ import os
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecret")
 manager = LoginManager(SECRET_KEY, token_url="/auth/login", use_cookie=True)
 manager.cookie_name = "admin_token"
+manager.cookie_secure = True
+manager.cookie_samesite = "lax"
 
 templates = Jinja2Templates(directory="templates")
 router = APIRouter()
@@ -45,7 +47,15 @@ async def login(request: Request):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     
     response = RedirectResponse(url=next_url, status_code=302)
-    manager.set_cookie(response, user["name"])
+    manager.set_cookie(
+        response,
+        user["name"],
+        max_age=3600,
+        path="/",
+        secure=True,
+        httponly=True,
+        samesite="lax"
+    )
     return response
 
 @router.get("/admin")
