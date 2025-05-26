@@ -17,7 +17,7 @@ class User(BaseModel):
 
 @manager.user_loader
 def load_user(username: str):
-    env_username = os.getenv("ADMIN_USERNAME", "admin")
+    env_username = os.getenv("ADMIN_USERNAME")
     if username == env_username:
         return User(name=username)
 
@@ -39,8 +39,8 @@ async def login(request: Request):
     next_url = request.query_params.get("next", "/admin")
 
     print(f"🚨 Login attempt: username={username}, password={password}")
-    env_username = os.getenv("ADMIN_USERNAME", "admin")
-    env_password = os.getenv("ADMIN_PASSWORD", "password123")
+    env_username = os.getenv("ADMIN_USERNAME")
+    env_password = os.getenv("ADMIN_PASSWORD")
     if username != env_username or password != env_password:
         raise HTTPException(status_code=400, detail="Invalid credentials")
     
