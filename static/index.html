@@ -129,7 +129,291 @@
     </style>
 </head>
 <body>
-    <a class="header-title" href="https://www.ncloud.com" target="_blank" rel="noopener noreferrer"
+    <a class="header-title" href="<head>
+  <title>MSP 평가 도구</title>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&display=swap');
+
+ .header {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   width: calc(100% - 56px);
+   position: absolute;
+   top: 20px;
+   left: 28px;
+   right: 28px;
+   background: none;
+   box-shadow: none;
+   padding: 0;
+ }
+
+.admin-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  font-family: 'Noto Sans KR', sans-serif;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.admin-link:hover {
+  color: #03c75a;
+}
+
+ .header-title {
+   font-size: 20px;
+   font-weight: 700;
+   color: #03c75a;
+   font-family: 'Noto Sans KR', sans-serif !important;
+   text-decoration: none;
+ }
+
+ .header-title:hover {
+   text-decoration: none;
+   cursor: pointer;
+ }
+
+.footer {
+  text-align: center;
+  margin-top: 40px;
+  color: #999;
+  font-size: 12px;
+}
+
+:root {
+  --primary: #03c75a;
+  --bg: #f5f7fa;
+  --card-bg: #ffffff;
+  --card-shadow: rgba(0, 0, 0, 0.08);
+  --text: #333;
+  --muted: #666;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'NanumSquareNeo', sans-serif !important;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'NanumSquareNeo', sans-serif !important;
+  background: linear-gradient(135deg, #e8fef3 0%, #f0fbf6 100%);
+  color: #1e1e1e;
+}
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  position: relative;
+}
+
+.hero {
+  background: transparent;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  background: transparent;
+  border-radius: 0;
+  padding: 48px 24px;
+  max-width: 680px;
+  width: 100%;
+  box-shadow: none;
+  margin-top: 24px;
+}
+
+ h1 {
+   text-align: center;
+   font-size: 28px;
+   font-weight: 900;
+   margin-bottom: 32px;
+   color: #03c75a;
+   font-family: 'NanumSquareNeo', sans-serif;
+ }
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%2303c75a' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  padding-right: 40px;
+  width: 100%;
+  padding: 18px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  border-radius: 12px;
+  border: 1px solid #d0d7de;
+  transition: box-shadow 0.3s ease;
+}
+
+select:focus {
+  box-shadow: 0 0 0 3px rgba(3, 199, 90, 0.25);
+  outline: none;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 18px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  border-radius: 12px;
+  border: 1px solid #d0d7de;
+  transition: border 0.3s, box-shadow 0.3s;
+  background-color: #fff;
+}
+
+select:focus, input[type="text"]:focus {
+  border-color: #03c75a;
+  box-shadow: 0 0 0 3px rgba(3, 199, 90, 0.3);
+  outline: none;
+}
+
+#submitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: bold;
+  background: linear-gradient(90deg, #03c75a, #1ecb8f);
+  box-shadow: 0 4px 10px rgba(3, 199, 90, 0.2);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+#submitBtn:hover {
+  filter: brightness(1.08);
+}
+
+.result-card {
+  background: #fcfffc;
+  border: 1px solid #e5e8eb;
+  border-left: 4px solid #03c75a;
+  padding: 24px;
+  border-radius: 10px;
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.result-card p {
+  margin: 6px 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.evidence-btn {
+  margin-top: 12px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  color: var(--text);
+}
+
+.evidence-btn:hover {
+  background-color: #e0e0e0;
+}
+input[type="text"],
+select,
+.result-card,
+.result-card p {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.6;
+  font-family: 'NanumSquareNeo', sans-serif !important;
+}
+</style>
+
+<body>
+  <div class="layout">
+    <header class="header">
+      <a class="header-title" href="https://mspevaluator.duckdns.org" target="_blank" rel="noopener noreferrer">NAVER Cloud</a>
+      <a class="admin-link" href="/login?next=/admin">Admin</a>
+    </header>
+    <div class="container">
+      <h1>🔍 MSP 평가 도구</h1>
+      <label for="minScore">최소 점수 선택</label>
+      <select id="minScore">
+        <option value="0">0 이상</option>
+        <option value="1">1 이상</option>
+        <option value="2">2 이상</option>
+        <option value="3">3 이상</option>
+        <option value="4">4 이상</option>
+        <option value="5">5점만</option>
+      </select>
+      <input type="text" id="questionInput" placeholder="예: 금융 회사와의 프로젝트에 어울리는 보안이 좋은 파트너사 추천해줘" />
+      <button id="submitBtn">검색</button>
+      <div id="results"></div>
+    </div>
+    <footer class="footer">ⓒ 2025 Naver Cloud MSP 평가 도구</footer>
+  </div>
+</body>
+
+<script>
+  document.getElementById("submitBtn").addEventListener("click", async () => {
+    const question = document.getElementById("questionInput").value;
+    const min_score = document.getElementById("minScore").value;
+
+    if (!question.trim()) {
+      alert("질문을 입력해 주세요.");
+      return;
+    }
+
+    const results = document.getElementById("results");
+    results.innerHTML = '<div class="result-card"><p>파트너사 검색 중...</p></div>';
+
+    const res = await fetch("/query/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, min_score })
+    });
+
+    const data = await res.json();
+    results.innerHTML = "";
+
+    if (data.answer) {
+      const card = document.createElement("div");
+      card.className = "result-card";
+      card.innerHTML = `<p>${data.answer.replace(/\n/g, "<br/>")}</p>`;
+      results.appendChild(card);
+    } else {
+      results.innerHTML = "<p>결과를 찾을 수 없습니다.</p>";
+    }
+  });
+</script>" target="_blank" rel="noopener noreferrer"
        style="position: absolute; top: 20px; left: 30px; font-size: 20px; font-weight: 700; color: #03c75a; font-family: 'Noto Sans KR', sans-serif; text-decoration: none;">
       NAVER Cloud
     </a>
