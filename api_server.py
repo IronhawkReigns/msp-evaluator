@@ -201,6 +201,7 @@ async def ask_question(request: Request):
                 answer = ""
             else:
                 answer = clova_response.choices[0].message.content.strip()
+            answer = answer.replace("설루션", "솔루션")
             # Debug
             print("==== CLOVA RAW RESPONSE ====")
             print(json.dumps(clova_response.model_dump(), indent=2, ensure_ascii=False))
