@@ -210,3 +210,11 @@ async def ask_question(request: Request):
             raise HTTPException(status_code=500, detail=f"응답 처리 실패: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"HyperCLOVA error: {str(e)}")
+# Add protected /admin route using same login logic as /ui
+@app.get("/admin")
+def serve_admin_ui(request: Request):
+    try:
+        user = manager(request)
+        return FileResponse("static/admin.html")
+    except:
+        return RedirectResponse(url="/login?next=/admin")
