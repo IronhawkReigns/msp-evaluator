@@ -32,6 +32,19 @@
     color: #03c75a;
   }
 
+  .header-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #03c75a;
+    font-family: 'Noto Sans KR', sans-serif;
+    text-decoration: none;
+  }
+
+  .header-title:hover {
+    text-decoration: none;
+    cursor: pointer;
+  }
+
   a.logout {
     font-size: 14px;
     font-weight: 600;
@@ -174,7 +187,7 @@
 </head>
 <body>
     <div class="header">
-      <div style="font-family: 'Noto Sans KR', sans-serif; font-size: 20px; font-weight: bold; color: #03c75a;">NAVER Cloud</div>
+      <a href="https://www.ncloud.com" target="_blank" rel="noopener noreferrer" class="header-title">NAVER Cloud</a>
       <a href="/logout" class="logout">로그아웃</a>
     </div>
   <div class="card">
