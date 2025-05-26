@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>관리자 대시보드</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f4f5f7;
+      padding: 2rem;
+    }
+    .card {
+      background-color: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      max-width: 800px;
+      margin: auto;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    a.logout {
+      font-size: 0.9rem;
+      color: #999;
+      text-decoration: none;
+    }
+    a.logout:hover {
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>MSP 벡터 DB 관리</h1>
+      <a href="/logout" class="logout">로그아웃</a>
+    </div>
+    <p>안녕하세요, <strong>{{ user.name }}</strong>님 👋</p>
+    <p>이 페이지에서 파트너사의 벡터 데이터를 관리할 수 있습니다.</p>
+
+    <ul style="margin-top: 2rem; padding-left: 1.2rem;">
+      <li><a href="/ui">벡터 DB 뷰어 열기</a></li>
+      <li><a href="/run/SampleMSP">샘플 MSP 벡터 생성 실행</a></li>
+      <li><a href="/ui/delete_company/SampleMSP">샘플 MSP 삭제 실행</a></li>
+    </ul>
+
+    <hr style="margin: 2rem 0;">
+
+    <h2>파트너사 삭제</h2>
+    <p>벡터 DB에서 삭제할 회사를 선택하세요:</p>
+
+    <select id="company-select" style="margin-top: 1rem; padding: 0.5rem; width: 100%;">
+      <option value="" disabled selected>회사 선택</option>
+    </select>
+
+    <button onclick="deleteCompany()" style="margin-top: 1rem; padding: 0.5rem 1rem; background-color: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer;">
+      선택한 회사 삭제
+    </button>
+
+    <p id="result-message" style="margin-top: 1rem; color: green;"></p>
+
+    <hr style="margin: 2rem 0;">
+
+    <h2>파트너사 벡터 재생성</h2>
+    <p>선택한 회사의 벡터를 다시 생성합니다:</p>
+
+    <button onclick="rebuildVector()" style="margin-top: 1rem; padding: 0.5rem 1rem; background-color: #03c75a; color: white; border: none; border-radius: 4px; cursor: pointer;">
+      선택한 회사 벡터 재생성
+    </button>
+
+    <p id="rebuild-message" style="margin-top: 1rem; color: blue;"></p>
+
+    <hr style="margin: 2rem 0;">
+    <h2>최근 벡터 생성 시간</h2>
+    <ul id="log-list" style="padding-left: 1.2rem;"></ul>
+
+    <script>
+      async function fetchCompanies() {
+        try {
+          const res = await fetch("/ui/data");
+          const data = await res.json();
+          const select = document.getElementById("company-select");
+          Object.keys(data).forEach(name => {
+            const option = document.createElement("option");
+            option.value = name;
+            option.textContent = name;
+            select.appendChild(option);
+          });
+        } catch (e) {
+          console.error("회사 목록 불러오기 실패:", e);
+        }
+      }
+
+      async function deleteCompany() {
+        const name = document.getElementById("company-select").value;
+        if (!name) return;
+        try {
+          const res = await fetch(`/ui/delete_company/${name}`, {
+            method: "DELETE"
+          });
+          const result = await res.json();
+          document.getElementById("result-message").textContent = `${name} 삭제됨 (총 ${result.count}개 항목)`;
+        } catch (e) {
+          document.getElementById("result-meYesssage").textContent = "삭제 실패";
+          console.error("삭제 에러:", e);
+        }
+      }
+
+      async function rebuildVector() {
+        const name = document.getElementById("company-select").value;
+        if (!name) return;
+        try {
+          const res = await fetch(`/run/${name}`);
+          if (res.ok) {
+            document.getElementById("rebuild-message").textContent = `${name} 벡터 재생성 완료`;
+          } else {
+            throw new Error();
+          }
+        } catch (e) {
+          document.getElementById("rebuild-message").textContent = "벡터 재생성 실패";
+          console.error("재생성 에러:", e);
+        }
+      }
+
+      async function showTimestamps() {
+        try {
+          const res = await fetch("/ui/data");
+          const data = await res.json();
+          const logList = document.getElementById("log-list");
+          logList.innerHTML = "";
+          for (const name in data) {
+            const li = document.createElement("li");
+            const timestamp = data[name].last_updated || "정보 없음";
+            if(timestamp === "정보 없음") {
+              li.textContent = `${name} → 마지막 벡터 생성: ${timestamp}`;
+            } else {
+              const date = new Date(timestamp);
+              const formatted = date.toLocaleString("ko-KR", {
+                timeZone: "Asia/Seoul",
+                year: "numeric", month: "2-digit", day: "2-digit",
+                hour: "2-digit", minute: "2-digit"
+              });
+              li.textContent = `${name} → 마지막 벡터 생성: ${formatted}`;
+            }
+            logList.appendChild(li);
+          }
+        } catch (e) {
+          console.error("벡터 생성 시간 로딩 실패:", e);
+        }
+      }
+
+      fetchCompanies();
+      showTimestamps();
+    </script>
+  </div>
+</body>
+</html>
