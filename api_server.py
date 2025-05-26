@@ -9,6 +9,7 @@ from fastapi.requests import Request
 import requests
 from vector_writer import run_from_msp_name
 from admin_protected import router as admin_router, manager
+from admin_protected import load_user
 
 import chromadb
 from chromadb import PersistentClient
