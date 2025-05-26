@@ -65,7 +65,7 @@ client = PersistentClient(path=CHROMA_PATH)
 collection = client.get_or_create_collection("msp_chunks")
 
 @app.get("/ui/data")
-def get_filtered_chunks(question: str = None, min_score: int = 0, user=Depends(manager)):
+def get_filtered_chunks(question: str = None, min_score: int = 0):
     # Return flat format for public UI compatibility
     results = collection.get(include=["metadatas"])
     data = []
@@ -85,7 +85,7 @@ def get_filtered_chunks(question: str = None, min_score: int = 0, user=Depends(m
 
 # Flat data endpoint for public UI
 @app.get("/ui/data_flat")
-def get_flat_chunks(question: str = None, min_score: int = 0, user=Depends(manager)):
+def get_flat_chunks(question: str = None, min_score: int = 0):
     results = collection.get(include=["metadatas"])
     data = []
     for meta in results["metadatas"]:
