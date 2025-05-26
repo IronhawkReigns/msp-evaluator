@@ -1,6 +1,7 @@
 <head>
   <title>MSP 검색 도구</title>
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&display=swap');
 
@@ -35,7 +36,7 @@
    font-size: 20px;
    font-weight: 700;
    color: #03c75a;
-   font-family: 'Noto Sans KR', sans-serif;
+   font-family: 'Noto Sans KR', sans-serif !important;
    text-decoration: none;
  }
 
@@ -261,7 +262,7 @@ select,
     }
 
     const results = document.getElementById("results");
-    results.innerHTML = "<p>파트너사 검색 중...</p>";
+    results.innerHTML = '<div class="result-card"><p>파트너사 검색 중...</p></div>';
 
     const res = await fetch("/query/ask", {
       method: "POST",
