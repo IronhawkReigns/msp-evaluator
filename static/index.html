@@ -252,7 +252,7 @@
 <script>
   async function checkAuth() {
     try {
-      const res = await fetch("/ui/delete_company/__auth_test__", { method: "DELETE" });
+      const res = await fetch("/auth/check");
       if (res.status === 401) {
         window.location.href = "/login?next=/";
       }
