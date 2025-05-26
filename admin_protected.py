@@ -49,7 +49,7 @@ async def login(request: Request):
     response = RedirectResponse(url=next_url, status_code=302)
     response.set_cookie(
         key=manager.cookie_name,
-        value=manager._create_identifier(user["name"]),
+        value=manager.create_access_token(data={"sub": user["name"]}),
         httponly=True,
         secure=True,
         samesite="lax"
