@@ -11,9 +11,6 @@ manager.cookie_name = "admin_token"
 manager.cookie_secure = True
 manager.cookie_samesite = "lax"
 
-templates = Jinja2Templates(directory="templates")
-router = APIRouter()
-
 # Simple user data model
 class User(BaseModel):
     name: str
@@ -25,9 +22,13 @@ fake_users = {
 
 @manager.user_loader
 def load_user(username: str):
+    print(f"✅ load_user invoked for: {username}")
     user = fake_users.get(username)
     if user:
         return User(name=user["name"])
+
+templates = Jinja2Templates(directory="templates")
+router = APIRouter()
 
 @router.get("/login")
 def login_page(request: Request):
