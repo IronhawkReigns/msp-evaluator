@@ -101,6 +101,14 @@
         .delete-btn {
             background: #ff4d4f;
             color: white;
+            font-size: 13px;
+            padding: 8px 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: filter 0.2s ease;
+            font-family: 'NanumSquareNeo', sans-serif;
         }
 
         .delete-btn:hover {
@@ -147,7 +155,7 @@
         <option value="4">4+</option>
         <option value="5">5</option>
     </select>
-    <button class="delete-btn" onclick="deleteCompanyPrompt()">Delete Company Data</button>
+    <button class="delete-btn" onclick="deleteCompanyPrompt()" style="margin-bottom: 16px;">파트너사 전체 삭제</button>
     <table border="1">
         <thead>
             <tr>
@@ -198,7 +206,7 @@
 
                 const deleteBtnCell = document.createElement("td");
                 const delBtn = document.createElement("button");
-                delBtn.textContent = "Delete";
+                delBtn.textContent = "삭제";
                 delBtn.className = "delete-btn";
                 delBtn.style.display = "block";
                 delBtn.style.margin = "0 auto";
