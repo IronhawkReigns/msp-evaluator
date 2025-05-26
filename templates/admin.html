@@ -186,6 +186,30 @@
   a:hover {
     color: #027a33;
   }
+
+  #company-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 100%;
+    padding: 18px;
+    font-size: 15px;
+    font-family: 'NanumSquareNeo', sans-serif !important;
+    border-radius: 12px;
+    border: 1px solid #d0d7de;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='%2303c75a' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px 16px;
+    transition: box-shadow 0.3s ease;
+    margin-top: 1rem;
+  }
+
+  #company-select:focus {
+    box-shadow: 0 0 0 3px rgba(3, 199, 90, 0.25);
+    outline: none;
+  }
 </style>
 </head>
 <body>
@@ -206,7 +230,7 @@
     <h2>파트너사 삭제</h2>
     <p>벡터 DB에서 삭제할 회사를 선택하세요:</p>
 
-    <select id="company-select" style="margin-top: 1rem; padding: 0.5rem; width: 100%;">
+    <select id="company-select">
       <option value="" disabled selected>회사 선택</option>
     </select>
 
