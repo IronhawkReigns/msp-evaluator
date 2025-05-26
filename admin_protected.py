@@ -9,11 +9,6 @@ SECRET_KEY = os.getenv("SECRET_KEY", "supersecret")
 manager = LoginManager(SECRET_KEY, token_url="/auth/login", use_cookie=True)
 manager.cookie_name = "admin_token"
 
-# Redirect unauthenticated users to login page with next parameter
-@manager.unauthenticated_handler
-def redirect_to_login(request):
-    return RedirectResponse(url=f"/login?next={request.url.path}")
-
 templates = Jinja2Templates(directory="templates")
 router = APIRouter()
 
