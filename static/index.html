@@ -104,6 +104,20 @@
     <div style="position: absolute; top: 20px; left: 30px; font-family: 'Noto Sans KR', sans-serif; font-size: 20px; font-weight: bold; color: #03c75a;">
         NAVER Cloud
     </div>
+    <div style="position: absolute; top: 20px; right: 30px;">
+        <button onclick="logout()" style="
+            padding: 6px 12px;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 600;
+            background-color: #666;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        ">
+            로그아웃
+        </button>
+    </div>
     <h1>MSP Vector DB 뷰어</h1>
     <input type="text" id="searchInput" placeholder="Search questions..." />
     <select id="minScoreFilter">
@@ -261,6 +275,16 @@
     }
   }
   checkAuth();
+
+  function logout() {
+      fetch("/logout")
+          .then(() => {
+              window.location.href = "/login";
+          })
+          .catch(err => {
+              console.error("Logout failed:", err);
+          });
+  }
 </script>
 </body>
 </html>
