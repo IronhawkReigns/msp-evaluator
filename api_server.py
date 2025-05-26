@@ -193,7 +193,7 @@ async def ask_question(request: Request):
                 {"role": "user", "content": prompt}
             ],
             top_p=0.6,
-            temperature=0.3,
+            temperature=0.2,
             max_tokens=500
         )
         try:
