@@ -216,5 +216,5 @@ def serve_admin_ui(request: Request):
     try:
         user = manager(request)
         return FileResponse("static/admin.html")
-    except:
+    except Exception as e:
         return RedirectResponse(url="/login?next=/admin")
