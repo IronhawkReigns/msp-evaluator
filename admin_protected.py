@@ -15,16 +15,11 @@ manager.cookie_samesite = "lax"
 class User(BaseModel):
     name: str
 
-# Temporary in-memory user store
-fake_users = {
-    "admin": {"name": "admin", "password": "password123"}
-}
-
 @manager.user_loader
 def load_user(username: str):
-    user = fake_users.get(username)
-    if user:
-        return User(name=user["name"])
+    env_username = os.getenv("ADMIN_USERNAME", "admin")
+    if username == env_username:
+        return User(name=username)
 
 manager._user_callback = load_user
 print("✅ user_loader registration:", getattr(manager, "_user_callback", None))
@@ -44,20 +39,19 @@ async def login(request: Request):
     next_url = request.query_params.get("next", "/admin")
 
     print(f"🚨 Login attempt: username={username}, password={password}")
-
-    user = fake_users.get(username)
-    if not user or user["password"] != password:
+    env_username = os.getenv("ADMIN_USERNAME", "admin")
+    env_password = os.getenv("ADMIN_PASSWORD", "password123")
+    if username != env_username or password != env_password:
         raise HTTPException(status_code=400, detail="Invalid credentials")
     
     response = RedirectResponse(url=next_url, status_code=302)
     response.set_cookie(
         key=manager.cookie_name,
-        value=manager.create_access_token(data={"sub": user["name"]}),
+        value=manager.create_access_token(data={"sub": env_username}),
         httponly=True,
         secure=True,
         samesite="lax"
     )
-    # manager.set_cookie(response, user["name"])
     return response
 
 @router.get("/admin")
