@@ -324,6 +324,17 @@
       fetchCompanies();
       showTimestamps();
     </script>
+    <script>
+      function logout() {
+          fetch("/logout")
+              .then(() => {
+                  window.location.href = "/login";
+              })
+              .catch(err => {
+                  console.error("Logout failed:", err);
+              });
+      }
+    </script>
   </div>
 </body>
 </html>
