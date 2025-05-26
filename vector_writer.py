@@ -1,5 +1,6 @@
 import chromadb
 import os
+import datetime
 from dotenv import load_dotenv
 load_dotenv()
 from chromadb import PersistentClient
@@ -79,16 +80,26 @@ def clova_embedding(text: str):
 
     body = json.dumps({ "text": text })
     conn = http.client.HTTPSConnection(host)
-    conn.request("POST", "/testapp/v1/api-tools/embedding/v2/", body, headers)
+    conn.request("POST", "/testapp/v1/api-tools/embedding/v2", body, headers)
     response = conn.getresponse()
-    result = json.loads(response.read().decode("utf-8"))
+    try:
+        result = json.loads(response.read().decode("utf-8"))
+    except Exception as e:
+        print(f"[Embedding API Error] Failed to parse JSON response: {e}")
+        conn.close()
+        return []
     conn.close()
 
-    if result["status"]["code"] == "20000":
-        return result["result"]["embedding"]
+    if isinstance(result, dict) and result.get("status", {}).get("code") == "20000":
+        embedding = result.get("result", {}).get("embedding")
+        if embedding and isinstance(embedding, list):
+            return embedding
+        else:
+            print(f"[Embedding API Error] Unexpected embedding format: {embedding}")
+            return []
     else:
         print(f"[Embedding API Error] {result}")
-        return None
+        return []
 
 def add_msp_data_to_chroma(company_name, company_data, summary):
     documents = []
@@ -122,6 +133,7 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
                 "question": question,
                 "answer": chunk,
                 "score": score,
+                "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 **cleaned_summary
             }
             documents.append(document)
