@@ -218,3 +218,6 @@ def serve_admin_ui(request: Request):
         return FileResponse("static/admin.html")
     except Exception as e:
         return RedirectResponse(url="/login?next=/admin")
+@app.get("/")
+def serve_main_page():
+    return FileResponse("static/main.html")
