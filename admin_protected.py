@@ -22,10 +22,12 @@ fake_users = {
 
 @manager.user_loader
 def load_user(username: str):
-    print(f"✅ load_user invoked for: {username}")
     user = fake_users.get(username)
     if user:
         return User(name=user["name"])
+
+manager._user_callback = load_user
+print("✅ user_loader registration:", getattr(manager, "_user_callback", None))
 
 templates = Jinja2Templates(directory="templates")
 router = APIRouter()
