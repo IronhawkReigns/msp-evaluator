@@ -9,6 +9,11 @@ SECRET_KEY = os.getenv("SECRET_KEY", "supersecret")
 manager = LoginManager(SECRET_KEY, token_url="/auth/login", use_cookie=True)
 manager.cookie_name = "admin_token"
 
+# Redirect unauthenticated users to login page with next parameter
+@manager.unauthenticated_handler
+def redirect_to_login(request):
+    return RedirectResponse(url=f"/login?next={request.url.path}")
+
 templates = Jinja2Templates(directory="templates")
 router = APIRouter()
 
@@ -36,12 +41,13 @@ async def login(request: Request):
     form = await request.form()
     username = form.get("username")
     password = form.get("password")
+    next_url = request.query_params.get("next", "/admin")
 
     user = fake_users.get(username)
     if not user or user["password"] != password:
         raise HTTPException(status_code=400, detail="Invalid credentials")
     
-    response = RedirectResponse(url="/admin", status_code=302)
+    response = RedirectResponse(url=next_url, status_code=302)
     manager.set_cookie(response, user["name"])
     return response
 
