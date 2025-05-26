@@ -1,232 +1,118 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>MSP 검색 도구</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-green: #03c75a;
-            --navy: #1e1e1e;
-            --background: #f4f6f8;
-            --card-bg: #ffffff;
-            --border-color: #dcdfe4;
-        }
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&display=swap');
 
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--background);
-            color: var(--navy);
-        }
+  :root {
+      --primary: #03c75a;
+      --bg-gradient-start: #1b1b3a;
+      --bg-gradient-end: #2e144d;
+      --glass-white: rgba(255, 255, 255, 0.08);
+      --glass-border: rgba(255, 255, 255, 0.2);
+      --text: #fff;
+      --muted: #ccc;
+  }
 
-        .container {
-            max-width: 800px;
-            margin: 60px auto;
-            padding: 40px;
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
+  html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans KR', sans-serif;
+      background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+      color: var(--text);
+      height: 100%;
+  }
 
-        h1 {
-            text-align: center;
-            font-size: 28px;
-            margin-bottom: 24px;
-            color: var(--navy);
-        }
+  body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+  }
 
-        label {
-            font-size: 16px;
-            display: block;
-            margin-bottom: 6px;
-            color: #555;
-        }
+  .container {
+      background: var(--glass-white);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(16px);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 640px;
+      width: 90%;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  }
 
-        select,
-        input[type="text"] {
-            width: 100%;
-            margin-bottom: 20px;
-            padding: 12px 16px;
-            font-size: 16px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            background-color: #fff;
-            transition: box-shadow 0.2s ease, border-color 0.2s ease;
-        }
+  h1 {
+      text-align: center;
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 30px;
+  }
 
-        select:focus,
-        input[type="text"]:focus {
-            outline: none;
-            border-color: var(--primary-green);
-            box-shadow: 0 0 6px rgba(3, 199, 90, 0.3);
-        }
+  label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: var(--muted);
+  }
 
-        #submitBtn {
-            width: 100%;
-            padding: 14px 0;
-            font-size: 16px;
-            font-weight: 600;
-            background-color: var(--primary-green);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
-        }
+  select, input[type="text"] {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--text);
+  }
 
-        #submitBtn:hover {
-            background-color: #02b152;
-            box-shadow: 0 4px 12px rgba(3, 199, 90, 0.2);
-        }
+  select:focus, input[type="text"]:focus {
+      outline: none;
+      border: 1px solid var(--primary);
+      background-color: rgba(255, 255, 255, 0.15);
+  }
 
-        #responseBox {
-            margin-top: 40px;
-            white-space: pre-wrap;
-        }
+  #submitBtn {
+      width: 100%;
+      padding: 14px 0;
+      font-size: 16px;
+      font-weight: 700;
+      background-color: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+  }
 
-        .result-card {
-            background-color: var(--card-bg);
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-            margin-bottom: 20px;
-        }
+  #submitBtn:hover {
+      background-color: #02b152;
+  }
 
-        .result-card p {
-            margin: 6px 0;
-            font-size: 16px;
-            line-height: 1.6;
-        }
+  .result-card {
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+      margin-bottom: 20px;
+  }
 
-        .evidence-btn {
-            margin-top: 12px;
-            padding: 6px 12px;
-            font-size: 14px;
-            cursor: pointer;
-            background-color: #f2f2f2;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            color: #333;
-        }
-    </style>
-</head>
-<body>
-    <div style="position: absolute; top: 20px; left: 20px; font-size: 18px; font-weight: 700; color: var(--primary-green);">
-        NAVER Cloud
-    </div>
-    <div class="container">
-        <h1>MSP 검색 도구</h1>
-        <label for="minScore">최소 점수 선택</label>
-        <select id="minScore">
-            <option value="0">0 이상</option>
-            <option value="1">1 이상</option>
-            <option value="2">2 이상</option>
-            <option value="3">3 이상</option>
-            <option value="4">4 이상</option>
-            <option value="5">5 이상</option>
-        </select>
-        <input type="text" id="queryInput" placeholder="질문을 입력하세요..." />
-        <button id="submitBtn">검색</button>
-        <div id="responseBox">
-            <div id="rankedResults"></div>
-        </div>
-    </div>
+  .result-card p {
+      margin: 6px 0;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text);
+  }
 
-    <script>
-        const queryInput = document.getElementById("queryInput");
-        const submitBtn = document.getElementById("submitBtn");
-        const scoreSelect = document.getElementById("minScore");
-        const list = document.getElementById("rankedResults");
+  .evidence-btn {
+      margin-top: 12px;
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--text);
+  }
 
-        submitBtn.addEventListener("click", () => {
-            const query = queryInput.value.trim();
-            const minScore = scoreSelect.value;
-            if (!query) {
-                list.innerHTML = "<div>질문을 입력해주세요.</div>";
-                return;
-            }
-
-            submitBtn.disabled = true;
-            list.innerHTML = "<div>응답을 불러오는 중입니다...</div>";
-
-            fetch("/query/ask", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ question: query, min_score: parseInt(minScore) })
-            })
-            .then(res => res.json())
-            .then(data => {
-                list.innerHTML = "";
-                // Split answer into blocks (by two or more newlines)
-                const blocks = data.answer
-                  .split(/\n{2,}/)
-                  .map(block => block.trim())
-                  .filter(block => block.length > 0);
-
-                blocks.forEach(block => {
-                    const wrapper = document.createElement("div");
-                    wrapper.className = "result-card";
-
-                    const lines = block.split("\n").filter(line => line.trim());
-                    const mainLines = [];
-                    const evidenceLines = [];
-
-                    let evidenceStarted = false;
-                    lines.forEach(line => {
-                        if (line.includes("근거:") || line.match(/^ *- *Q\d+/)) {
-                            evidenceStarted = true;
-                        }
-                        (evidenceStarted ? evidenceLines : mainLines).push(line);
-                    });
-
-                    mainLines.forEach(line => {
-                        const p = document.createElement("p");
-                        p.textContent = line;
-                        wrapper.appendChild(p);
-                    });
-
-                    if (evidenceLines.length > 0) {
-                        const toggle = document.createElement("button");
-                        toggle.textContent = "근거 보기";
-                        toggle.className = "evidence-btn";
-                        wrapper.appendChild(toggle);
-
-                        const evidenceDiv = document.createElement("div");
-                        evidenceDiv.style.marginTop = "12px";
-                        evidenceDiv.style.display = "none";
-
-                        evidenceLines.forEach(line => {
-                            const p = document.createElement("p");
-                            p.textContent = line;
-                            p.style.margin = "4px 0";
-                            p.style.fontSize = "15px";
-                            p.style.color = "#555";
-                            evidenceDiv.appendChild(p);
-                        });
-
-                        toggle.addEventListener("click", () => {
-                            const isVisible = evidenceDiv.style.display === "block";
-                            evidenceDiv.style.display = isVisible ? "none" : "block";
-                            toggle.textContent = isVisible ? "근거 보기" : "근거 숨기기";
-                        });
-
-                        wrapper.appendChild(evidenceDiv);
-                    }
-
-                    list.appendChild(wrapper);
-                });
-            })
-            .catch(err => {
-                list.innerHTML = `<div>에러 발생: ${err.message}</div>`;
-            })
-            .finally(() => {
-                submitBtn.disabled = false;
-            });
-        });
-    </script>
-</body>
-</html>
+  .evidence-btn:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+  }
+</style>
