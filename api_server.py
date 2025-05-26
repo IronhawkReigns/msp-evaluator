@@ -14,9 +14,9 @@ from admin_protected import router as admin_router, manager
 @manager.user_loader()
 def load_user(username: str):
     from admin_protected import User
-    user = fake_users.get(username)
-    if user:
-        return User(name=user["name"])
+    env_username = os.getenv("ADMIN_USERNAME")
+    if username == env_username:
+        return User(name=username)
 
 import chromadb
 from chromadb import PersistentClient
