@@ -13,7 +13,7 @@ from admin_protected import router as admin_router, manager
 # Register user_loader at import time to avoid "Missing user_loader callback" error
 @manager.user_loader()
 def load_user(username: str):
-    from admin_protected import fake_users, User
+    from admin_protected import User
     user = fake_users.get(username)
     if user:
         return User(name=user["name"])
