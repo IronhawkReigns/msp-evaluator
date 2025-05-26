@@ -5,183 +5,172 @@
   <title>관리자 대시보드</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap');
+  @import url('https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css');
 
-    body {
-      font-family: 'Noto Sans KR', sans-serif;
-      background-color: #f0f2f5;
-      padding: 2rem;
-      margin: 0;
-      color: #222;
-    }
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'NanumSquareNeo', sans-serif;
+    background: linear-gradient(135deg, #e8fef3 0%, #f0fbf6 100%);
+    color: #1e1e1e;
+  }
 
-    .card {
-      background-color: #fff;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-      max-width: 720px;
-      margin: 4rem auto 2rem auto;
-      box-sizing: border-box;
-    }
+  .header {
+    position: absolute;
+    top: 20px;
+    left: 30px;
+    right: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
 
-    .header {
-      position: sticky;
-      top: 0;
-      background-color: #fff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 2rem;
-      border-bottom: 1px solid #e1e4e8;
-      z-index: 10;
-      box-sizing: border-box;
-      margin: 0 -2rem 2rem -2rem;
-    }
+  .header div {
+    font-size: 20px;
+    font-weight: bold;
+    color: #03c75a;
+  }
 
-    h1 {
-      font-size: 1.8rem;
-      color: #03c75a;
-      margin: 0;
-      font-weight: 700;
-    }
+  a.logout {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    background-color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    text-decoration: none;
+  }
 
-    a.logout {
-      font-size: 0.9rem;
-      color: #03c75a;
-      text-decoration: none;
-      font-weight: 600;
-      transition: color 0.3s ease;
-      padding: 0.4rem 0.8rem;
-      border-radius: 6px;
-      border: 1.5px solid transparent;
-      background-color: transparent;
-    }
+  a.logout:hover {
+    background-color: #03c75a;
+    color: white;
+  }
 
-    a.logout:hover {
-      color: #027a33;
-      border-color: #027a33;
-      background-color: #e6f4e9;
-    }
+  .card {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    max-width: 720px;
+    margin: 120px auto 2rem auto;
+    box-sizing: border-box;
+  }
 
-    ul {
-      padding-left: 1.5rem;
-      margin-bottom: 2rem;
-      border-bottom: 1px solid #e1e4e8;
-      padding-bottom: 1.5rem;
-    }
+  h1 {
+    font-size: 30px;
+    color: #018d6c;
+    margin: 0 0 24px 0;
+    font-weight: 900;
+    text-align: center;
+  }
 
-    ul li {
-      margin-bottom: 0.6rem;
-    }
+  h2 {
+    margin-top: 2.5rem;
+    margin-bottom: 0.8rem;
+    color: #222;
+    font-weight: 700;
+    border-bottom: 1px solid #e1e4e8;
+    padding-bottom: 0.3rem;
+  }
 
-    a {
-      color: #03c75a;
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.3s ease;
-    }
+  p#result-message,
+  p#rebuild-message {
+    margin-top: 0.8rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
 
-    a:hover {
-      text-decoration: underline;
-      color: #027a33;
-    }
+  p#result-message {
+    color: #03c75a;
+  }
 
-    select,
-    button {
-      font-size: 1rem;
-      padding: 0.6rem 1rem;
-      margin-top: 1rem;
-      border-radius: 12px;
-      border: none;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-      background-color: #fff;
-      transition: box-shadow 0.3s ease, background-color 0.3s ease;
-      outline: none;
-      min-width: 180px;
-      box-sizing: border-box;
-    }
+  p#rebuild-message {
+    color: #027a33;
+  }
 
-    select:hover,
-    select:focus {
-      box-shadow: 0 4px 10px rgba(3, 199, 90, 0.3);
-      background-color: #f9fff9;
-      cursor: pointer;
-    }
+  select,
+  button {
+    font-size: 15px;
+    font-family: 'NanumSquareNeo', sans-serif;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    transition: box-shadow 0.3s ease, background-color 0.3s ease;
+    outline: none;
+    margin-top: 1rem;
+    width: 100%;
+  }
 
-    button {
-      cursor: pointer;
-      font-weight: 600;
-      color: #fff;
-      background-color: #03c75a;
-      border-radius: 24px;
-      box-shadow: 0 4px 12px rgba(3, 199, 90, 0.4);
-      transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease;
-      border: none;
-      min-width: 200px;
-      display: inline-block;
-    }
+  select:hover,
+  select:focus,
+  button:hover,
+  button:focus {
+    box-shadow: 0 0 0 3px rgba(3, 199, 90, 0.25);
+    background-color: #f9fff9;
+    cursor: pointer;
+  }
 
-    button:hover {
-      background-color: #029c3b;
-      box-shadow: 0 6px 16px rgba(2, 156, 59, 0.6);
-      transform: translateY(-2px);
-    }
+  button {
+    font-weight: 600;
+    color: white;
+    background-color: #03c75a;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(3, 199, 90, 0.4);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease;
+    min-width: 200px;
+  }
 
-    button:active {
-      transform: translateY(0);
-      box-shadow: 0 3px 8px rgba(2, 156, 59, 0.4);
-    }
+  button:hover {
+    background-color: #029c3b;
+    transform: translateY(-2px);
+  }
 
-    button.delete {
-      background-color: #e74c3c;
-      box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
-    }
+  button:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 8px rgba(2, 156, 59, 0.4);
+  }
 
-    button.delete:hover {
-      background-color: #c0392b;
-      box-shadow: 0 6px 16px rgba(192, 57, 43, 0.6);
-    }
+  button.delete {
+    background-color: #e74c3c;
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+  }
 
-    button.delete:active {
-      box-shadow: 0 3px 8px rgba(192, 57, 43, 0.4);
-    }
+  button.delete:hover {
+    background-color: #c0392b;
+  }
 
-    button.rebuild {
-      background-color: #03c75a;
-      box-shadow: 0 4px 12px rgba(3, 199, 90, 0.4);
-    }
+  hr {
+    border: none;
+    border-bottom: 1px solid #e1e4e8;
+    margin: 2rem 0;
+  }
 
-    h2 {
-      margin-top: 2.5rem;
-      margin-bottom: 0.8rem;
-      color: #222;
-      font-weight: 700;
-      border-bottom: 1px solid #e1e4e8;
-      padding-bottom: 0.3rem;
-    }
+  ul {
+    padding-left: 1.5rem;
+    margin-bottom: 2rem;
+  }
 
-    p#result-message,
-    p#rebuild-message {
-      margin-top: 0.8rem;
-      font-weight: 600;
-      line-height: 1.4;
-    }
+  ul li {
+    margin-bottom: 0.6rem;
+  }
 
-    p#result-message {
-      color: #03c75a;
-    }
+  a {
+    color: #03c75a;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+  }
 
-    p#rebuild-message {
-      color: #027a33;
-    }
-
-    hr {
-      border: none;
-      border-bottom: 1px solid #e1e4e8;
-      margin: 2rem 0;
-    }
-  </style>
+  a:hover {
+    color: #027a33;
+  }
+</style>
 </head>
 <body>
     <div class="header">
