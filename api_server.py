@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.requests import Request
 import requests
 from vector_writer import run_from_msp_name
-from admin_protected import router as admin_router
+from admin_protected import router as admin_router, manager
 
 import chromadb
 from chromadb import PersistentClient
@@ -35,7 +35,6 @@ def run_msp_vector_pipeline(msp_name: str):
 # Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-from admin_protected import manager
 
 @app.get("/ui")
 def serve_ui(user=Depends(manager)):
