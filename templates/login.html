@@ -47,5 +47,11 @@
     <input type="password" name="password" placeholder="비밀번호" required>
     <button type="submit">로그인</button>
   </form>
+<script>
+  const next = new URLSearchParams(window.location.search).get("next") || "/admin";
+  setTimeout(() => {
+    window.location.href = next;
+  }, 100);
+</script>
 </body>
 </html>
