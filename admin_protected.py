@@ -78,3 +78,9 @@ def delete_entry(entry_id: str, user=Depends(manager)):
 @router.get("/auth/check")
 def check_auth(user=Depends(manager)):
     return {"status": "ok"}
+
+
+# Debug route to show current authenticated user
+@router.get("/whoami")
+def whoami(user=Depends(manager)):
+    return {"user": user.name}
