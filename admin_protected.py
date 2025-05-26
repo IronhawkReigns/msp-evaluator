@@ -70,3 +70,7 @@ def delete_entry(entry_id: str, user=Depends(manager)):
     from api_server import collection
     collection.delete(ids=[entry_id])
     return {"status": "success"}
+
+@router.get("/auth/check")
+def check_auth(user=Depends(manager)):
+    return {"status": "ok"}
