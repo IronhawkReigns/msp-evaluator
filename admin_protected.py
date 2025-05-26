@@ -38,6 +38,8 @@ async def login(request: Request):
     password = form.get("password")
     next_url = request.query_params.get("next", "/admin")
 
+    print(f"🚨 Login attempt: username={username}, password={password}")
+
     user = fake_users.get(username)
     if not user or user["password"] != password:
         raise HTTPException(status_code=400, detail="Invalid credentials")
