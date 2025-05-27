@@ -1,4 +1,11 @@
-from msp_core import run_msp_recommendation, run_msp_information_summary, run_msp_information_summary_claude, extract_msp_name
+from msp_core import (
+    run_msp_recommendation,
+    run_msp_information_summary,
+    run_msp_information_summary_claude,
+    extract_msp_name,
+    query_embed,
+    collection,
+)
 from clova_router import Executor
 from pydantic import BaseModel
 from difflib import get_close_matches
@@ -33,9 +40,6 @@ app.include_router(admin_router)
 print("📦 admin router included")
 
 
-def query_embed(text: str):
-    from vector_writer import clova_embedding
-    return clova_embedding(text)
 
 @app.post("/run/{msp_name}")
 def run_msp_vector_pipeline(msp_name: str):
