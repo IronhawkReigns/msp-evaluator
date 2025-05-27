@@ -1,3 +1,7 @@
+from clova_router import Executor
+class RouterQuery(BaseModel):
+    query: str
+    chat_history: list[dict] = []
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -102,19 +106,12 @@ def get_flat_chunks(question: str = None, min_score: int = 0):
             })
     return JSONResponse(content=data)
 
-# Query/Ask endpoint
-@app.post("/query/ask")
-async def ask_question(request: Request):
+def run_msp_recommendation(question: str, min_score: int):
     from collections import defaultdict
-
-    body = await request.json()
-    question = body.get("question")
-    min_score = int(body.get("min_score", 0))
-    if not question:
-        raise HTTPException(status_code=400, detail="Missing question")
-
-    # Retrieve top 3 relevant chunks from ChromaDB
     import traceback
+    from openai import OpenAI
+    import json
+
     try:
         query_vector = query_embed(question)
         query_results = collection.query(
@@ -141,26 +138,21 @@ async def ask_question(request: Request):
         prompt = (
             f"{context}\n\n"
             f"위의 Q&A 정보만을 바탕으로 '{question}'에 가장 잘 부합하는 상위 2개 회사를 선정해 주세요.\n\n"
-            
             f"[주의사항]\n"
-            f"- 질문이 MSP 평가 기준과 관련이 없는 경우, '해당 질문은 본 도구의 평가 범위를 벗어납니다.' 라고 답변하세요.\n"
             f"- 추론 금지: 주어진 정보에 명확히 나타나지 않은 내용은 절대 추정하거나 일반적인 기대를 바탕으로 판단하지 마세요.\n"
             f"- 정보 부족 시 해당 회사를 제외하고, 명확한 연결고리가 있는 경우에만 선정하세요.\n"
             f"- score는 질문과의 관련성을 나타내는 보조 지표일 뿐이며, 반드시 높은 점수가 직접적인 답변을 의미하지는 않습니다.\n"
             f"- 맞춤법과 문법에 유의하여 오타 없이 작성할 것\n\n"
-
             f"[평가 기준]\n"
             f"1. 질문에 명시적으로 답하고 있는가?\n"
             f"2. 관련 핵심 키워드가 포함되어 있는가?\n"
             f"3. 구체적인 수치, 사례, 근거가 있는가?\n"
             f"4. 점수는 보조적으로만 사용하고, 응답 내용의 명확성을 중심으로 평가할 것\n"
             f"   예: 'UI/UX' 관련 질문의 경우 '사용 편의성', '인터페이스', '접근성', '직관성' 등 키워드 포함 여부 확인\n\n"
-
             f"[제외 기준]\n"
             f"- 보안, 성능, 데이터 처리 등 유사 개념은 질문에 직접적으로 답하지 않는 한 제외\n"
             f"- 추측, 기대 기반 해석, 점수만을 근거로 한 선정은 금지\n"
             f"- DB에 존재하지 않는 기업을 선정하는 것은 절대 금지\n\n"
-
             f"[응답 형식]\n"
             f"- 각 회사명을 **굵게** 표시하고, 각 회사를 별도의 단락으로 구성하세요.\n"
             f"- 최종 응답 전 회사명이 msp_name이 맞는지 확실히 확인 후 응답해 주세요.\n"
@@ -174,18 +166,14 @@ async def ask_question(request: Request):
             f"- 관련 키워드 부재, 질문에 대한 직접적 답변 없음 등 명확한 근거가 있는 경우에만 간단히 언급"
         )
     except Exception as e:
-        print("=== Vector search failed ===")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
 
-    # Call HyperCLOVA API (new style using OpenAI client)
-    from openai import OpenAI
     CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
     API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
     client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
     model = "HCX-005"
 
-    import json
     try:
         clova_response = client.chat.completions.create(
             model=model,
@@ -197,22 +185,109 @@ async def ask_question(request: Request):
             temperature=0.3,
             max_tokens=500
         )
-        try:
-            if not clova_response.choices or not clova_response.choices[0].message.content:
-                print("CLOVA 응답 없음 또는 content 필드 비어 있음")
-                answer = ""
-            else:
-                answer = clova_response.choices[0].message.content.strip()
-            answer = answer.replace("설루션", "솔루션")
-            # Debug
-            print("==== CLOVA RAW RESPONSE ====")
-            print(json.dumps(clova_response.model_dump(), indent=2, ensure_ascii=False))
-            return {"answer": answer or "", "raw": clova_response.model_dump()}
-        except Exception as e:
-            print("CLOVA 응답 처리 중 예외:", str(e))
-            raise HTTPException(status_code=500, detail=f"응답 처리 실패: {str(e)}")
+        if not clova_response.choices or not clova_response.choices[0].message.content:
+            answer = ""
+        else:
+            answer = clova_response.choices[0].message.content.strip()
+        answer = answer.replace("설루션", "솔루션")
+        return {"answer": answer, "raw": clova_response.model_dump()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"HyperCLOVA error: {str(e)}")
+
+
+# Information summary function (for Information domain)
+def run_msp_information_summary(question: str):
+    import traceback
+    from openai import OpenAI
+    import json
+
+    try:
+        query_vector = query_embed(question)
+        query_results = collection.query(
+            query_embeddings=[query_vector],
+            n_results=8
+        )
+
+        if not query_results["metadatas"] or not query_results["metadatas"][0]:
+            return {"answer": "관련된 정보를 찾을 수 없습니다."}
+
+        chunks = query_results["metadatas"][0]
+        answer_blocks = []
+        for chunk in chunks:
+            if not chunk.get("answer") or not chunk.get("question"):
+                continue
+            answer_blocks.append(f"Q: {chunk['question']}\nA: {chunk['answer']}")
+
+        context = "\n\n".join(answer_blocks)
+        prompt = (
+            f"다음은 MSP 파트너사 관련 인터뷰 Q&A 모음입니다. 아래 내용을 바탕으로 사용자 질문에 대해 응답해 주세요.\n"
+            f"사용자 질문: \"{question}\"\n\n"
+            f"{context}\n\n"
+            f"[응답 지침]\n"
+            f"- 실제 Q&A에 기반해 요약하거나 종합적으로 정리해 주세요.\n"
+            f"- 없는 정보를 추론하거나 꾸며내지 마세요.\n"
+            f"- 가능한 한 간결하면서도 신뢰도 있는 표현으로 작성해 주세요.\n"
+        )
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
+
+    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
+    API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
+    client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
+    model = "HCX-005"
+
+    try:
+        clova_response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "정확한 정보에 기반한 자연스러운 응답을 해주세요. 오탈자 없이 명확하고 일관된 문장으로 작성해 주세요."},
+                {"role": "user", "content": prompt}
+            ],
+            top_p=0.6,
+            temperature=0.3,
+            max_tokens=500
+        )
+        if not clova_response.choices or not clova_response.choices[0].message.content:
+            answer = ""
+        else:
+            answer = clova_response.choices[0].message.content.strip()
+        answer = answer.replace("설루션", "솔루션")
+        return {"answer": answer, "raw": clova_response.model_dump()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"HyperCLOVA error: {str(e)}")
+
+# Query/Ask endpoint
+@app.post("/query/ask")
+async def ask_question(request: Request):
+    body = await request.json()
+    question = body.get("question")
+    min_score = int(body.get("min_score", 0))
+    if not question:
+        raise HTTPException(status_code=400, detail="Missing question")
+
+    return run_msp_recommendation(question, min_score)
+
+# Router endpoint
+@app.post("/query/router")
+async def query_router(data: RouterQuery):
+    executor = Executor()
+    request_data = {
+        "query": data.query,
+        "chatHistory": data.chat_history
+    }
+    result = executor.execute(request_data)
+    # Analyze router result and route accordingly
+    domain_result = result.get("domain", {}).get("result")
+    if domain_result == "Recommend":
+        return run_msp_recommendation(data.query, min_score=0)
+    elif domain_result == "Information":
+        return run_msp_information_summary(data.query)
+    elif domain_result == "Unrelated":
+        return {"answer": "본 시스템은 MSP 평가 도구입니다. 해당 질문은 지원하지 않습니다. 다른 질문을 입력해 주세요."}
+    else:
+        return {"answer": "도메인 분류에 실패했습니다. 다시 시도해 주세요."}
+
 # Add protected /admin route using same login logic as /ui
 @app.get("/admin")
 def serve_admin_ui(request: Request):
@@ -221,6 +296,7 @@ def serve_admin_ui(request: Request):
         return FileResponse("static/admin.html")
     except Exception as e:
         return RedirectResponse(url="/login?next=/admin")
+    
 @app.get("/")
 def serve_main_page():
     return FileResponse("static/main.html")
