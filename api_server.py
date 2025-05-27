@@ -49,16 +49,20 @@ def extract_msp_name(question: str) -> str:
     model = "HCX-005"
 
     prompt = (
-        f"다음 사용자 질문에서 클라우드 MSP 파트너사의 이름만 정확히 추출해 주세요.\n"
-        f"질문: \"{question}\"\n"
-        f"[응답 형식]\n<회사명>"
+        f"다음 질문에서 실제 클라우드 MSP 파트너사의 이름만 정확하게 추출하세요. 문장 전체를 출력하지 말고, 회사명만 출력하세요.\n"
+        f"[예시]\n"
+        f"질문: 'ITCEN CLOIT에 대해 알려줘'\n응답: ITCEN CLOIT\n"
+        f"질문: 'Lomin의 AI 역량은?'\n응답: Lomin\n"
+        f"질문: '베스핀글로벌의 MLOps 사례는?'\n응답: 베스핀글로벌\n"
+        f"질문: '{question}'\n"
+        f"응답:"
     )
 
     try:
         clova_response = client.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": "정확한 회사명을 추출해 주세요. 다른 불필요한 말은 하지 마세요."},
+                {"role": "system", "content": "질문에서 클라우드 MSP 회사 이름만 정확하게 추출해 주세요. 문장은 절대 작성하지 말고, 회사명만 단독으로 출력하세요. 예: 베스핀글로벌"},
                 {"role": "user", "content": prompt}
             ],
             top_p=0.6,
@@ -67,7 +71,7 @@ def extract_msp_name(question: str) -> str:
         )
         raw = clova_response.choices[0].message.content.strip()
         print(f"🔍 Extracted raw MSP name: {raw}")
-        return raw.strip("<>").strip()
+        return raw
     except Exception as e:
         print(f"❌ Error extracting MSP name: {e}")
         return ""
