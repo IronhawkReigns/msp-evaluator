@@ -1,5 +1,3 @@
-
-
 # -*- coding: utf-8 -*-
 import base64
 import json
@@ -17,7 +15,7 @@ class Executor:
     def _send_request(self, request):
         headers = {
             'Content-Type': 'application/json; charset=utf-8',
-            'Authorization': self._api_key,
+            'Authorization': f'Bearer {self._api_key}',
             'X-NCP-CLOVASTUDIO-REQUEST-ID': self._request_id,
         }
 
