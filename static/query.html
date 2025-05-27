@@ -306,6 +306,25 @@ input:checked + .slider:before {
     visibility: visible;
     opacity: 1;
   }
+
+  .evidence-card {
+    margin-bottom: 12px;
+    padding: 16px;
+    border-radius: 10px;
+    border-left: 4px solid #03c75a;
+    background: #ffffff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
+  }
+
+  .evidence-card strong {
+    display: block;
+    color: #555;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
 </style>
 
 <body>
@@ -406,7 +425,7 @@ input:checked + .slider:before {
       if (data.evidence && data.evidence.length > 0) {
         const evidenceBtn = document.createElement("button");
         evidenceBtn.className = "evidence-btn";
-        evidenceBtn.textContent = "🔍 Why this answer?";
+        evidenceBtn.textContent = "🔍 왜 이 답변인가요?";
         let visible = false;
         const evidenceList = document.createElement("div");
         evidenceList.style.marginTop = "10px";
@@ -414,19 +433,15 @@ input:checked + .slider:before {
 
         data.evidence.forEach(ev => {
           const evBlock = document.createElement("div");
-          evBlock.innerHTML = `<strong>Q:</strong> ${ev.question}<br/><strong>A:</strong> ${ev.answer}<br/><strong>Score:</strong> ${ev.score}`;
-          evBlock.style.marginBottom = "12px";
-          evBlock.style.padding = "10px";
-          evBlock.style.border = "1px solid #e0e0e0";
-          evBlock.style.borderRadius = "6px";
-          evBlock.style.background = "#f9f9f9";
+          evBlock.className = "evidence-card";
+          evBlock.innerHTML = `<strong>Q:</strong> ${ev.question}<strong>A:</strong> ${ev.answer}<strong>Score:</strong> ${ev.score}`;
           evidenceList.appendChild(evBlock);
         });
 
         evidenceBtn.onclick = () => {
           visible = !visible;
           evidenceList.style.display = visible ? "block" : "none";
-          evidenceBtn.textContent = visible ? "🙈 Hide evidence" : "🔍 Why this answer?";
+          evidenceBtn.textContent = visible ? "근거 숨기기" : "답변 근거 데이터";
         };
 
         results.appendChild(evidenceBtn);
