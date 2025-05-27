@@ -158,6 +158,7 @@ input[type="text"] {
   border: 1px solid #d0d7de;
   transition: border 0.3s, box-shadow 0.3s;
   background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 select:focus, input[type="text"]:focus {
@@ -198,6 +199,7 @@ select:focus, input[type="text"]:focus {
   margin-bottom: 16px;
   font-size: 15px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
 }
 
 .result-card p {
@@ -299,12 +301,13 @@ input:checked + .slider:before {
           <input type="checkbox" id="advancedSearch">
           <span class="slider round"></span>
         </label>
-        <span style="font-size: 14px; font-weight: 600; color: var(--muted);">고급 검색 (Web 기반)</span>
+        <span title="Perplexity 기반 웹 검색을 사용합니다." style="font-size: 14px; font-weight: 600; color: var(--muted); cursor: help;">고급 검색 (Web 기반)</span>
       </div>
       <button id="submitBtn">검색</button>
       <p style="font-size: 13px; color: #777; margin-top: 8px;">
         ⚠️ 주의사항: 본 서비스는 AI 기반으로 제공되며, 간헐적으로 부정확한 응답이 포함될 수 있습니다. 이 경우 다시 검색을 권장합니다.
       </p>
+      <h2 id="resultTitle" style="font-size: 18px; font-weight: 700; margin-top: 30px; color: #03c75a; display: none;">🔎 검색 결과</h2>
       <div id="advanced-badge" style="display: none;">
         <span style="background-color: #e9f8f0; color: #03c75a; font-size: 13px; font-weight: bold; padding: 6px 12px; border-radius: 20px; display: inline-block; margin-top: 12px; border: 1px solid #03c75a;">
           🌐 고급 검색 결과
@@ -342,6 +345,9 @@ input:checked + .slider:before {
 
     const data = await res.json();
     results.innerHTML = "";
+
+    const resultTitle = document.getElementById("resultTitle");
+    resultTitle.style.display = "block";
 
     const badge = document.getElementById("advanced-badge");
     if (badge) {
