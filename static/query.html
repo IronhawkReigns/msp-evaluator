@@ -307,13 +307,13 @@ input:checked + .slider:before {
     opacity: 1;
   }
 
+  /* Updated evidence-card style to match .evidence-btn background and border */
   .evidence-card {
-    margin-bottom: 12px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
     padding: 16px;
     border-radius: 10px;
-    border-left: 4px solid #03c75a;
-    background: #ffffff;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+    margin-bottom: 12px;
     font-size: 14px;
     line-height: 1.6;
     color: #333;
@@ -456,17 +456,17 @@ input:checked + .slider:before {
   document.querySelectorAll(".sample-btn").forEach(btn => {
     btn.style.padding = "8px 12px";
     btn.style.fontSize = "13px";
-    btn.style.border = "1px solid #ccc";
+    btn.style.border = "1px solid #ddd";
     btn.style.borderRadius = "8px";
-    btn.style.background = "#fff";
+    btn.style.backgroundColor = "#f0f0f0";
     btn.style.cursor = "pointer";
     btn.style.transition = "background 0.2s";
 
     btn.addEventListener("mouseover", () => {
-      btn.style.background = "#f0f0f0";
+      btn.style.backgroundColor = "#e0e0e0";
     });
     btn.addEventListener("mouseout", () => {
-      btn.style.background = "#fff";
+      btn.style.backgroundColor = "#f0f0f0";
     });
 
     btn.addEventListener("click", () => {
