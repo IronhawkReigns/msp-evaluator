@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from clova_router import Executor
+from difflib import get_close_matches
 class RouterQuery(BaseModel):
     query: str
     chat_history: list[dict] = []
@@ -144,7 +145,6 @@ def run_msp_recommendation(question: str, min_score: int):
     import traceback
     from openai import OpenAI
     import json
-    from difflib import get_close_matches
 
     try:
         query_vector = query_embed(question)
