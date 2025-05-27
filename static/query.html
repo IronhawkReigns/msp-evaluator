@@ -403,6 +403,35 @@ input:checked + .slider:before {
       card.className = "result-card";
       card.innerHTML = `<p>${data.answer.replace(/\n/g, "<br/>")}</p>`;
       results.appendChild(card);
+      if (data.evidence && data.evidence.length > 0) {
+        const evidenceBtn = document.createElement("button");
+        evidenceBtn.className = "evidence-btn";
+        evidenceBtn.textContent = "🔍 Why this answer?";
+        let visible = false;
+        const evidenceList = document.createElement("div");
+        evidenceList.style.marginTop = "10px";
+        evidenceList.style.display = "none";
+
+        data.evidence.forEach(ev => {
+          const evBlock = document.createElement("div");
+          evBlock.innerHTML = `<strong>Q:</strong> ${ev.question}<br/><strong>A:</strong> ${ev.answer}<br/><strong>Score:</strong> ${ev.score}`;
+          evBlock.style.marginBottom = "12px";
+          evBlock.style.padding = "10px";
+          evBlock.style.border = "1px solid #e0e0e0";
+          evBlock.style.borderRadius = "6px";
+          evBlock.style.background = "#f9f9f9";
+          evidenceList.appendChild(evBlock);
+        });
+
+        evidenceBtn.onclick = () => {
+          visible = !visible;
+          evidenceList.style.display = visible ? "block" : "none";
+          evidenceBtn.textContent = visible ? "🙈 Hide evidence" : "🔍 Why this answer?";
+        };
+
+        results.appendChild(evidenceBtn);
+        results.appendChild(evidenceList);
+      }
     } else {
       results.innerHTML = "<p>결과를 찾을 수 없습니다.</p>";
     }
