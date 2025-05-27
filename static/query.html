@@ -326,7 +326,10 @@ input:checked + .slider:before {
         <option value="5">5점만</option>
       </select>
       <input type="text" id="questionInput" placeholder="예: 금융 회사와의 프로젝트에 어울리는 보안이 강점인 파트너사 추천해줘 / 메가존 주력 솔루션 알려줘" />
-      <div id="sample-questions" style="margin-bottom: 20px;">
+      <button id="toggle-sample-btn" style="margin-bottom: 10px; font-size: 14px; padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer;">
+        예시 질문 보기 ▼
+      </button>
+      <div id="sample-questions" style="margin-bottom: 20px; display: none;">
         <p style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 6px;">예시 질문:</p>
         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
           <button class="sample-btn">ITCEN CLOIT의 AI 전문 인력 구성은?</button>
@@ -426,5 +429,15 @@ input:checked + .slider:before {
       document.getElementById("questionInput").value = btn.textContent;
       document.getElementById("submitBtn").click();
     });
+  });
+</script>
+<script>
+  const toggleSampleBtn = document.getElementById("toggle-sample-btn");
+  const sampleQuestionsDiv = document.getElementById("sample-questions");
+
+  toggleSampleBtn.addEventListener("click", () => {
+    const isVisible = sampleQuestionsDiv.style.display === "block";
+    sampleQuestionsDiv.style.display = isVisible ? "none" : "block";
+    toggleSampleBtn.innerText = isVisible ? "예시 질문 보기 ▼" : "예시 질문 닫기 ▲";
   });
 </script>
