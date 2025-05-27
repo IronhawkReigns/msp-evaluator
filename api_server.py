@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException, Depends, Request
 class RouterQuery(BaseModel):
     query: str
     chat_history: list = []
+    advanced: bool = False  # NEW
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 import requests
