@@ -360,7 +360,7 @@ def run_msp_information_summary_claude(question: str):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "claude-3-sonnet",
+                "model": "sonar",
                 "messages": [
                     {"role": "system", "content": "정확하고 신뢰할 수 있는 정보를 간결한 한국어로 제공하세요."},
                     {"role": "user", "content": prompt}
