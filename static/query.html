@@ -326,9 +326,6 @@ input:checked + .slider:before {
         <option value="5">5점만</option>
       </select>
       <input type="text" id="questionInput" placeholder="예: 금융 회사와의 프로젝트에 어울리는 보안이 강점인 파트너사 추천해줘 / 메가존 주력 솔루션 알려줘" />
-      <button id="toggle-sample-btn" style="margin-bottom: 10px; font-size: 14px; padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer;">
-        예시 질문 보기 ▼
-      </button>
       <div id="sample-questions" style="margin-bottom: 20px; display: none;">
         <p style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 6px;">예시 질문:</p>
         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
@@ -346,6 +343,9 @@ input:checked + .slider:before {
           고급 검색 (Web 기반)
           <span class="tooltip-text">Perplexity 기반 웹 검색을 사용합니다. 더 깊이 있는 검색 결과가 제공됩니다.</span>
         </span>
+        <button id="toggle-sample-btn" style="font-size: 13px; padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; margin-left: auto;">
+          예시 질문 보기 ▼
+        </button>
       </div>
       <button id="submitBtn">검색</button>
       <p style="font-size: 13px; color: #777; margin-top: 8px;">
