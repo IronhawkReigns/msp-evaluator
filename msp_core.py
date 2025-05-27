@@ -1,300 +1,487 @@
-from fastapi import HTTPException
-from typing import Any
-import requests
-import json
-import uuid
-from difflib import get_close_matches
-from vector_writer import clova_embedding
-import os
-import chromadb
-from chromadb import PersistentClient
+<head>
+  <title>MSP 검색 도구</title>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&display=swap');
 
-# Embedding and collection setup
-def query_embed(text: str):
-    return clova_embedding(text)
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 
-CHROMA_PATH = os.path.abspath("chroma_store")
-client = PersistentClient(path=CHROMA_PATH)
-collection = client.get_or_create_collection("msp_chunks")
+ .header {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   width: calc(100% - 56px);
+   position: absolute;
+   top: 20px;
+   left: 28px;
+   right: 28px;
+   background: none;
+   box-shadow: none;
+   padding: 0;
+ }
 
-def run_msp_recommendation(question: str, min_score: int):
-    from collections import defaultdict
-    import traceback
-    from openai import OpenAI
-    import json
+.admin-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  font-family: 'Noto Sans KR', sans-serif;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
 
-    try:
-        query_vector = query_embed(question)
-        query_results = collection.query(
-            query_embeddings=[query_vector],
-            n_results=10
-        )
-        grouped_chunks = defaultdict(list)
-        for meta in query_results["metadatas"][0]:
-            if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
-                continue
-            if meta["score"] is not None and int(meta["score"]) >= min_score:
-                grouped_chunks[meta["msp_name"]].append(
-                    f"Q: {meta['question']}\nA: {meta['answer']} (score: {meta['score']})"
-                )
+.admin-link:hover {
+  color: #03c75a;
+}
 
-        if not grouped_chunks:
-            return {"answer": "해당 조건에 맞는 평가 데이터를 찾을 수 없습니다."}
+ .header-title {
+   font-size: 20px;
+   font-weight: 700;
+   color: #03c75a;
+   font-family: 'Noto Sans KR', sans-serif !important;
+   text-decoration: none;
+ }
 
-        context_blocks = []
-        for msp, qa_list in grouped_chunks.items():
-            context_blocks.append(f"[{msp}]\n" + "\n".join(qa_list))
+ .header-title:hover {
+   text-decoration: none;
+   cursor: pointer;
+ }
 
-        context = "\n\n".join(context_blocks)
-        prompt = (
-            f"{context}\n\n"
-            f"위의 Q&A 정보만을 바탕으로 '{question}'에 가장 잘 부합하는 상위 2개 회사를 선정해 주세요.\n\n"
-            f"[주의사항]\n"
-            f"- 추론 금지: 주어진 정보에 명확히 나타나지 않은 내용은 절대 추정하거나 일반적인 기대를 바탕으로 판단하지 마세요.\n"
-            f"- 정보 부족 시 해당 회사를 제외하고, 명확한 연결고리가 있는 경우에만 선정하세요.\n"
-            f"- score는 질문과의 관련성을 나타내는 보조 지표일 뿐이며, 반드시 높은 점수가 직접적인 답변을 의미하지는 않습니다.\n"
-            f"- 맞춤법과 문법에 유의하여 오타 없이 작성할 것\n\n"
-            f"[평가 기준]\n"
-            f"1. 질문에 명시적으로 답하고 있는가?\n"
-            f"2. 관련 핵심 키워드가 포함되어 있는가?\n"
-            f"3. 구체적인 수치, 사례, 근거가 있는가?\n"
-            f"4. 점수는 보조적으로만 사용하고, 응답 내용의 명확성을 중심으로 평가할 것\n"
-            f"   예: 'UI/UX' 관련 질문의 경우 '사용 편의성', '인터페이스', '접근성', '직관성' 등 키워드 포함 여부 확인\n\n"
-            f"[제외 기준]\n"
-            f"- 보안, 성능, 데이터 처리 등 유사 개념은 질문에 직접적으로 답하지 않는 한 제외\n"
-            f"- 추측, 기대 기반 해석, 점수만을 근거로 한 선정은 금지\n"
-            f"- DB에 존재하지 않는 기업을 선정하는 것은 절대 금지\n\n"
-            f"[응답 형식]\n"
-            f"- 각 회사명을 **굵게** 표시하고, 각 회사를 별도의 단락으로 구성하세요.\n"
-            f"- 최종 응답 전 회사명이 msp_name이 맞는지 확실히 확인 후 응답해 주세요.\n"
-            f"- 선정 이유는 간결하고 명확하게 1~2문장으로 기술하세요.\n\n"
-            f"예시:\n"
-            f"**A 회사**\n"
-            f"- 선정 이유: AI 전문 인력 비율이 높고, 해당 질문에 대해 구체적인 수치와 프로젝트 사례를 언급하며 5점을 받음\n\n"
-            f"**B 회사**\n"
-            f"- 선정 이유: OCR 기술 관련 경험을 보유하고 있으며, 해당 질문에 명확히 응답하고 4점을 기록함\n\n"
-            f"**기타 회사**\n"
-            f"- 관련 키워드 부재, 질문에 대한 직접적 답변 없음 등 명확한 근거가 있는 경우에만 간단히 언급"
-        )
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
+.footer {
+  text-align: center;
+  margin-top: 40px;
+  color: #999;
+  font-size: 12px;
+}
 
-    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
-    API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
-    client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
-    model = "HCX-005"
+:root {
+  --primary: #03c75a;
+  --bg: #f5f7fa;
+  --card-bg: #ffffff;
+  --card-shadow: rgba(0, 0, 0, 0.08);
+  --text: #333;
+  --muted: #666;
+}
 
-    try:
-        clova_response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "클라우드 전문가 수준의 문장으로, 오탈자 없이 정확한 맞춤법과 문법을 사용해 주세요. 문장은 간결하면서도 자연스럽고, 일관되며 신뢰감 있게 작성해 주세요."},
-                {"role": "user", "content": prompt}
-            ],
-            top_p=0.6,
-            temperature=0.3,
-            max_tokens=500
-        )
-        if not clova_response.choices or not clova_response.choices[0].message.content:
-            answer = ""
-        else:
-            answer = clova_response.choices[0].message.content.strip()
-        answer = answer.replace("설루션", "솔루션")
-        return {"answer": answer, "raw": clova_response.model_dump(), "evidence": query_results["metadatas"][0]}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"HyperCLOVA error: {str(e)}")
-    
-# Information summary function (for Information domain)
-def run_msp_information_summary(question: str):
-    import traceback
-    from openai import OpenAI
-    import json
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'NanumSquareNeo', sans-serif !important;
+  background: var(--bg);
+  color: var(--text);
+}
 
-    query = question
-    msp_name = extract_msp_name(question)
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'NanumSquareNeo', sans-serif !important;
+  background: linear-gradient(135deg, #e8fef3 0%, #f0fbf6 100%);
+  color: #1e1e1e;
+}
 
-    all_results = collection.get(include=["metadatas"])
-    all_msp_names = [meta.get("msp_name", "") for meta in all_results["metadatas"] if meta.get("msp_name")]
+.layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  position: relative;
+}
 
-    matches = get_close_matches(msp_name, all_msp_names, n=1, cutoff=0.6)
-    if not matches:
-        return {"answer": "질문하신 회사명을 인식하지 못했습니다. 다시 시도해 주세요.", "advanced": False}
-    best_match = matches[0]
+.hero {
+  background: transparent;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
 
-    try:
-        query_vector = query_embed(question)
-        query_results = collection.query(
-            query_embeddings=[query_vector],
-            n_results=8
-        )
-        filtered_chunks = [c for c in query_results["metadatas"][0] if c.get("answer") and c.get("question") and c.get("msp_name") == best_match]
-        if not filtered_chunks:
-            return {"answer": "관련된 정보를 찾을 수 없습니다.", "advanced": False}
+.container {
+  background: transparent;
+  border-radius: 0;
+  padding: 48px 24px;
+  max-width: 680px;
+  width: 100%;
+  box-shadow: none;
+  margin-top: 24px;
+}
 
-        answer_blocks = []
-        for chunk in filtered_chunks:
-            if not chunk.get("answer") or not chunk.get("question"):
-                continue
-            answer_blocks.append(f"Q: {chunk['question']}\nA: {chunk['answer']}")
+ h1 {
+   text-align: center;
+   font-size: 28px;
+   font-weight: 900;
+   margin-bottom: 32px;
+   color: #03c75a;
+   font-family: 'NanumSquareNeo', sans-serif;
+ }
 
-        context = "\n\n".join(answer_blocks)
-        prompt = (
-            f"다음은 MSP 파트너사 관련 인터뷰 Q&A 모음입니다. 아래 내용을 바탕으로 사용자 질문에 대해 응답해 주세요.\n"
-            f"사용자 질문: \"{question}\"\n\n"
-            f"{context}\n\n"
-            f"[응답 지침]\n"
-            f"- 실제 Q&A에 기반해 요약하거나 종합적으로 정리해 주세요.\n"
-            f"- 없는 정보를 추론하거나 꾸며내지 마세요.\n"
-            f"- 질문과 다른 타 회사의 정보를 절대로 억지로 끼워맞추지 마세요."
-            f"- 가능한 한 간결하면서도 신뢰도 있는 표현으로 작성해 주세요.\n"
-        )
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
 
-    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
-    API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
-    client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
-    model = "HCX-005"
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%2303c75a' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  padding-right: 40px;
+  width: 100%;
+  padding: 18px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  border-radius: 12px;
+  border: 1px solid #d0d7de;
+  transition: box-shadow 0.3s ease;
+}
 
-    try:
-        clova_response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "정확한 정보에 기반한 자연스러운 응답을 해주세요. 오탈자 없이 명확하고 일관된 문장으로 작성해 주세요."},
-                {"role": "user", "content": prompt}
-            ],
-            top_p=0.6,
-            temperature=0.3,
-            max_tokens=500
-        )
-        if not clova_response.choices or not clova_response.choices[0].message.content:
-            answer = ""
-        else:
-            answer = clova_response.choices[0].message.content.strip()
-        answer = answer.replace("설루션", "솔루션")
-        return {"answer": answer, "raw": clova_response.model_dump(), "advanced": False, "evidence": filtered_chunks}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"HyperCLOVA error: {str(e)}")
+select:focus {
+  box-shadow: 0 0 0 3px rgba(3, 199, 90, 0.25);
+  outline: none;
+}
 
-def run_msp_information_summary_claude(question: str):
-    import traceback
-    import requests
-    import os
+input[type="text"] {
+  width: 100%;
+  padding: 18px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  border-radius: 12px;
+  border: 1px solid #d0d7de;
+  transition: border 0.3s, box-shadow 0.3s;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
 
-    query = question
-    msp_name = extract_msp_name(question)
+select:focus, input[type="text"]:focus {
+  border-color: #03c75a;
+  box-shadow: 0 0 0 3px rgba(3, 199, 90, 0.3);
+  outline: none;
+}
 
-    all_results = collection.get(include=["metadatas"])
-    all_msp_names = [meta.get("msp_name", "") for meta in all_results["metadatas"] if meta.get("msp_name")]
+#submitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: bold;
+  background: linear-gradient(90deg, #03c75a, #1ecb8f);
+  box-shadow: 0 4px 10px rgba(3, 199, 90, 0.2);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
 
-    from difflib import get_close_matches
-    matches = get_close_matches(msp_name, all_msp_names, n=1, cutoff=0.6)
-    if not matches:
-        return {"answer": "질문하신 회사명을 인식하지 못했습니다. 다시 시도해 주세요.", "advanced": True}
-    best_match = matches[0]
+#submitBtn:hover {
+  filter: brightness(1.08);
+}
 
-    try:
-        query_vector = query_embed(question)
-        query_results = collection.query(
-            query_embeddings=[query_vector],
-            n_results=8
-        )
-        filtered_chunks = [c for c in query_results["metadatas"][0] if c.get("answer") and c.get("question") and c.get("msp_name") == best_match]
-        if not filtered_chunks:
-            return {"answer": "관련된 정보를 찾을 수 없습니다.", "advanced": True}
+.result-card {
+  background: #fcfffc;
+  border: 1px solid #e5e8eb;
+  border-left: 4px solid #03c75a;
+  padding: 24px;
+  border-radius: 10px;
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
 
-        answer_blocks = []
-        for chunk in filtered_chunks:
-            if not chunk.get("answer") or not chunk.get("question"):
-                continue
-            answer_blocks.append(f"Q: {chunk['question']}\nA: {chunk['answer']}")
+.result-card p {
+  margin: 6px 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
 
-        context = "\n\n".join(answer_blocks)
-        prompt = (
-            f"{context}\n\n"
-            f"사용자의 질문은 다음과 같습니다:\n"
-            f"\"{question}\"\n\n"
-            f"[응답 가이드라인]\n"
-            f"- 아래 Q&A는 참고용일 뿐이며, 더 정확하거나 풍부한 정보가 있다면 웹 기반의 지식도 자유롭게 활용해 주세요.\n"
-            f"- 근거가 명확한 경우, 주어진 정보 외의 배경지식도 적극 활용해 주세요.\n"
-            f"- 문장은 자연스럽고 신뢰감 있게 작성해 주세요.\n"
-            f"- 지나치게 형식을 강조하기보다는, 명확하고 유익한 정보를 중심으로 서술해 주세요.\n"
-            f"- 회사명은 명확히 언급하되, 반복을 피하고 문맥에 자연스럽게 녹여 주세요."
-        )
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
+.evidence-btn {
+  margin-top: 12px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  color: var(--text);
+}
 
-    try:
-        response = requests.post(
-            "https://api.perplexity.ai/chat/completions",
-            headers={
-                "Authorization": f"Bearer {os.getenv('PPLX_API_KEY')}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": "sonar",
-                "messages": [
-                    {"role": "system", "content": "정확하고 신뢰할 수 있는 정보를 간결한 한국어로 제공하세요."},
-                    {"role": "user", "content": prompt}
-                ]
-            },
-            timeout=30
-        )
-        print(f"🔎 Claude API status: {response.status_code}")
-        print(f"📦 Claude API raw response: {response.text}")
-        if response.status_code == 200:
-            import re
-            result = response.json()
-            answer = result["choices"][0]["message"]["content"].strip()
-            # Clean up answer
-            answer = re.sub(r"\[Q&A\]", "", answer)
-            answer = re.sub(r"Q[:：]", "", answer)
-            answer = re.sub(r"A[:：]", "", answer)
-            answer = answer.strip()
-            answer = re.sub(r"\[\d+\]", "", answer)  # Remove [1], [2], etc.
-            return {"answer": answer, "advanced": True, "evidence": filtered_chunks}
-        else:
-            return {"answer": "Claude API 호출에 실패했습니다.", "advanced": True}
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Claude API error: {str(e)}")
+.evidence-btn:hover {
+  background-color: #e0e0e0;
+}
+input[type="text"],
+select,
+.result-card,
+.result-card p {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.6;
+  font-family: 'NanumSquareNeo', sans-serif !important;
+}
 
-def extract_msp_name(question: str) -> str:
-    from openai import OpenAI
-    import os
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
 
-    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
-    API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
-    client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
-    model = "HCX-005"
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
 
-    prompt = (
-        f"다음 질문에서 실제 클라우드 MSP 파트너사의 이름만 정확하게 추출하세요. 문장 전체를 출력하지 말고, 회사명만 출력하세요.\n"
-        f"[예시]\n"
-        f"질문: 'ITCEN CLOIT에 대해 알려줘'\n응답: ITCEN CLOIT\n"
-        f"질문: 'Lomin의 AI 역량은?'\n응답: Lomin\n"
-        f"질문: '베스핀글로벌의 MLOps 사례는?'\n응답: 베스핀글로벌\n"
-        f"질문: '{question}'\n"
-        f"응답:"
-    )
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 24px;
+}
 
-    try:
-        clova_response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "질문에서 클라우드 MSP 회사 이름만 정확하게 추출해 주세요. 문장은 절대 작성하지 말고, 회사명만 단독으로 출력하세요. 예: 베스핀글로벌"},
-                {"role": "user", "content": prompt}
-            ],
-            top_p=0.6,
-            temperature=0.3,
-            max_tokens=20
-        )
-        raw = clova_response.choices[0].message.content.strip()
-        print(f"🔍 Extracted raw MSP name: {raw}")
-        return raw
-    except Exception as e:
-        print(f"❌ Error extracting MSP name: {e}")
-        return ""
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #03c75a;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+  .tooltip-wrapper {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+  }
+
+  .tooltip-wrapper .tooltip-text {
+    visibility: hidden;
+    width: 220px;
+    background: linear-gradient(135deg, rgba(30,30,30,0.9), rgba(60,60,60,0.9));
+    color: #f9f9f9;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 0;
+    margin-left: -10px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .tooltip-wrapper:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .evidence-card {
+    margin-bottom: 12px;
+    padding: 16px;
+    border-radius: 10px;
+    border-left: 4px solid #03c75a;
+    background: #ffffff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
+  }
+
+  .evidence-card strong {
+    display: block;
+    color: #555;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+</style>
+
+<body>
+  <div class="layout">
+    <header class="header">
+      <a class="header-title" href="https://mspevaluator.duckdns.org" target="_blank" rel="noopener noreferrer">NAVER Cloud</a>
+      <a class="admin-link" href="/login?next=/admin">관리자</a>
+    </header>
+    <div class="container">
+      <h1>🔍 MSP 검색 도구</h1>
+      <label for="minScore">최소 추천 기준 점수 선택</label>
+      <select id="minScore">
+        <option value="0">0 이상</option>
+        <option value="1">1 이상</option>
+        <option value="2">2 이상</option>
+        <option value="3">3 이상</option>
+        <option value="4">4 이상</option>
+        <option value="5">5점만</option>
+      </select>
+      <input type="text" id="questionInput" placeholder="예: 금융 회사와의 프로젝트에 어울리는 보안이 강점인 파트너사 추천해줘 / 메가존 주력 솔루션 알려줘" />
+      <div id="sample-questions" style="margin-bottom: 20px; display: none;">
+        <p style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 6px;">예시 질문:</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+          <button class="sample-btn">ITCEN CLOIT의 AI 전문 인력 구성은?</button>
+          <button class="sample-btn">MLOps 관련 경험이 풍부한 MSP는?</button>
+          <button class="sample-btn">디딤365의 협업 방식은 어떤가?</button>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+        <label class="switch">
+          <input type="checkbox" id="advancedSearch">
+          <span class="slider round"></span>
+        </label>
+        <span class="tooltip-wrapper" style="font-size: 14px; font-weight: 600; color: var(--muted);">
+          고급 검색 (Web 기반)
+          <span class="tooltip-text">Perplexity 기반 웹 검색을 사용합니다. 더 깊이 있는 검색 결과가 제공됩니다.</span>
+        </span>
+        <button id="toggle-sample-btn" style="font-size: 13px; padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; margin-left: auto;">
+          예시 질문 보기 ▼
+        </button>
+      </div>
+      <button id="submitBtn">검색</button>
+      <p style="font-size: 13px; color: #777; margin-top: 8px;">
+        ⚠️ 주의사항: 본 서비스는 AI 기반으로 제공되며, 간헐적으로 부정확한 응답이 포함될 수 있습니다. 이 경우 다시 검색을 권장합니다.
+      </p>
+      <h2 id="resultTitle" style="font-size: 18px; font-weight: 700; margin-top: 30px; color: #03c75a; display: none;">🔎 검색 결과</h2>
+      <div id="advanced-badge" style="display: none;">
+        <span style="background-color: #e9f8f0; color: #03c75a; font-size: 13px; font-weight: bold; padding: 6px 12px; border-radius: 20px; display: inline-block; margin-top: 12px; border: 1px solid #03c75a;">
+          🌐 고급 검색 결과
+        </span>
+      </div>
+      <div id="results"></div>
+    </div>
+    <footer class="footer">ⓒ 2025 Naver Cloud MSP 평가 도구</footer>
+  </div>
+</body>
+
+<script>
+  document.getElementById("submitBtn").addEventListener("click", async () => {
+    const question = document.getElementById("questionInput").value;
+    const min_score = document.getElementById("minScore").value;
+    const advanced = document.getElementById("advancedSearch").checked; // 고급 검색 토글 상태
+
+    if (!question.trim()) {
+      alert("질문을 입력해 주세요.");
+      return;
+    }
+
+    const results = document.getElementById("results");
+    results.innerHTML = `
+    <div class="result-card" style="display: flex; align-items: center; gap: 10px;">
+      <div class="loader" style="border: 4px solid #f3f3f3; border-top: 4px solid #03c75a; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite;"></div>
+      <p style="margin: 0;">파트너사 검색 중...</p>
+    </div>`;
+
+    const res = await fetch("/query/router", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: question, chat_history: [], advanced: advanced })
+    });
+
+    const data = await res.json();
+    results.innerHTML = "";
+
+    const resultTitle = document.getElementById("resultTitle");
+    resultTitle.style.display = "block";
+
+    const badge = document.getElementById("advanced-badge");
+    if (badge) {
+      badge.style.display = data.advanced ? "inline-block" : "none";
+    }
+
+    if (data.answer) {
+      const card = document.createElement("div");
+      card.className = "result-card";
+      card.innerHTML = `<p>${data.answer.replace(/\n/g, "<br/>")}</p>`;
+      results.appendChild(card);
+      if (data.evidence && data.evidence.length > 0) {
+        const evidenceBtn = document.createElement("button");
+        evidenceBtn.className = "evidence-btn";
+        evidenceBtn.textContent = "🔍 왜 이 답변인가요?";
+        let visible = false;
+        const evidenceList = document.createElement("div");
+        evidenceList.style.marginTop = "10px";
+        evidenceList.style.display = "none";
+
+        data.evidence.forEach(ev => {
+          const evBlock = document.createElement("div");
+          evBlock.className = "evidence-card";
+          evBlock.innerHTML = `<strong>Q:</strong> ${ev.question}<strong>A:</strong> ${ev.answer}<strong>Score:</strong> ${ev.score}`;
+          evidenceList.appendChild(evBlock);
+        });
+
+        evidenceBtn.onclick = () => {
+          visible = !visible;
+          evidenceList.style.display = visible ? "block" : "none";
+          evidenceBtn.textContent = visible ? "근거 숨기기" : "답변 근거 데이터";
+        };
+
+        results.appendChild(evidenceBtn);
+        results.appendChild(evidenceList);
+      }
+    } else {
+      results.innerHTML = "<p>결과를 찾을 수 없습니다.</p>";
+    }
+  });
+</script>
+<script>
+  document.querySelectorAll(".sample-btn").forEach(btn => {
+    btn.style.padding = "8px 12px";
+    btn.style.fontSize = "13px";
+    btn.style.border = "1px solid #ccc";
+    btn.style.borderRadius = "8px";
+    btn.style.background = "#fff";
+    btn.style.cursor = "pointer";
+    btn.style.transition = "background 0.2s";
+
+    btn.addEventListener("mouseover", () => {
+      btn.style.background = "#f0f0f0";
+    });
+    btn.addEventListener("mouseout", () => {
+      btn.style.background = "#fff";
+    });
+
+    btn.addEventListener("click", () => {
+      document.getElementById("questionInput").value = btn.textContent;
+      document.getElementById("submitBtn").click();
+    });
+  });
+</script>
+<script>
+  const toggleSampleBtn = document.getElementById("toggle-sample-btn");
+  const sampleQuestionsDiv = document.getElementById("sample-questions");
+
+  toggleSampleBtn.addEventListener("click", () => {
+    const isVisible = sampleQuestionsDiv.style.display === "block";
+    sampleQuestionsDiv.style.display = isVisible ? "none" : "block";
+    toggleSampleBtn.innerText = isVisible ? "예시 질문 보기 ▼" : "예시 질문 닫기 ▲";
+  });
+</script>
