@@ -174,7 +174,7 @@ def run_msp_information_summary(question: str):
         else:
             answer = clova_response.choices[0].message.content.strip()
         answer = answer.replace("설루션", "솔루션")
-        return {"answer": answer, "raw": clova_response.model_dump(), "advanced": False}
+        return {"answer": answer, "raw": clova_response.model_dump(), "advanced": False, "evidence": filtered_chunks}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"HyperCLOVA error: {str(e)}")
 
@@ -255,7 +255,7 @@ def run_msp_information_summary_claude(question: str):
             answer = re.sub(r"A[:：]", "", answer)
             answer = answer.strip()
             answer = re.sub(r"\[\d+\]", "", answer)  # Remove [1], [2], etc.
-            return {"answer": answer, "advanced": True}
+            return {"answer": answer, "advanced": True, "evidence": filtered_chunks}
         else:
             return {"answer": "Claude API 호출에 실패했습니다.", "advanced": True}
     except Exception as e:
