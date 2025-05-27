@@ -455,6 +455,27 @@ input:checked + .slider:before {
       if (evidenceBtn) {
         card.appendChild(evidenceBtn);
       }
+      const pdfBtn = document.createElement("button");
+      pdfBtn.className = "evidence-btn";
+      pdfBtn.textContent = "📄 PDF로 저장";
+      pdfBtn.style.display = "block";
+      pdfBtn.style.margin = "16px auto 0";
+      pdfBtn.onclick = async () => {
+        const res = await fetch("/generate_pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answer: data.answer, evidence: data.evidence || [] })
+        });
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "msp_result.pdf";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      };
+      card.appendChild(pdfBtn);
     } else {
       results.innerHTML = "<p>결과를 찾을 수 없습니다.</p>";
     }
