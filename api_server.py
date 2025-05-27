@@ -1,303 +1,42 @@
-from pydantic import BaseModel
-from clova_router import Executor
-class RouterQuery(BaseModel):
-    query: str
-    chat_history: list[dict] = []
+# -*- coding: utf-8 -*-
+import base64
+import json
+import http.client
+import uuid
 import os
-from dotenv import load_dotenv
-load_dotenv()
-from fastapi import FastAPI, HTTPException, Depends
-from pydantic import BaseModel
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
-from fastapi.requests import Request
-import requests
-from vector_writer import run_from_msp_name
-from admin_protected import router as admin_router, manager
+from http import HTTPStatus
 
-# Register user_loader at import time to avoid "Missing user_loader callback" error
-@manager.user_loader()
-def load_user(username: str):
-    from admin_protected import User
-    env_username = os.getenv("ADMIN_USERNAME")
-    if username == env_username:
-        return User(name=username)
+class Executor:
+    def __init__(self):
+        self._host = "clovastudio.stream.ntruss.com"
+        self._api_key = os.getenv("CLOVA_API_KEY")
+        self._request_id = str(uuid.uuid4())
 
-import chromadb
-from chromadb import PersistentClient
+    def _send_request(self, request):
+        headers = {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Authorization': f'Bearer {self._api_key}',
+            'X-NCP-CLOVASTUDIO-REQUEST-ID': self._request_id,
+        }
 
-app = FastAPI()
+        conn = http.client.HTTPSConnection(self._host)
+        conn.request('POST', '/testapp/v1/routers/haxvawqc/versions/1/route', json.dumps(request), headers)
+        response = conn.getresponse()
+        status = response.status
+        result = json.loads(response.read().decode(encoding='utf-8'))
+        conn.close()
+        return result, status
 
-app.include_router(admin_router)
-print("📦 admin router included")
+    def execute(self, request):
+        res, status = self._send_request(request)
+        print("📦 CLOVA Router raw response:", res)
+        print("📦 CLOVA Router HTTP status:", status)
 
-class CompanyInput(BaseModel):
-    name: str
-
-def query_embed(text: str):
-    from vector_writer import clova_embedding
-    return clova_embedding(text)
-
-@app.post("/run/{msp_name}")
-def run_msp_vector_pipeline(msp_name: str):
-    try:
-        run_from_msp_name(msp_name)
-        return {"message": f"Vector DB update completed for {msp_name}"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Serve static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-
-@app.get("/ui")
-def serve_ui(request: Request):
-    try:
-        user = manager(request)
-        return FileResponse("static/index.html")
-    except:
-        return RedirectResponse(url="/login?next=/ui")
-
-
-# Serve query UI
-@app.get("/query")
-def serve_query_ui():
-    return FileResponse("static/query.html")
-
-# Load ChromaDB
-CHROMA_PATH = os.path.abspath("chroma_store")
-client = PersistentClient(path=CHROMA_PATH)
-collection = client.get_or_create_collection("msp_chunks")
-
-@app.get("/ui/data")
-def get_filtered_chunks(question: str = None, min_score: int = 0):
-    # Return flat format for public UI compatibility
-    results = collection.get(include=["metadatas"])
-    data = []
-    for meta in results["metadatas"]:
-        if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
-            continue
-        if question and question != meta["question"]:
-            continue
-        if meta["score"] is not None and int(meta["score"]) >= min_score:
-            data.append({
-                "msp_name": meta["msp_name"],
-                "question": meta["question"],
-                "score": meta["score"],
-                "answer": meta["answer"]
-            })
-    return JSONResponse(content=data)
-
-# Flat data endpoint for public UI
-@app.get("/ui/data_flat")
-def get_flat_chunks(question: str = None, min_score: int = 0):
-    results = collection.get(include=["metadatas"])
-    data = []
-    for meta in results["metadatas"]:
-        if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
-            continue
-        if question and question != meta["question"]:
-            continue
-        if meta["score"] is not None and int(meta["score"]) >= min_score:
-            data.append({
-                "msp_name": meta["msp_name"],
-                "question": meta["question"],
-                "score": meta["score"],
-                "answer": meta["answer"]
-            })
-    return JSONResponse(content=data)
-
-def run_msp_recommendation(question: str, min_score: int):
-    from collections import defaultdict
-    import traceback
-    from openai import OpenAI
-    import json
-
-    try:
-        query_vector = query_embed(question)
-        query_results = collection.query(
-            query_embeddings=[query_vector],
-            n_results=10
-        )
-        grouped_chunks = defaultdict(list)
-        for meta in query_results["metadatas"][0]:
-            if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
-                continue
-            if meta["score"] is not None and int(meta["score"]) >= min_score:
-                grouped_chunks[meta["msp_name"]].append(
-                    f"Q: {meta['question']}\nA: {meta['answer']} (score: {meta['score']})"
-                )
-
-        if not grouped_chunks:
-            return {"answer": "해당 조건에 맞는 평가 데이터를 찾을 수 없습니다."}
-
-        context_blocks = []
-        for msp, qa_list in grouped_chunks.items():
-            context_blocks.append(f"[{msp}]\n" + "\n".join(qa_list))
-
-        context = "\n\n".join(context_blocks)
-        prompt = (
-            f"{context}\n\n"
-            f"위의 Q&A 정보만을 바탕으로 '{question}'에 가장 잘 부합하는 상위 2개 회사를 선정해 주세요.\n\n"
-            f"[주의사항]\n"
-            f"- 추론 금지: 주어진 정보에 명확히 나타나지 않은 내용은 절대 추정하거나 일반적인 기대를 바탕으로 판단하지 마세요.\n"
-            f"- 정보 부족 시 해당 회사를 제외하고, 명확한 연결고리가 있는 경우에만 선정하세요.\n"
-            f"- score는 질문과의 관련성을 나타내는 보조 지표일 뿐이며, 반드시 높은 점수가 직접적인 답변을 의미하지는 않습니다.\n"
-            f"- 맞춤법과 문법에 유의하여 오타 없이 작성할 것\n\n"
-            f"[평가 기준]\n"
-            f"1. 질문에 명시적으로 답하고 있는가?\n"
-            f"2. 관련 핵심 키워드가 포함되어 있는가?\n"
-            f"3. 구체적인 수치, 사례, 근거가 있는가?\n"
-            f"4. 점수는 보조적으로만 사용하고, 응답 내용의 명확성을 중심으로 평가할 것\n"
-            f"   예: 'UI/UX' 관련 질문의 경우 '사용 편의성', '인터페이스', '접근성', '직관성' 등 키워드 포함 여부 확인\n\n"
-            f"[제외 기준]\n"
-            f"- 보안, 성능, 데이터 처리 등 유사 개념은 질문에 직접적으로 답하지 않는 한 제외\n"
-            f"- 추측, 기대 기반 해석, 점수만을 근거로 한 선정은 금지\n"
-            f"- DB에 존재하지 않는 기업을 선정하는 것은 절대 금지\n\n"
-            f"[응답 형식]\n"
-            f"- 각 회사명을 **굵게** 표시하고, 각 회사를 별도의 단락으로 구성하세요.\n"
-            f"- 최종 응답 전 회사명이 msp_name이 맞는지 확실히 확인 후 응답해 주세요.\n"
-            f"- 선정 이유는 간결하고 명확하게 1~2문장으로 기술하세요.\n\n"
-            f"예시:\n"
-            f"**A 회사**\n"
-            f"- 선정 이유: AI 전문 인력 비율이 높고, 해당 질문에 대해 구체적인 수치와 프로젝트 사례를 언급하며 5점을 받음\n\n"
-            f"**B 회사**\n"
-            f"- 선정 이유: OCR 기술 관련 경험을 보유하고 있으며, 해당 질문에 명확히 응답하고 4점을 기록함\n\n"
-            f"**기타 회사**\n"
-            f"- 관련 키워드 부재, 질문에 대한 직접적 답변 없음 등 명확한 근거가 있는 경우에만 간단히 언급"
-        )
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
-
-    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
-    API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
-    client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
-    model = "HCX-005"
-
-    try:
-        clova_response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "클라우드 전문가 수준의 문장으로, 오탈자 없이 정확한 맞춤법과 문법을 사용해 주세요. 문장은 간결하면서도 자연스럽고, 일관되며 신뢰감 있게 작성해 주세요."},
-                {"role": "user", "content": prompt}
-            ],
-            top_p=0.6,
-            temperature=0.3,
-            max_tokens=500
-        )
-        if not clova_response.choices or not clova_response.choices[0].message.content:
-            answer = ""
+        if status == HTTPStatus.OK and isinstance(res, dict) and "result" in res:
+            return res["result"]
         else:
-            answer = clova_response.choices[0].message.content.strip()
-        answer = answer.replace("설루션", "솔루션")
-        return {"answer": answer, "raw": clova_response.model_dump()}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"HyperCLOVA error: {str(e)}")
-
-
-# Information summary function (for Information domain)
-def run_msp_information_summary(question: str):
-    import traceback
-    from openai import OpenAI
-    import json
-
-    try:
-        query_vector = query_embed(question)
-        query_results = collection.query(
-            query_embeddings=[query_vector],
-            n_results=8
-        )
-
-        if not query_results["metadatas"] or not query_results["metadatas"][0]:
-            return {"answer": "관련된 정보를 찾을 수 없습니다."}
-
-        chunks = query_results["metadatas"][0]
-        answer_blocks = []
-        for chunk in chunks:
-            if not chunk.get("answer") or not chunk.get("question"):
-                continue
-            answer_blocks.append(f"Q: {chunk['question']}\nA: {chunk['answer']}")
-
-        context = "\n\n".join(answer_blocks)
-        prompt = (
-            f"다음은 MSP 파트너사 관련 인터뷰 Q&A 모음입니다. 아래 내용을 바탕으로 사용자 질문에 대해 응답해 주세요.\n"
-            f"사용자 질문: \"{question}\"\n\n"
-            f"{context}\n\n"
-            f"[응답 지침]\n"
-            f"- 실제 Q&A에 기반해 요약하거나 종합적으로 정리해 주세요.\n"
-            f"- 없는 정보를 추론하거나 꾸며내지 마세요.\n"
-            f"- 가능한 한 간결하면서도 신뢰도 있는 표현으로 작성해 주세요.\n"
-        )
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
-
-    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
-    API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
-    client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
-    model = "HCX-005"
-
-    try:
-        clova_response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "정확한 정보에 기반한 자연스러운 응답을 해주세요. 오탈자 없이 명확하고 일관된 문장으로 작성해 주세요."},
-                {"role": "user", "content": prompt}
-            ],
-            top_p=0.6,
-            temperature=0.3,
-            max_tokens=500
-        )
-        if not clova_response.choices or not clova_response.choices[0].message.content:
-            answer = ""
-        else:
-            answer = clova_response.choices[0].message.content.strip()
-        answer = answer.replace("설루션", "솔루션")
-        return {"answer": answer, "raw": clova_response.model_dump()}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"HyperCLOVA error: {str(e)}")
-
-# Query/Ask endpoint
-@app.post("/query/ask")
-async def ask_question(request: Request):
-    body = await request.json()
-    question = body.get("question")
-    min_score = int(body.get("min_score", 0))
-    if not question:
-        raise HTTPException(status_code=400, detail="Missing question")
-
-    return run_msp_recommendation(question, min_score)
-
-# Router endpoint
-@app.post("/query/router")
-async def query_router(data: RouterQuery):
-    executor = Executor()
-    request_data = {
-        "query": data.query,
-        "chatHistory": data.chat_history
-    }
-    result = executor.execute(request_data)
-    # Analyze router result and route accordingly
-    domain_result = result.get("domain", {}).get("result")
-    if domain_result == "Recommend":
-        return run_msp_recommendation(data.query, min_score=0)
-    elif domain_result == "Information":
-        return run_msp_information_summary(data.query)
-    elif domain_result == "Unrelated":
-        return {"answer": "본 시스템은 MSP 평가 도구입니다. 해당 질문은 지원하지 않습니다. 다른 질문을 입력해 주세요."}
-    else:
-        return {"answer": "도메인 분류에 실패했습니다. 다시 시도해 주세요."}
-
-# Add protected /admin route using same login logic as /ui
-@app.get("/admin")
-def serve_admin_ui(request: Request):
-    try:
-        user = manager(request)
-        return FileResponse("static/admin.html")
-    except Exception as e:
-        return RedirectResponse(url="/login?next=/admin")
-    
-@app.get("/")
-def serve_main_page():
-    return FileResponse("static/main.html")
+            return {
+                "error": "Router 호출 실패",
+                "raw_status": status,
+                "response": res
+            }
