@@ -66,6 +66,7 @@ def extract_msp_name(question: str) -> str:
             max_tokens=20
         )
         raw = clova_response.choices[0].message.content.strip()
+        print(f"🔍 Extracted raw MSP name: {raw}")
         return raw.strip("<>").strip()
     except Exception as e:
         print(f"❌ Error extracting MSP name: {e}")
@@ -326,6 +327,8 @@ async def query_router(data: RouterQuery):
         blocked = result.get("blockedContent", {}).get("result", [])
 
         if domain_result == "mspevaluator":
+            extracted_name = extract_msp_name(data.query)
+            print(f"🧠 CLOVA 추출 회사명: {extracted_name}")
             if "Recommend" in blocked:
                 return run_msp_recommendation(data.query, min_score=0)
             elif "Information" in blocked:
