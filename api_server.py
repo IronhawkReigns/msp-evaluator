@@ -374,6 +374,11 @@ def run_msp_information_summary_claude(question: str):
             import re
             result = response.json()
             answer = result["choices"][0]["message"]["content"].strip()
+            # Clean up answer
+            answer = re.sub(r"\[Q&A\]", "", answer)
+            answer = re.sub(r"Q[:：]", "", answer)
+            answer = re.sub(r"A[:：]", "", answer)
+            answer = answer.strip()
             answer = re.sub(r"\[\d+\]", "", answer)  # Remove [1], [2], etc.
             return {"answer": answer}
         else:
