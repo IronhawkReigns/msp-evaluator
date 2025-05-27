@@ -289,13 +289,17 @@ async def query_router(data: RouterQuery):
             result = raw_result
 
         domain_result = result.get("domain", {}).get("result")
+        blocked = result.get("blockedContent", {}).get("result", [])
 
-        if domain_result == "Recommend":
-            return run_msp_recommendation(data.query, min_score=0)
-        elif domain_result == "Information":
-            return run_msp_information_summary(data.query)
-        elif domain_result == "Unrelated":
-            return {"answer": "본 시스템은 MSP 평가 도구입니다. 해당 질문은 지원하지 않습니다. 다른 질문을 입력해 주세요."}
+        if domain_result == "mspevaluator":
+            if "Recommend" in blocked:
+                return run_msp_recommendation(data.query, min_score=0)
+            elif "Information" in blocked:
+                return run_msp_information_summary(data.query)
+            elif "Unrelated" in blocked:
+                return {"answer": "본 시스템은 MSP 평가 도구입니다. 해당 질문은 지원하지 않습니다. 다른 질문을 입력해 주세요."}
+            else:
+                return {"answer": "질문 의도를 정확히 분류하지 못했습니다. 다시 시도해 주세요."}
         else:
             return {"answer": "도메인 분류에 실패했습니다. 다시 시도해 주세요."}
     except Exception as e:
