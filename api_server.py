@@ -245,7 +245,7 @@ def run_msp_information_summary(question: str):
 
     matches = get_close_matches(msp_name, all_msp_names, n=1, cutoff=0.6)
     if not matches:
-        return {"answer": "질문하신 회사명을 인식하지 못했습니다. 다시 시도해 주세요."}
+        return {"answer": "질문하신 회사명을 인식하지 못했습니다. 다시 시도해 주세요.", "advanced": False}
     best_match = matches[0]
 
     try:
@@ -256,7 +256,7 @@ def run_msp_information_summary(question: str):
         )
         filtered_chunks = [c for c in query_results["metadatas"][0] if c.get("answer") and c.get("question") and c.get("msp_name") == best_match]
         if not filtered_chunks:
-            return {"answer": "관련된 정보를 찾을 수 없습니다."}
+            return {"answer": "관련된 정보를 찾을 수 없습니다.", "advanced": False}
 
         answer_blocks = []
         for chunk in filtered_chunks:
@@ -300,7 +300,7 @@ def run_msp_information_summary(question: str):
         else:
             answer = clova_response.choices[0].message.content.strip()
         answer = answer.replace("설루션", "솔루션")
-        return {"answer": answer, "raw": clova_response.model_dump()}
+        return {"answer": answer, "raw": clova_response.model_dump(), "advanced": False}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"HyperCLOVA error: {str(e)}")
 
@@ -318,7 +318,7 @@ def run_msp_information_summary_claude(question: str):
     from difflib import get_close_matches
     matches = get_close_matches(msp_name, all_msp_names, n=1, cutoff=0.6)
     if not matches:
-        return {"answer": "질문하신 회사명을 인식하지 못했습니다. 다시 시도해 주세요."}
+        return {"answer": "질문하신 회사명을 인식하지 못했습니다. 다시 시도해 주세요.", "advanced": True}
     best_match = matches[0]
 
     try:
@@ -329,7 +329,7 @@ def run_msp_information_summary_claude(question: str):
         )
         filtered_chunks = [c for c in query_results["metadatas"][0] if c.get("answer") and c.get("question") and c.get("msp_name") == best_match]
         if not filtered_chunks:
-            return {"answer": "관련된 정보를 찾을 수 없습니다."}
+            return {"answer": "관련된 정보를 찾을 수 없습니다.", "advanced": True}
 
         answer_blocks = []
         for chunk in filtered_chunks:
@@ -380,9 +380,9 @@ def run_msp_information_summary_claude(question: str):
             answer = re.sub(r"A[:：]", "", answer)
             answer = answer.strip()
             answer = re.sub(r"\[\d+\]", "", answer)  # Remove [1], [2], etc.
-            return {"answer": answer}
+            return {"answer": answer, "advanced": True}
         else:
-            return {"answer": "Claude API 호출에 실패했습니다."}
+            return {"answer": "Claude API 호출에 실패했습니다.", "advanced": True}
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Claude API error: {str(e)}")
