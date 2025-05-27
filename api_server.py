@@ -244,18 +244,15 @@ def run_msp_information_summary(question: str):
 
         all_msp_names = list(set(c.get("msp_name") for c in query_results["metadatas"][0] if c.get("msp_name")))
 
-        # Step 1: Try fuzzy match against entire question
-        close_matches = get_close_matches(question, all_msp_names, n=1, cutoff=0.6)
+        msp_name = extract_msp_name(question)
+        if not msp_name:
+            return {"answer": "질문에서 MSP 파트너사 이름을 인식할 수 없습니다. 다시 시도해 주세요."}
 
-        if close_matches:
-            matched_name = close_matches[0]
-        else:
-            # Step 2: Try to extract MSP name from the question
-            msp_name = extract_msp_name(question)
-            if not msp_name:
-                return {"answer": "질문에서 MSP 파트너사 이름을 인식할 수 없습니다. 다시 시도해 주세요."}
-            close_matches = get_close_matches(msp_name, all_msp_names, n=1, cutoff=0.6)
-            matched_name = close_matches[0] if close_matches else None
+        matched_name = None
+        for name in all_msp_names:
+            if msp_name.strip().lower() in name.strip().lower() or name.strip().lower() in msp_name.strip().lower():
+                matched_name = name
+                break
 
         if not matched_name:
             return {"answer": "관련된 정보를 찾을 수 없습니다."}
