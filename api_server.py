@@ -371,8 +371,10 @@ def run_msp_information_summary_claude(question: str):
         print(f"🔎 Claude API status: {response.status_code}")
         print(f"📦 Claude API raw response: {response.text}")
         if response.status_code == 200:
+            import re
             result = response.json()
             answer = result["choices"][0]["message"]["content"].strip()
+            answer = re.sub(r"\[\d+\]", "", answer)  # Remove [1], [2], etc.
             return {"answer": answer}
         else:
             return {"answer": "Claude API 호출에 실패했습니다."}
