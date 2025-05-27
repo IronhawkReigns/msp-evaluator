@@ -367,6 +367,8 @@ def run_msp_information_summary_claude(question: str):
             },
             timeout=30
         )
+        print(f"🔎 Claude API status: {response.status_code}")
+        print(f"📦 Claude API raw response: {response.text}")
         if response.status_code == 200:
             result = response.json()
             answer = result["choices"][0]["message"]["content"].strip()
