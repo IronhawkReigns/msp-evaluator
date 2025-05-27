@@ -277,17 +277,30 @@ async def query_router(data: RouterQuery):
         "query": data.query,
         "chatHistory": data.chat_history
     }
-    result = executor.execute(request_data)
-    # Analyze router result and route accordingly
-    domain_result = result.get("domain", {}).get("result")
-    if domain_result == "Recommend":
-        return run_msp_recommendation(data.query, min_score=0)
-    elif domain_result == "Information":
-        return run_msp_information_summary(data.query)
-    elif domain_result == "Unrelated":
-        return {"answer": "본 시스템은 MSP 평가 도구입니다. 해당 질문은 지원하지 않습니다. 다른 질문을 입력해 주세요."}
-    else:
-        return {"answer": "도메인 분류에 실패했습니다. 다시 시도해 주세요."}
+    raw_result = executor.execute(request_data)
+
+    import json
+    import traceback
+
+    try:
+        if isinstance(raw_result, str):
+            result = json.loads(raw_result)
+        else:
+            result = raw_result
+
+        domain_result = result.get("domain", {}).get("result")
+
+        if domain_result == "Recommend":
+            return run_msp_recommendation(data.query, min_score=0)
+        elif domain_result == "Information":
+            return run_msp_information_summary(data.query)
+        elif domain_result == "Unrelated":
+            return {"answer": "본 시스템은 MSP 평가 도구입니다. 해당 질문은 지원하지 않습니다. 다른 질문을 입력해 주세요."}
+        else:
+            return {"answer": "도메인 분류에 실패했습니다. 다시 시도해 주세요."}
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Router 처리 중 오류 발생: {str(e)}")
 
 # Add protected /admin route using same login logic as /ui
 @app.get("/admin")
