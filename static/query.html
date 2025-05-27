@@ -276,10 +276,10 @@ select,
       <p style="margin: 0;">파트너사 검색 중...</p>
     </div>`;
 
-    const res = await fetch("/query/ask", {
+    const res = await fetch("/query/router", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question, min_score })
+      body: JSON.stringify({ query: question, chat_history: [] })
     });
 
     const data = await res.json();
