@@ -31,7 +31,14 @@ class Executor:
 
     def execute(self, request):
         res, status = self._send_request(request)
-        if status == HTTPStatus.OK:
-            return res['result']
+        print("📦 CLOVA Router raw response:", res)
+        print("📦 CLOVA Router HTTP status:", status)
+
+        if status == HTTPStatus.OK and isinstance(res, dict) and "result" in res:
+            return res["result"]
         else:
-            return 'Error'
+            return {
+                "error": "Router 호출 실패",
+                "raw_status": status,
+                "response": res
+            }
