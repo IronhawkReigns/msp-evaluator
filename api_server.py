@@ -144,6 +144,7 @@ def run_msp_recommendation(question: str, min_score: int):
     import traceback
     from openai import OpenAI
     import json
+    from difflib import get_close_matches
 
     try:
         query_vector = query_embed(question)
@@ -242,13 +243,22 @@ def run_msp_information_summary(question: str):
         )
 
         msp_name = extract_msp_name(question)
-        chunks = [c for c in query_results["metadatas"][0] if c.get("msp_name") == msp_name]
 
         if not msp_name:
             return {"answer": "질문에서 MSP 파트너사 이름을 인식할 수 없습니다. 다시 시도해 주세요."}
 
+        all_msp_names = list(set(c.get("msp_name") for c in query_results["metadatas"][0] if c.get("msp_name")))
+        close_matches = get_close_matches(msp_name, all_msp_names, n=1, cutoff=0.6)
+
+        fallback_name = close_matches[0] if close_matches else None
+        matched_name = fallback_name if fallback_name else msp_name
+        chunks = [c for c in query_results["metadatas"][0] if c.get("msp_name") == matched_name]
+
         if not chunks:
-            return {"answer": "관련된 정보를 찾을 수 없습니다."}
+            return {"answer": f"'{msp_name}' 관련된 정보를 찾을 수 없습니다."}
+
+        if fallback_name:
+            print(f"⚠️ '{msp_name}' 대신 가장 유사한 이름 '{fallback_name}'을 사용합니다.")
 
         answer_blocks = []
         for chunk in chunks:
