@@ -267,7 +267,7 @@ select,
   document.getElementById("submitBtn").addEventListener("click", async () => {
     const question = document.getElementById("questionInput").value;
     const min_score = document.getElementById("minScore").value;
-    const advanced = document.getElementById("advancedSearch").checked;
+    const advanced = document.getElementById("advancedSearch").checked; // 고급 검색 토글 상태
 
     if (!question.trim()) {
       alert("질문을 입력해 주세요.");
