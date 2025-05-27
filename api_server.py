@@ -303,6 +303,80 @@ def run_msp_information_summary(question: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"HyperCLOVA error: {str(e)}")
 
+def run_msp_information_summary_claude(question: str):
+    import traceback
+    import requests
+    import os
+
+    query = question
+    msp_name = extract_msp_name(question)
+
+    all_results = collection.get(include=["metadatas"])
+    all_msp_names = [meta.get("msp_name", "") for meta in all_results["metadatas"] if meta.get("msp_name")]
+
+    from difflib import get_close_matches
+    matches = get_close_matches(msp_name, all_msp_names, n=1, cutoff=0.6)
+    if not matches:
+        return {"answer": "질문하신 회사명을 인식하지 못했습니다. 다시 시도해 주세요."}
+    best_match = matches[0]
+
+    try:
+        query_vector = query_embed(question)
+        query_results = collection.query(
+            query_embeddings=[query_vector],
+            n_results=8
+        )
+        filtered_chunks = [c for c in query_results["metadatas"][0] if c.get("answer") and c.get("question") and c.get("msp_name") == best_match]
+        if not filtered_chunks:
+            return {"answer": "관련된 정보를 찾을 수 없습니다."}
+
+        answer_blocks = []
+        for chunk in filtered_chunks:
+            if not chunk.get("answer") or not chunk.get("question"):
+                continue
+            answer_blocks.append(f"Q: {chunk['question']}\nA: {chunk['answer']}")
+
+        context = "\n\n".join(answer_blocks)
+        prompt = (
+            f"다음은 클라우드 MSP 파트너사에 대한 Q&A 모음입니다. 다음 질문에 응답하세요:\n"
+            f"질문: \"{question}\"\n\n"
+            f"{context}\n\n"
+            f"[지침]\n"
+            f"- 위 Q&A 정보만 바탕으로 응답하세요.\n"
+            f"- 허위 정보, 추론, 상상 금지.\n"
+            f"- 깔끔하고 명확한 문장으로 한국어로 작성하세요.\n"
+            f"- 회사명을 꼭 명시하고, 다른 회사 정보를 억지로 끼워 넣지 마세요."
+        )
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
+
+    try:
+        response = requests.post(
+            "https://api.perplexity.ai/chat/completions",
+            headers={
+                "Authorization": f"Bearer {os.getenv('PPLX_API_KEY')}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "claude-3-sonnet",
+                "messages": [
+                    {"role": "system", "content": "정확하고 신뢰할 수 있는 정보를 간결한 한국어로 제공하세요."},
+                    {"role": "user", "content": prompt}
+                ]
+            },
+            timeout=30
+        )
+        if response.status_code == 200:
+            result = response.json()
+            answer = result["choices"][0]["message"]["content"].strip()
+            return {"answer": answer}
+        else:
+            return {"answer": "Claude API 호출에 실패했습니다."}
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Claude API error: {str(e)}")
+
 # Query/Ask endpoint
 @app.post("/query/ask")
 async def ask_question(request: Request):
@@ -342,7 +416,10 @@ async def query_router(data: RouterQuery):
             if "Recommend" in blocked:
                 return run_msp_recommendation(data.query, min_score=0)
             elif "Information" in blocked:
-                return run_msp_information_summary(data.query)
+                if getattr(data, "advanced", False):
+                    return run_msp_information_summary_claude(data.query)
+                else:
+                    return run_msp_information_summary(data.query)
             elif "Unrelated" in blocked:
                 return {"answer": "본 시스템은 MSP 평가 도구입니다. 해당 질문은 지원하지 않습니다. 다른 질문을 입력해 주세요."}
             else:
