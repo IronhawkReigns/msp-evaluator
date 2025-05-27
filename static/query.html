@@ -200,6 +200,7 @@ select:focus, input[type="text"]:focus {
   font-size: 15px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .result-card p {
@@ -208,20 +209,22 @@ select:focus, input[type="text"]:focus {
   line-height: 1.6;
 }
 
-.evidence-btn {
-  margin-top: 12px;
-  padding: 6px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  color: var(--text);
-}
-
-.evidence-btn:hover {
-  background-color: #e0e0e0;
-}
+  .evidence-btn {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    margin-top: 0;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    color: var(--text);
+  }
+  .evidence-btn:hover {
+    background-color: #e0e0e0;
+  }
 input[type="text"],
 select,
 .result-card,
@@ -421,31 +424,35 @@ input:checked + .slider:before {
     if (data.answer) {
       const card = document.createElement("div");
       card.className = "result-card";
+      // Prepare answer HTML
       card.innerHTML = `<p>${data.answer.replace(/\n/g, "<br/>")}</p>`;
-      results.appendChild(card);
+      let evidenceBtn = null;
+      let evidenceList = null;
+      let visible = false;
       if (data.evidence && data.evidence.length > 0) {
-        const evidenceBtn = document.createElement("button");
+        evidenceBtn = document.createElement("button");
         evidenceBtn.className = "evidence-btn";
         evidenceBtn.textContent = "🔍 왜 이 답변인가요?";
-        let visible = false;
-        const evidenceList = document.createElement("div");
+        evidenceList = document.createElement("div");
         evidenceList.style.marginTop = "10px";
         evidenceList.style.display = "none";
-
         data.evidence.forEach(ev => {
           const evBlock = document.createElement("div");
           evBlock.className = "evidence-card";
           evBlock.innerHTML = `<strong>Q:</strong> ${ev.question}<strong>A:</strong> ${ev.answer}<strong>Score:</strong> ${ev.score}`;
           evidenceList.appendChild(evBlock);
         });
-
         evidenceBtn.onclick = () => {
           visible = !visible;
           evidenceList.style.display = visible ? "block" : "none";
           evidenceBtn.textContent = visible ? "근거 숨기기" : "🔍 왜 이 답변인가요?";
         };
-
-        results.appendChild(evidenceBtn);
+        // Place the evidence button inside the card
+        card.appendChild(evidenceBtn);
+      }
+      results.appendChild(card);
+      // Place the evidence list outside the card for layout consistency
+      if (evidenceList) {
         results.appendChild(evidenceList);
       }
     } else {
