@@ -227,6 +227,7 @@ def run_msp_information_summary(question: str):
             f"[응답 지침]\n"
             f"- 실제 Q&A에 기반해 요약하거나 종합적으로 정리해 주세요.\n"
             f"- 없는 정보를 추론하거나 꾸며내지 마세요.\n"
+            f"- 질문과 다른 타 회사의 정보를 절대로 억지로 끼워맞추지 마세요."
             f"- 가능한 한 간결하면서도 신뢰도 있는 표현으로 작성해 주세요.\n"
         )
     except Exception as e:
