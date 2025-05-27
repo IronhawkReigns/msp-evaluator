@@ -210,10 +210,7 @@ select:focus, input[type="text"]:focus {
 }
 
   .evidence-btn {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
-    margin-top: 0;
+    margin-top: 12px;
     padding: 6px 12px;
     font-size: 14px;
     cursor: pointer;
@@ -221,6 +218,7 @@ select:focus, input[type="text"]:focus {
     border: 1px solid #ddd;
     border-radius: 6px;
     color: var(--text);
+    z-index: 1;
   }
   .evidence-btn:hover {
     background-color: #e0e0e0;
@@ -448,9 +446,15 @@ input:checked + .slider:before {
           evidenceBtn.textContent = visible ? "근거 숨기기" : "🔍 왜 이 답변인가요?";
         };
       }
-      if (evidenceBtn) card.appendChild(evidenceBtn);
-      if (evidenceList) card.appendChild(evidenceList);
+      // Append the answer card first
       results.appendChild(card);
+      // Append evidenceList before evidenceBtn inside the card for correct layout
+      if (evidenceList) {
+        card.appendChild(evidenceList);
+      }
+      if (evidenceBtn) {
+        card.appendChild(evidenceBtn);
+      }
     } else {
       results.innerHTML = "<p>결과를 찾을 수 없습니다.</p>";
     }
