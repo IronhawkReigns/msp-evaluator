@@ -276,6 +276,34 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(20px);
 }
+  .tooltip-wrapper {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+  }
+
+  .tooltip-wrapper .tooltip-text {
+    visibility: hidden;
+    width: 220px;
+    background-color: #1e1e1e;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 0;
+    margin-left: -10px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px;
+  }
+
+  .tooltip-wrapper:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+  }
 </style>
 
 <body>
@@ -301,7 +329,10 @@ input:checked + .slider:before {
           <input type="checkbox" id="advancedSearch">
           <span class="slider round"></span>
         </label>
-        <span title="Perplexity 기반 웹 검색을 사용합니다." style="font-size: 14px; font-weight: 600; color: var(--muted); cursor: help;">고급 검색 (Web 기반)</span>
+        <span class="tooltip-wrapper" style="font-size: 14px; font-weight: 600; color: var(--muted);">
+          고급 검색 (Web 기반)
+          <span class="tooltip-text">Perplexity 기반 웹 검색을 사용합니다. 더 깊이 있는 검색 결과가 제공됩니다.</span>
+        </span>
       </div>
       <button id="submitBtn">검색</button>
       <p style="font-size: 13px; color: #777; margin-top: 8px;">
