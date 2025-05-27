@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from clova_router import Executor
 class RouterQuery(BaseModel):
     query: str
