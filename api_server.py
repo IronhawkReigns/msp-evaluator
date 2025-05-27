@@ -288,7 +288,7 @@ async def query_router(data: RouterQuery):
         else:
             result = raw_result
 
-        domain_result = result["result"].get("domain", {}).get("result")
+        domain_result = result.get("result", {}).get("domain", {}).get("result")
 
         if domain_result == "Recommend":
             return run_msp_recommendation(data.query, min_score=0)
