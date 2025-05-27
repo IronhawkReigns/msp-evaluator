@@ -242,25 +242,9 @@ def run_msp_information_summary(question: str):
             n_results=8
         )
 
-        all_msp_names = list(set(c.get("msp_name") for c in query_results["metadatas"][0] if c.get("msp_name")))
-
-        msp_name = extract_msp_name(question)
-        if not msp_name:
-            return {"answer": "질문에서 MSP 파트너사 이름을 인식할 수 없습니다. 다시 시도해 주세요."}
-
-        matched_name = None
-        for name in all_msp_names:
-            if msp_name.strip().lower() in name.strip().lower() or name.strip().lower() in msp_name.strip().lower():
-                matched_name = name
-                break
-
-        if not matched_name:
-            return {"answer": "관련된 정보를 찾을 수 없습니다."}
-
-        chunks = [c for c in query_results["metadatas"][0] if c.get("msp_name") == matched_name]
-
+        chunks = [c for c in query_results["metadatas"][0] if c.get("answer") and c.get("question")]
         if not chunks:
-            return {"answer": f"'{matched_name}' 관련된 정보를 찾을 수 없습니다."}
+            return {"answer": "관련된 정보를 찾을 수 없습니다."}
 
         answer_blocks = []
         for chunk in chunks:
