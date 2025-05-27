@@ -125,7 +125,7 @@ Naver Cloud Platform의 AI & Hybrid Consulting 프로젝트로 개발된 클라�
 ## 개발자
 
 **신예준 (Yejoon Shin)**  
-Naver Cloud Platform 인턴  
+Naver Cloud Platform 파트타임  
 GitHub: [IronhawkReigns](https://github.com/IronhawkReigns)  
 이메일: mistervic03@gmail.com / yejoons_2026@gatech.edu
 
