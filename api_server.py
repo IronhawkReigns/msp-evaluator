@@ -5,7 +5,7 @@ from msp_core import (
     extract_msp_name,
     query_embed,
     collection,
-    create_pdf
+    generate_answer_pdf
 )
 from clova_router import Executor
 from pydantic import BaseModel
@@ -179,7 +179,7 @@ def serve_admin_ui(request: Request):
 
 @app.post("/generate_pdf")
 def generate_pdf(data: dict):
-    pdf_bytes = create_pdf(data["answer"], data.get("evidence", []))
+    pdf_bytes = generate_answer_pdf(data["answer"], data.get("evidence", []))
     return StreamingResponse(io.BytesIO(pdf_bytes), media_type="application/pdf", headers={
         "Content-Disposition": "attachment; filename=msp_result.pdf"
     })
