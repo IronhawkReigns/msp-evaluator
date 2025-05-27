@@ -101,7 +101,7 @@ def run_msp_recommendation(question: str, min_score: int):
         else:
             answer = clova_response.choices[0].message.content.strip()
         answer = answer.replace("설루션", "솔루션")
-        return {"answer": answer, "raw": clova_response.model_dump()}
+        return {"answer": answer, "raw": clova_response.model_dump(), "evidence": query_results["metadatas"][0]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"HyperCLOVA error: {str(e)}")
     
