@@ -307,10 +307,11 @@ input:checked + .slider:before {
     opacity: 1;
   }
 
-  /* Updated evidence-card style to match .evidence-btn background and border */
+  /* Updated evidence-card style to match .result-card left border and background */
   .evidence-card {
     background-color: #f0f0f0;
     border: 1px solid #ddd;
+    border-left: 4px solid #03c75a;
     padding: 16px;
     border-radius: 10px;
     margin-bottom: 12px;
@@ -345,9 +346,9 @@ input:checked + .slider:before {
         <option value="5">5점만</option>
       </select>
       <input type="text" id="questionInput" placeholder="예: 금융 회사와의 프로젝트에 어울리는 보안이 강점인 파트너사 추천해줘 / 메가존 주력 솔루션 알려줘" />
-      <div id="sample-questions" style="margin-bottom: 20px; display: none;">
+      <div id="sample-questions" style="margin-bottom: 20px; display: none; text-align: center;">
         <p style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 6px;">예시 질문:</p>
-        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
           <button class="sample-btn">ITCEN CLOIT의 AI 전문 인력 구성은?</button>
           <button class="sample-btn">MLOps 관련 경험이 풍부한 MSP는?</button>
           <button class="sample-btn">디딤365의 협업 방식은 어떤가?</button>
@@ -362,7 +363,7 @@ input:checked + .slider:before {
           고급 검색 (Web 기반)
           <span class="tooltip-text">Perplexity 기반 웹 검색을 사용합니다. 더 깊이 있는 검색 결과가 제공됩니다.</span>
         </span>
-        <button id="toggle-sample-btn" style="font-size: 13px; padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; margin-left: auto;">
+        <button id="toggle-sample-btn" style="font-size: 13px; padding: 6px 10px; border-radius: 6px; border: 1px solid #ddd; background-color: #f0f0f0; color: #333; margin-left: auto; cursor: pointer;">
           예시 질문 보기 ▼
         </button>
       </div>
@@ -457,7 +458,8 @@ input:checked + .slider:before {
     btn.style.padding = "8px 12px";
     btn.style.fontSize = "13px";
     btn.style.border = "1px solid #ddd";
-    btn.style.borderRadius = "8px";
+    btn.style.color = "#333";
+    btn.style.borderRadius = "6px";
     btn.style.backgroundColor = "#f0f0f0";
     btn.style.cursor = "pointer";
     btn.style.transition = "background 0.2s";
