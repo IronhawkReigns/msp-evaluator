@@ -176,20 +176,3 @@ def serve_admin_ui(request: Request):
         return FileResponse("static/admin.html")
     except Exception as e:
         return RedirectResponse(url="/login?next=/admin")
-
-@app.post("/generate_pdf")
-async def generate_pdf(request: Request):
-    try:
-        data = await request.json()
-        answer = data.get("answer", "")
-        evidence = data.get("evidence", [])
-        pdf_bytes = generate_answer_pdf(answer, evidence)
-        return StreamingResponse(io.BytesIO(pdf_bytes), media_type="application/pdf", headers={
-            "Content-Disposition": "attachment; filename=msp_result.pdf"
-        })
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"PDF 생성 중 오류 발생: {str(e)}")
-    
-@app.get("/")
-def serve_main_page():
-    return FileResponse("static/main.html")
