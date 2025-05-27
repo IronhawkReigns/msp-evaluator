@@ -338,6 +338,6 @@ def generate_answer_pdf(answer: str, evidence: list, filename: str = "msp_report
             block = f"[{idx}] {msp} (score: {score})\nQ: {question}\nA: {response}\n"
             pdf.chapter_body(block)
 
-    output_path = os.path.join("Downloads", filename)
+    output_path = os.path.join("static", filename)
     pdf.output(output_path)
     return output_path
