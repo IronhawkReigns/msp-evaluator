@@ -240,19 +240,29 @@ def run_msp_information_summary(question: str):
     from openai import OpenAI
     import json
 
+    query = question
+    msp_name = extract_msp_name(question)
+
+    all_results = collection.get(include=["metadatas"])
+    all_msp_names = [meta.get("msp_name", "") for meta in all_results["metadatas"] if meta.get("msp_name")]
+
+    matches = get_close_matches(msp_name, all_msp_names, n=1, cutoff=0.6)
+    if not matches:
+        return {"answer": "질문하신 회사명을 인식하지 못했습니다. 다시 시도해 주세요."}
+    best_match = matches[0]
+
     try:
         query_vector = query_embed(question)
         query_results = collection.query(
             query_embeddings=[query_vector],
             n_results=8
         )
-
-        chunks = [c for c in query_results["metadatas"][0] if c.get("answer") and c.get("question")]
-        if not chunks:
+        filtered_chunks = [c for c in query_results["metadatas"][0] if c.get("answer") and c.get("question") and c.get("msp_name") == best_match]
+        if not filtered_chunks:
             return {"answer": "관련된 정보를 찾을 수 없습니다."}
 
         answer_blocks = []
-        for chunk in chunks:
+        for chunk in filtered_chunks:
             if not chunk.get("answer") or not chunk.get("question"):
                 continue
             answer_blocks.append(f"Q: {chunk['question']}\nA: {chunk['answer']}")
