@@ -447,7 +447,7 @@ input:checked + .slider:before {
           evidenceList.style.display = visible ? "block" : "none";
           evidenceBtn.textContent = visible ? "근거 숨기기" : "🔍 왜 이 답변인가요?";
         };
-        // Place the evidence button inside the card
+        // Place the evidence button inside the card just before appending the card
         card.appendChild(evidenceBtn);
       }
       results.appendChild(card);
@@ -471,7 +471,12 @@ input:checked + .slider:before {
         link.download = "msp_result.pdf";
         link.click();
       };
-      results.appendChild(downloadBtn);
+      const buttonWrapper = document.createElement("div");
+      buttonWrapper.style.display = "flex";
+      buttonWrapper.style.justifyContent = "flex-end";
+      buttonWrapper.style.marginTop = "8px";
+      buttonWrapper.appendChild(downloadBtn);
+      card.appendChild(buttonWrapper);
     } else {
       results.innerHTML = "<p>결과를 찾을 수 없습니다.</p>";
     }
