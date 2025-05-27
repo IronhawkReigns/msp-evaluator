@@ -5,6 +5,7 @@ import requests
 import json
 import uuid
 from difflib import get_close_matches
+from api_server import query_embed, collection
 
 def run_msp_recommendation(question: str, min_score: int):
     from collections import defaultdict
