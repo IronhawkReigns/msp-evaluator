@@ -38,6 +38,38 @@ def query_embed(text: str):
     from vector_writer import clova_embedding
     return clova_embedding(text)
 
+def extract_msp_name(question: str) -> str:
+    from openai import OpenAI
+    import os
+
+    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
+    API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
+    client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
+    model = "HCX-005"
+
+    prompt = (
+        f"다음 사용자 질문에서 클라우드 MSP 파트너사의 이름만 정확히 추출해 주세요.\n"
+        f"질문: \"{question}\"\n"
+        f"[응답 형식]\n<회사명>"
+    )
+
+    try:
+        clova_response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "정확한 회사명을 추출해 주세요. 다른 불필요한 말은 하지 마세요."},
+                {"role": "user", "content": prompt}
+            ],
+            top_p=0.6,
+            temperature=0.3,
+            max_tokens=20
+        )
+        raw = clova_response.choices[0].message.content.strip()
+        return raw.strip("<>").strip()
+    except Exception as e:
+        print(f"❌ Error extracting MSP name: {e}")
+        return ""
+
 @app.post("/run/{msp_name}")
 def run_msp_vector_pipeline(msp_name: str):
     try:
@@ -209,10 +241,15 @@ def run_msp_information_summary(question: str):
             n_results=8
         )
 
-        if not query_results["metadatas"] or not query_results["metadatas"][0]:
+        msp_name = extract_msp_name(question)
+        chunks = [c for c in query_results["metadatas"][0] if c.get("msp_name") == msp_name]
+
+        if not msp_name:
+            return {"answer": "질문에서 MSP 파트너사 이름을 인식할 수 없습니다. 다시 시도해 주세요."}
+
+        if not chunks:
             return {"answer": "관련된 정보를 찾을 수 없습니다."}
 
-        chunks = query_results["metadatas"][0]
         answer_blocks = []
         for chunk in chunks:
             if not chunk.get("answer") or not chunk.get("question"):
