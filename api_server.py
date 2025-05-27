@@ -4,8 +4,7 @@ from msp_core import (
     run_msp_information_summary_claude,
     extract_msp_name,
     query_embed,
-    collection,
-    generate_answer_pdf  # Ensure this is a callable returning bytes
+    collection
 )
 from clova_router import Executor
 from pydantic import BaseModel
