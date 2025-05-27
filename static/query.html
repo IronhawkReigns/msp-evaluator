@@ -447,36 +447,10 @@ input:checked + .slider:before {
           evidenceList.style.display = visible ? "block" : "none";
           evidenceBtn.textContent = visible ? "근거 숨기기" : "🔍 왜 이 답변인가요?";
         };
-        // Place the evidence button inside the card just before appending the card
-        card.appendChild(evidenceBtn);
       }
+      if (evidenceBtn) card.appendChild(evidenceBtn);
+      if (evidenceList) card.appendChild(evidenceList);
       results.appendChild(card);
-      // Place the evidence list outside the card for layout consistency
-      if (evidenceList) {
-        results.appendChild(evidenceList);
-      }
-      const downloadBtn = document.createElement("button");
-      downloadBtn.textContent = "📄 PDF로 저장";
-      downloadBtn.className = "evidence-btn";
-      downloadBtn.style.marginTop = "12px";
-      downloadBtn.onclick = async () => {
-        const res = await fetch("/generate-pdf", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ answer: data.answer, evidence: data.evidence || [] })
-        });
-        const blob = await res.blob();
-        const link = document.createElement("a");
-        link.href = window.URL.createObjectURL(blob);
-        link.download = "msp_result.pdf";
-        link.click();
-      };
-      const buttonWrapper = document.createElement("div");
-      buttonWrapper.style.display = "flex";
-      buttonWrapper.style.justifyContent = "flex-end";
-      buttonWrapper.style.marginTop = "8px";
-      buttonWrapper.appendChild(downloadBtn);
-      card.appendChild(buttonWrapper);
     } else {
       results.innerHTML = "<p>결과를 찾을 수 없습니다.</p>";
     }
