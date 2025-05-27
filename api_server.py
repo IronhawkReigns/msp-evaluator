@@ -5,6 +5,7 @@ from msp_core import (
     extract_msp_name,
     query_embed,
     collection,
+    create_pdf
 )
 from clova_router import Executor
 from pydantic import BaseModel
@@ -13,6 +14,8 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi.responses import StreamingResponse
+import io
 class RouterQuery(BaseModel):
     query: str
     chat_history: list = []
@@ -173,6 +176,13 @@ def serve_admin_ui(request: Request):
         return FileResponse("static/admin.html")
     except Exception as e:
         return RedirectResponse(url="/login?next=/admin")
+
+@app.post("/generate_pdf")
+def generate_pdf(data: dict):
+    pdf_bytes = create_pdf(data["answer"], data.get("evidence", []))
+    return StreamingResponse(io.BytesIO(pdf_bytes), media_type="application/pdf", headers={
+        "Content-Disposition": "attachment; filename=msp_result.pdf"
+    })
     
 @app.get("/")
 def serve_main_page():
