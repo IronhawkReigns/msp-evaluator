@@ -1,11 +1,21 @@
 from fastapi import HTTPException
-from chromadb import PersistentClient
 from typing import Any
 import requests
 import json
 import uuid
 from difflib import get_close_matches
-from api_server import query_embed, collection
+from vector_writer import clova_embedding
+import os
+import chromadb
+from chromadb import PersistentClient
+
+# Embedding and collection setup
+def query_embed(text: str):
+    return clova_embedding(text)
+
+CHROMA_PATH = os.path.abspath("chroma_store")
+client = PersistentClient(path=CHROMA_PATH)
+collection = client.get_or_create_collection("msp_chunks")
 
 def run_msp_recommendation(question: str, min_score: int):
     from collections import defaultdict
