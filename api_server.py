@@ -1,17 +1,11 @@
-from pydantic import BaseModel
 from clova_router import Executor
 from difflib import get_close_matches
-class RouterQuery(BaseModel):
-    query: str
-    chat_history: list[dict] = []
 import os
 from dotenv import load_dotenv
 load_dotenv()
-from fastapi import FastAPI, HTTPException, Depends
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
-from fastapi.requests import Request
 import requests
 from vector_writer import run_from_msp_name
 from admin_protected import router as admin_router, manager
@@ -32,8 +26,6 @@ app = FastAPI()
 app.include_router(admin_router)
 print("📦 admin router included")
 
-class CompanyInput(BaseModel):
-    name: str
 
 def query_embed(text: str):
     from vector_writer import clova_embedding
@@ -342,7 +334,7 @@ async def query_router(data: RouterQuery):
 
         if domain_result == "mspevaluator":
             extracted_name = extract_msp_name(data.query)
-            print(f"🧠 CLOVA 추출 회사명: {extracted_name}")
+            print(f"CLOVA 추출 회사명: {extracted_name}")
             if "Recommend" in blocked:
                 return run_msp_recommendation(data.query, min_score=0)
             elif "Information" in blocked:
