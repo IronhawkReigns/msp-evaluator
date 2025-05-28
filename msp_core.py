@@ -300,3 +300,64 @@ def extract_msp_name(question: str) -> str:
     except Exception as e:
         print(f"❌ Error extracting MSP name: {e}")
         return ""
+def run_msp_news_summary_clova(question: str):
+    import urllib.parse
+    import urllib.request
+    import traceback
+
+    msp_name = extract_msp_name(question)
+    if not msp_name:
+        return {"answer": "회사명을 인식하지 못했습니다. 다시 시도해 주세요.", "advanced": True}
+
+    try:
+        query = urllib.parse.quote(msp_name)
+        url = f"https://openapi.naver.com/v1/search/news.json?query={query}&display=10&sort=sim"
+        headers = {
+            "X-Naver-Client-Id": os.getenv("NAVER_CLIENT_ID"),
+            "X-Naver-Client-Secret": os.getenv("NAVER_CLIENT_SECRET")
+        }
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req) as response:
+            if response.status != 200:
+                raise Exception(f"Naver API Error: {response.status}")
+            news_data = json.loads(response.read().decode("utf-8"))
+
+        if "items" not in news_data or not news_data["items"]:
+            return {"answer": f"{msp_name}에 대한 뉴스 기사를 찾을 수 없습니다.", "advanced": True}
+
+        article_summaries = "\n".join(
+            f"- 제목: {item['title'].replace('<b>', '').replace('</b>', '')}\n  요약: {item['description'].replace('<b>', '').replace('</b>', '')}"
+            for item in news_data["items"]
+        )
+
+        prompt = (
+            f"다음은 클라우드 MSP 기업 '{msp_name}'에 대한 뉴스 기사 요약입니다. 이 내용을 바탕으로 사용자의 질문에 응답해 주세요.\n"
+            f"사용자 질문: \"{question}\"\n\n"
+            f"{article_summaries}\n\n"
+            f"[응답 지침]\n"
+            f"- 뉴스 기사 내용을 기반으로 응답을 생성하세요.\n"
+            f"- 없는 정보를 꾸며내거나 추론하지 마세요.\n"
+            f"- 기업의 수상 실적, 협업, 투자, 인력 구성 등 핵심 정보를 간결하게 요약해 주세요."
+        )
+
+        CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
+        API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
+        from openai import OpenAI
+        client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
+        model = "HCX-005"
+
+        clova_response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "정확하고 신뢰할 수 있는 응답을 자연스럽고 간결한 문장으로 작성해 주세요."},
+                {"role": "user", "content": prompt}
+            ],
+            top_p=0.6,
+            temperature=0.3,
+            max_tokens=500
+        )
+        answer = clova_response.choices[0].message.content.strip()
+        return {"answer": answer, "advanced": True, "evidence": news_data["items"]}
+    except Exception as e:
+        traceback.print_exc()
+        return {"answer": f"뉴스 기반 요약에 실패했습니다: {str(e)}", "advanced": True}
