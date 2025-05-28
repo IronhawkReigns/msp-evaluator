@@ -310,6 +310,22 @@ def run_msp_news_summary_clova(question: str):
     if not msp_name:
         return {"answer": "회사명을 인식하지 못했습니다. 다시 시도해 주세요.", "advanced": True}
 
+    # Get vector DB information for the MSP
+    try:
+        query_vector = query_embed(question)
+        query_results = collection.query(
+            query_embeddings=[query_vector],
+            n_results=10
+        )
+        db_chunks = [
+            f"Q: {chunk['question']}\nA: {chunk['answer']}"
+            for chunk in query_results["metadatas"][0]
+            if chunk.get("msp_name") == msp_name and chunk.get("question") and chunk.get("answer")
+        ][:5]
+        db_context = "\n\n".join(db_chunks)
+    except Exception as e:
+        db_context = ""
+
     try:
         query = urllib.parse.quote(msp_name)
         url = f"https://openapi.naver.com/v1/search/news.json?query={query}&display=10&sort=sim"
@@ -344,12 +360,13 @@ def run_msp_news_summary_clova(question: str):
         )
 
         prompt = (
-            f"다음은 클라우드 MSP 기업 '{msp_name}'에 대한 뉴스 기사 및 웹 문서 요약입니다. 이 내용을 바탕으로 사용자의 질문에 응답해 주세요.\n"
+            f"다음은 클라우드 MSP 기업 '{msp_name}'에 대한 뉴스 기사, 웹 문서, 인터뷰 Q&A 요약입니다. 이 내용을 바탕으로 사용자의 질문에 응답해 주세요.\n"
             f"사용자 질문: \"{question}\"\n\n"
+            f"[DB 기반 정보]\n{db_context}\n\n"
             f"[뉴스 기사 요약]\n{article_summaries}\n\n"
             f"[웹 문서 요약]\n{web_summaries}\n\n"
             f"[응답 지침]\n"
-            f"- 기사 및 문서 내용을 기반으로 응답을 생성하세요.\n"
+            f"- 기사, 웹 문서, 인터뷰 Q&A 내용을 기반으로 응답을 생성하세요.\n"
             f"- 없는 정보를 꾸며내거나 추론하지 마세요.\n"
             f"- 기업의 수상 실적, 협업, 투자, 인력 구성 등 핵심 정보를 간결하게 요약해 주세요."
         )
