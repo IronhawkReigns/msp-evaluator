@@ -369,9 +369,9 @@ input:checked + .slider:before {
         </button>
       </div>
       <button id="submitBtn">검색</button>
-      <button formaction="/query/advanced_naver" formmethod="post" class="search-button" style="margin-top: 10px; background-color: white; color: #03c75a; border: 2px solid #03c75a; font-weight: bold; border-radius: 12px; padding: 14px; width: 100%; cursor: pointer;">
-        고급 검색 (NAVER)
-      </button>
+<button type="button" class="search-button" style="margin-top: 10px; background-color: white; color: #03c75a; border: 2px solid #03c75a; font-weight: bold; border-radius: 12px; padding: 14px; width: 100%; cursor: pointer;">
+  고급 검색 (NAVER)
+</button>
       <p style="font-size: 13px; color: #777; margin-top: 8px;">
         ⚠️ 주의사항: 본 서비스는 AI 기반으로 제공되며, 간헐적으로 부정확한 응답이 포함될 수 있습니다. 이 경우 다시 검색을 권장합니다.
       </p>
@@ -493,5 +493,43 @@ input:checked + .slider:before {
     const isVisible = sampleQuestionsDiv.style.display === "block";
     sampleQuestionsDiv.style.display = isVisible ? "none" : "block";
     toggleSampleBtn.innerText = isVisible ? "예시 질문 보기 ▼" : "예시 질문 닫기 ▲";
+  });
+</script>
+<script>
+  document.querySelector(".search-button").addEventListener("click", async () => {
+    const question = document.getElementById("questionInput").value;
+
+    if (!question.trim()) {
+      alert("질문을 입력해 주세요.");
+      return;
+    }
+
+    const results = document.getElementById("results");
+    results.innerHTML = `
+    <div class="result-card" style="display: flex; align-items: center; gap: 10px;">
+      <div class="loader" style="border: 4px solid #f3f3f3; border-top: 4px solid #03c75a; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite;"></div>
+      <p style="margin: 0;">NAVER 뉴스 기반 검색 중...</p>
+    </div>`;
+
+    const res = await fetch("/query/advanced_naver", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: question })
+    });
+
+    const data = await res.json();
+    results.innerHTML = "";
+
+    const resultTitle = document.getElementById("resultTitle");
+    resultTitle.style.display = "block";
+
+    if (data.answer) {
+      const card = document.createElement("div");
+      card.className = "result-card";
+      card.innerHTML = `<p>${data.answer.replace(/\n/g, "<br/>")}</p>`;
+      results.appendChild(card);
+    } else {
+      results.innerHTML = `<div class="result-card"><p>결과를 찾을 수 없습니다.</p></div>`;
+    }
   });
 </script>
