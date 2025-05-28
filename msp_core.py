@@ -370,6 +370,7 @@ def run_msp_news_summary_clova(question: str):
             max_tokens=500
         )
         answer = clova_response.choices[0].message.content.strip()
+        answer = answer.replace("설루션", "솔루션")
         return {"answer": answer, "advanced": True, "evidence": news_data["items"], "web_evidence": web_data.get("items", [])}
     except Exception as e:
         traceback.print_exc()
