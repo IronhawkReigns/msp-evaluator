@@ -5,7 +5,7 @@ from msp_core import (
     extract_msp_name,
     query_embed,
     collection,
-    run_msp_information_summary_clova_with_news
+    run_msp_news_summary_clova
 )
 from clova_router import Executor
 from pydantic import BaseModel
@@ -173,7 +173,7 @@ async def query_router(data: RouterQuery):
 @app.post("/query/advanced_naver")
 async def query_advanced_naver(data: RouterQuery):
     msp_name = extract_msp_name(data.query)
-    return run_msp_information_summary_clova_with_news(msp_name, data.query)
+    return run_msp_news_summary_clova(msp_name, data.query)
 
 # Add protected /admin route using same login logic as /ui
 @app.get("/admin")
