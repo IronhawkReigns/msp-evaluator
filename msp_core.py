@@ -309,24 +309,6 @@ def run_msp_news_summary_clova(question: str):
     if not msp_name:
         return {"answer": "회사명을 인식하지 못했습니다. 다시 시도해 주세요.", "advanced": True}
 
-    from difflib import get_close_matches
-    query_vector = query_embed(question)
-    all_results = collection.get(include=["metadatas"])
-    all_msp_names = [meta.get("msp_name", "") for meta in all_results["metadatas"] if meta.get("msp_name")]
-    matches = get_close_matches(msp_name, all_msp_names, n=1, cutoff=0.6)
-    best_match = matches[0] if matches else None
-
-    vector_context = ""
-    if best_match:
-        vector_results = collection.query(query_embeddings=[query_vector], n_results=8)
-        matched_chunks = [
-            c for c in vector_results["metadatas"][0]
-            if c.get("answer") and c.get("question") and c.get("msp_name") == best_match
-        ]
-        vector_context = "\n".join(
-            f"Q: {c['question']}\nA: {c['answer']}" for c in matched_chunks
-        )
-
     try:
         query = urllib.parse.quote(msp_name)
         url = f"https://openapi.naver.com/v1/search/news.json?query={query}&display=10&sort=sim"
@@ -340,6 +322,13 @@ def run_msp_news_summary_clova(question: str):
                 raise Exception(f"Naver API Error: {response.status}")
             news_data = json.loads(response.read().decode("utf-8"))
 
+        url_web = f"https://openapi.naver.com/v1/search/webkr.json?query={query}&display=3&sort=sim"
+        req_web = urllib.request.Request(url_web, headers=headers)
+        with urllib.request.urlopen(req_web) as response_web:
+            if response_web.status != 200:
+                raise Exception(f"Naver Web API Error: {response_web.status}")
+            web_data = json.loads(response_web.read().decode("utf-8"))
+
         if "items" not in news_data or not news_data["items"]:
             return {"answer": f"{msp_name}에 대한 뉴스 기사를 찾을 수 없습니다.", "advanced": True}
 
@@ -348,13 +337,18 @@ def run_msp_news_summary_clova(question: str):
             for item in news_data["items"]
         )
 
+        web_summaries = "\n".join(
+            f"- 제목: {item['title'].replace('<b>', '').replace('</b>', '')}\n  요약: {item['description'].replace('<b>', '').replace('</b>', '')}"
+            for item in web_data.get("items", [])
+        )
+
         prompt = (
-            f"다음은 클라우드 MSP 기업 '{msp_name}'에 대한 뉴스 기사 요약과 인터뷰 Q&A입니다. 이 내용을 바탕으로 사용자의 질문에 응답해 주세요.\n"
+            f"다음은 클라우드 MSP 기업 '{msp_name}'에 대한 뉴스 기사 및 웹 문서 요약입니다. 이 내용을 바탕으로 사용자의 질문에 응답해 주세요.\n"
             f"사용자 질문: \"{question}\"\n\n"
             f"[뉴스 기사 요약]\n{article_summaries}\n\n"
-            f"[내부 Q&A 인터뷰]\n{vector_context if vector_context else '관련 Q&A 없음'}\n\n"
+            f"[웹 문서 요약]\n{web_summaries}\n\n"
             f"[응답 지침]\n"
-            f"- 뉴스 기사 및 Q&A 정보를 바탕으로 응답을 생성하세요.\n"
+            f"- 기사 및 문서 내용을 기반으로 응답을 생성하세요.\n"
             f"- 없는 정보를 꾸며내거나 추론하지 마세요.\n"
             f"- 기업의 수상 실적, 협업, 투자, 인력 구성 등 핵심 정보를 간결하게 요약해 주세요."
         )
@@ -376,8 +370,7 @@ def run_msp_news_summary_clova(question: str):
             max_tokens=500
         )
         answer = clova_response.choices[0].message.content.strip()
-        answer = answer.replace("설루션", "솔루션")
-        return {"answer": answer, "advanced": True, "evidence": news_data["items"]}
+        return {"answer": answer, "advanced": True, "evidence": news_data["items"], "web_evidence": web_data.get("items", [])}
     except Exception as e:
         traceback.print_exc()
         return {"answer": f"뉴스 기반 요약에 실패했습니다: {str(e)}", "advanced": True}
