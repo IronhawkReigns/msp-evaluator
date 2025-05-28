@@ -172,8 +172,7 @@ async def query_router(data: RouterQuery):
 # Advanced Naver route
 @app.post("/query/advanced_naver")
 async def query_advanced_naver(data: RouterQuery):
-    msp_name = extract_msp_name(data.query)
-    return run_msp_news_summary_clova(msp_name, data.query)
+    return run_msp_news_summary_clova(data.query)
 
 # Add protected /admin route using same login logic as /ui
 @app.get("/admin")
