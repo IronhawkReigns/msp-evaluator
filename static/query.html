@@ -327,6 +327,12 @@ input:checked + .slider:before {
     font-weight: 600;
     margin-bottom: 4px;
   }
+
+.search-button:hover {
+  background: #f1fdf7;
+  box-shadow: 0 4px 10px rgba(3, 199, 90, 0.1);
+  transform: translateY(-1px);
+}
 </style>
 
 <body>
@@ -369,7 +375,7 @@ input:checked + .slider:before {
         </button>
       </div>
       <button id="submitBtn">검색</button>
-<button type="button" class="search-button" style="margin-top: 10px; background-color: white; color: #03c75a; border: 2px solid #03c75a; font-weight: bold; border-radius: 12px; padding: 14px; width: 100%; cursor: pointer;">
+<button type="button" class="search-button" style="margin-top: 10px; background: white; color: #03c75a; border: 2px solid #03c75a; font-weight: bold; border-radius: 12px; padding: 16px; width: 100%; cursor: pointer; transition: all 0.2s ease; font-family: 'NanumSquareNeo', sans-serif; font-size: 16px;">
   고급 검색 (NAVER)
 </button>
       <p style="font-size: 13px; color: #777; margin-top: 8px;">
