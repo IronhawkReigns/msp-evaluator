@@ -328,23 +328,8 @@ input:checked + .slider:before {
     margin-bottom: 4px;
   }
 
-.search-button {
-  margin-top: 10px;
-  font-size: 15px;
-  font-weight: bold;
-  width: 100%;
-  padding: 16px;
-  border-radius: 12px;
-  border: 2px solid #03c75a;
-  background: #ffffff;
-  color: #03c75a;
-  cursor: pointer;
-  transition: background 0.2s ease;
-  font-family: 'NanumSquareNeo', sans-serif;
-}
-
 .search-button:hover {
-  background: linear-gradient(to bottom, #f5f5f5, #eaeaea);
+  background: linear-gradient(135deg, #f8f8f8, #ececec);
 }
 </style>
 
@@ -388,9 +373,12 @@ input:checked + .slider:before {
         </button>
       </div>
       <button id="submitBtn">검색</button>
-<button type="button" class="search-button">
-  고급 검색 (NAVER)
-</button>
+<div class="tooltip-wrapper" style="width: 100%;">
+  <button type="button" class="search-button" style="margin-top: 10px; font-size: 15px; font-weight: bold; width: 100%; padding: 16px; border-radius: 12px; border: 1px solid #03c75a; background-color: white; color: #03c75a; cursor: pointer; transition: background 0.2s ease; font-family: 'NanumSquareNeo', sans-serif;">
+    고급 검색 (NAVER)
+  </button>
+  <span class="tooltip-text" style="left: 50%; transform: translateX(-50%);">NAVER 뉴스 검색을 기반으로 정보에 접근합니다.</span>
+</div>
       <p style="font-size: 13px; color: #777; margin-top: 8px;">
         ⚠️ 주의사항: 본 서비스는 AI 기반으로 제공되며, 간헐적으로 부정확한 응답이 포함될 수 있습니다. 이 경우 다시 검색을 권장합니다.
       </p>
