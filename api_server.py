@@ -4,7 +4,8 @@ from msp_core import (
     run_msp_information_summary_claude,
     extract_msp_name,
     query_embed,
-    collection
+    collection,
+    run_msp_information_summary_clova_with_news
 )
 from clova_router import Executor
 from pydantic import BaseModel
@@ -166,6 +167,13 @@ async def query_router(data: RouterQuery):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Router 처리 중 오류 발생: {str(e)}")
+
+
+# Advanced Naver route
+@app.post("/query/advanced_naver")
+async def query_advanced_naver(data: RouterQuery):
+    msp_name = extract_msp_name(data.query)
+    return run_msp_information_summary_clova_with_news(msp_name, data.query)
 
 # Add protected /admin route using same login logic as /ui
 @app.get("/admin")
