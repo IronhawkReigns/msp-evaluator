@@ -300,6 +300,7 @@ def extract_msp_name(question: str) -> str:
     except Exception as e:
         print(f"❌ Error extracting MSP name: {e}")
         return ""
+
 def run_msp_news_summary_clova(question: str):
     import urllib.parse
     import urllib.request
