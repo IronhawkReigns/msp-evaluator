@@ -15,6 +15,7 @@
         <input type="file" id="excelFile" name="file" accept=".xlsx" required><br>
         <button type="submit">업로드 및 평가</button>
     </form>
+    <div id="result"></div>
     <div id="summaryTable" style="margin-top: 2em;"></div>
 
     <script>
@@ -31,11 +32,54 @@
             });
 
             const result = await res.json();
+            const output = document.getElementById('result');
+            output.innerHTML = '<h3>✅ 평가 결과 요약</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
 
-            const summaryTableDiv = document.getElementById('summaryTable');
-            summaryTableDiv.innerHTML = '';
+            if (result.summary && Array.isArray(result.summary)) {
+                const table = document.createElement('table');
+                table.style.borderCollapse = 'collapse';
+                table.style.marginTop = '1em';
 
-            if (result.group_summary && Array.isArray(result.group_summary)) {
+                const headers = ['Category', 'Score', 'Questions'];
+                const thead = document.createElement('thead');
+                const headRow = document.createElement('tr');
+                headers.forEach(h => {
+                    const th = document.createElement('th');
+                    th.textContent = h;
+                    th.style.border = '1px solid black';
+                    th.style.padding = '0.5em';
+                    th.style.background = '#f0f0f0';
+                    headRow.appendChild(th);
+                });
+                thead.appendChild(headRow);
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                result.summary.forEach(row => {
+                    const tr = document.createElement('tr');
+                    let cells = [];
+
+                    if (Array.isArray(row)) {
+                        cells = row;
+                    } else if (typeof row === 'object') {
+                        cells = [row.Category || '', row.Score || '', row.Questions || ''];
+                    }
+
+                    cells.forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell;
+                        td.style.border = '1px solid black';
+                        td.style.padding = '0.5em';
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+
+                document.getElementById('summaryTable').appendChild(table);
+            }
+
+            if (result.groups && Array.isArray(result.groups)) {
                 const groupTable = document.createElement('table');
                 groupTable.style.borderCollapse = 'collapse';
                 groupTable.style.marginTop = '2em';
@@ -54,7 +98,7 @@
                 groupTable.appendChild(groupHeader);
 
                 const groupBody = document.createElement('tbody');
-                result.group_summary.forEach(group => {
+                result.groups.forEach(group => {
                     const tr = document.createElement('tr');
                     [group.name || '', group.score || '', group.questions || ''].forEach(cell => {
                         const td = document.createElement('td');
@@ -67,13 +111,16 @@
                 });
                 groupTable.appendChild(groupBody);
 
-                summaryTableDiv.appendChild(groupTable);
+                document.getElementById('summaryTable').appendChild(groupTable);
             }
 
             if (result.evaluations && Array.isArray(result.evaluations)) {
-                const detailedTable = document.createElement('table');
-                detailedTable.style.borderCollapse = 'collapse';
-                detailedTable.style.marginTop = '2em';
+                const detailedOutput = document.createElement('div');
+                detailedOutput.innerHTML = '<h3>📋 평가 세부 결과</h3>';
+
+                const table = document.createElement('table');
+                table.style.borderCollapse = 'collapse';
+                table.style.marginTop = '1em';
 
                 const headers = ['Category', 'Question', 'Score', 'Answer'];
                 const thead = document.createElement('thead');
@@ -87,7 +134,7 @@
                     headRow.appendChild(th);
                 });
                 thead.appendChild(headRow);
-                detailedTable.appendChild(thead);
+                table.appendChild(thead);
 
                 const tbody = document.createElement('tbody');
                 result.evaluations.forEach(row => {
@@ -107,9 +154,10 @@
                     });
                     tbody.appendChild(tr);
                 });
-                detailedTable.appendChild(tbody);
+                table.appendChild(tbody);
+                detailedOutput.appendChild(table);
 
-                summaryTableDiv.appendChild(detailedTable);
+                document.body.appendChild(detailedOutput);
             }
         });
     </script>
