@@ -187,7 +187,11 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ msp_name: mspName, items: items })
+                body: JSON.stringify({ 
+                    msp_name: mspName, 
+                    items: items,
+                    summary: result.summary
+                })
             });
 
             if (response.ok) {
