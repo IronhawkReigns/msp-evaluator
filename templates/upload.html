@@ -178,19 +178,22 @@
       headers.forEach(header => {
         const td = document.createElement('td');
         const key = header.toLowerCase();
-        if (editableScore && key === 'score') {
+        // Use camelCase keys for row objects
+        const camelCaseKey = key.replace(/\s+(.)/g, (match, group1) => group1.toUpperCase());
+
+        if (editableScore && camelCaseKey === 'score') {
           const input = document.createElement('input');
           input.type = 'number';
           input.className = 'score-input';
           input.min = 1;
           input.max = 5;
-          input.value = row.score !== undefined ? row.score : '';
+          input.value = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
           input.addEventListener('change', () => {
-            row.score = Number(input.value);
+            row[camelCaseKey] = Number(input.value);
           });
           td.appendChild(input);
         } else {
-          td.textContent = row[key] !== undefined ? row[key] : '';
+          td.textContent = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
         }
         tr.appendChild(td);
       });
