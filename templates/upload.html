@@ -43,36 +43,31 @@
 
   form#uploadForm {
     display: flex;
-    align-items: center; /* Vertically center all children */
-    gap: 1rem;           /* Space between file input and button */
-  }
-
-  input[type="file"], button[type="submit"] {
-    height: 48px;        /* Explicit same height */
-    line-height: 48px;   /* Vertically center button text */
-    font-size: 1rem;
-    box-sizing: border-box;
+    align-items: center;
+    gap: 0.8rem;
+    justify-content: flex-start;
+    margin-bottom: 1.5em;
   }
 
   label[for="excelFile"] {
-    flex: 1 1 160px;
-    font-weight: 600;
-    color: var(--muted-color);
-    font-size: 1rem;
-    padding-left: 12px; /* Added to move label slightly to the right */
+    flex: 0 0 140px;
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    user-select: none;
   }
 
   input[type="file"] {
-    flex: 2 1 320px;
+    flex: 1 1 auto;
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 0.8em 1em; /* Match button height */
+    padding: 0.7em 1em;
     font-size: 1rem;
     background-color: white;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
     vertical-align: middle;
-    height: 48px; /* Explicit height to match button */
+    height: 44px;
     box-sizing: border-box;
   }
 
@@ -82,33 +77,26 @@
     box-shadow: 0 0 10px rgba(3,199,90,0.3);
   }
 
-  button[type="submit"], button#uploadToVectorDbBtn {
-    flex: 1 1 150px;
+  button[type="submit"] {
+    flex: 0 0 160px;
     background: linear-gradient(90deg, var(--primary-color), #1ecb8f);
     border: none;
     color: white;
-    padding: 0.8em 1.2em;
+    padding: 0.7em 1.2em;
     font-size: 1.1rem;
     font-weight: 700;
     border-radius: 12px;
     cursor: pointer;
     transition: filter 0.25s ease;
     user-select: none;
-    height: 48px; /* Match file input height for vertical alignment */
+    height: 44px;
     box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  button[type="submit"]:hover, button#uploadToVectorDbBtn:hover {
+  button[type="submit"]:hover {
     filter: brightness(1.1);
-  }
-  button#uploadToVectorDbBtn {
-    margin-top: 1.5em;
-    display: none;
-    width: 100%;
-    max-width: 300px;
-    text-align: center;
   }
 
   /* Updated table styles matching static/index.html style */
@@ -186,7 +174,7 @@
       flex-direction: column;
       align-items: stretch;
     }
-    input[type="file"], button[type="submit"], button#uploadToVectorDbBtn {
+    input[type="file"], button[type="submit"] {
       width: 100%;
       flex: none;
     }
@@ -293,7 +281,7 @@
 <main class="container">
   <h2>파트너사 평가 도구</h2>
   <form id="uploadForm" autocomplete="off" novalidate>
-    <label for="excelFile" style="min-width: 160px;">엑셀 파일 (.xlsx):</label>
+    <label for="excelFile">엑셀 파일 (.xlsx):</label>
     <input type="file" id="excelFile" name="file" accept=".xlsx" required />
     <button type="submit">업로드 및 평가</button>
   </form>
