@@ -7,6 +7,8 @@ from msp_core import (
     collection,
     run_msp_news_summary_clova
 )
+from fastapi import File, UploadFile
+from excel_upload_handler import evaluate_uploaded_excel
 from clova_router import Executor
 from pydantic import BaseModel
 from difflib import get_close_matches
@@ -188,3 +190,26 @@ def serve_admin_ui(request: Request):
 @app.get("/")
 def serve_main_page():
     return FileResponse("static/main.html")
+
+
+
+# Serve upload page
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/upload", response_class=HTMLResponse)
+async def serve_upload_page(request: Request):
+    return templates.TemplateResponse("upload.html", {"request": request})
+
+# Excel upload endpoint
+from fastapi import UploadFile, File
+from excel_upload_handler import evaluate_uploaded_excel
+
+@app.post("/api/upload_excel")
+async def upload_excel(file: UploadFile = File(...)):
+    try:
+        result = await evaluate_uploaded_excel(file)
+        return JSONResponse(content=result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Excel 평가 처리 중 오류 발생: {str(e)}")
