@@ -1,181 +1,412 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>MSP 평가 업로드 및 결과</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>평가 도구</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css" />
 <style>
+  :root {
+    --primary-color: #03c75a;
+    --background-color: #f5f7fa;
+    --card-bg: #fff;
+    --card-shadow: rgba(0, 0, 0, 0.1);
+    --text-color: #333;
+    --muted-color: #666;
+    --border-color: #d0d7de;
+  }
+
   body {
+    margin: 0;
+    padding: 0;
+    background: var(--background-color);
     font-family: 'NanumSquareNeo', sans-serif !important;
-    background: linear-gradient(135deg, #e8fef3 0%, #f0fbf6 100%);
-    color: #1e1e1e;
-    margin: 40px;
+    color: var(--text-color);
   }
-  h1, h2 {
-    color: #03c75a;
-    font-weight: 900;
+
+  main.container {
+    max-width: 960px;
+    margin: 3em auto 5em;
+    padding: 2em 2.5em;
+    background: var(--card-bg);
+    box-shadow: 0 8px 24px var(--card-shadow);
+    border-radius: 12px;
+  }
+
+  h2 {
+    color: var(--primary-color);
+    margin-bottom: 1em;
+    font-weight: 700;
+    font-size: 1.75rem;
     text-align: center;
-    margin-bottom: 32px;
   }
-  form {
-    max-width: 680px;
-    margin: 0 auto 40px auto;
+
+  form#uploadForm {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1em;
+    margin-bottom: 1.5em;
   }
-  label {
+
+  label[for="excelFile"] {
+    flex: 1 1 160px;
     font-weight: 600;
-    font-size: 14px;
-    color: #666;
-    display: block;
-    margin-bottom: 6px;
+    color: var(--muted-color);
+    font-size: 1rem;
   }
+
   input[type="file"] {
-    display: block;
-    width: 100%;
-    padding: 12px;
+    flex: 2 1 320px;
+    border: 1px solid var(--border-color);
     border-radius: 12px;
-    border: 1px solid #d0d7de;
-    font-size: 15px;
-    box-sizing: border-box;
+    padding: 0.75em 1em;
+    font-size: 1rem;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
   }
-  button {
-    display: block;
-    width: 100%;
-    padding: 16px;
-    background: linear-gradient(90deg, #03c75a, #1ecb8f);
+
+  input[type="file"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(3,199,90,0.3);
+  }
+
+  button[type="submit"], button#uploadToVectorDbBtn {
+    flex: 1 1 150px;
+    background: linear-gradient(90deg, var(--primary-color), #1ecb8f);
     border: none;
-    border-radius: 12px;
     color: white;
-    font-weight: bold;
-    font-size: 16px;
+    padding: 0.8em 1.2em;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 12px;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(3, 199, 90, 0.2);
-    transition: filter 0.2s ease;
-    font-family: 'NanumSquareNeo', sans-serif;
+    transition: filter 0.25s ease;
+    user-select: none;
   }
-  button:hover {
-    filter: brightness(1.08);
+  button[type="submit"]:hover, button#uploadToVectorDbBtn:hover {
+    filter: brightness(1.1);
+  }
+  button#uploadToVectorDbBtn {
+    margin-top: 1.5em;
+    display: none;
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
   }
 
   table {
     width: 100%;
-    max-width: 680px;
-    margin: 0 auto 40px auto;
-    border-collapse: collapse;
-    background-color: #fff;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    font-size: 14px;
-  }
-  th, td {
-    padding: 10px 12px;
-    border: 1px solid #ddd;
-    vertical-align: middle;
-  }
-  th {
-    background-color: #03c75a;
-    color: white;
-    font-weight: 700;
-    text-align: center;
-  }
-  td:first-child {
-    font-weight: 700;
-  }
-  tr:nth-child(even) {
-    background-color: #f9f9f9;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 1em;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    background: white;
   }
 
-  /* Buttons for copying category scores */
-  #copy-buttons {
-    max-width: 680px;
-    margin: 0 auto 40px auto;
+  thead tr {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  th, td {
+    padding: 0.75em 1em;
+    text-align: left;
+    border-bottom: 1px solid #e4e7eb;
+    font-size: 1rem;
+  }
+
+  tbody tr:hover {
+    background-color: #f7fbf9;
+  }
+
+  th {
+    font-weight: 700;
+  }
+
+  input.score-input {
+    width: 3.2em;
+    font-size: 1rem;
+    padding: 0.3em 0.4em;
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    text-align: center;
+    transition: border-color 0.3s ease;
+  }
+  input.score-input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 8px rgba(3,199,90,0.3);
+  }
+
+  @media (max-width: 600px) {
+    form#uploadForm {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    input[type="file"], button[type="submit"], button#uploadToVectorDbBtn {
+      width: 100%;
+      flex: none;
+    }
+    label[for="excelFile"] {
+      flex: none;
+      margin-bottom: 0.3em;
+    }
+  }
+
+  .summary-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 1em;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    background: white;
+  }
+
+  .summary-table thead tr {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  .summary-table th, .summary-table td {
+    padding: 0.75em 1em;
+    text-align: left;
+    border-bottom: 1px solid #e4e7eb;
+    font-size: 1rem;
+  }
+
+  .summary-table tbody tr:nth-child(even) {
+    background-color: #f7fbf9;
+  }
+
+  .summary-table tbody tr:hover {
+    background-color: #e1f3e9;
+  }
+
+  .spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 30px auto;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .copy-btn-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 16px;
+  }
+
+  .copy-btn {
+    border: none;
+    color: white;
+    border-radius: 24px;
+    padding: 12px 32px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: 'NanumSquareNeo', sans-serif !important;
+    transition: background 0.3s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 10px rgba(3, 199, 90, 0.3);
+    user-select: none;
+  }
+
+  .copy-btn:hover {
+    box-shadow: 0 6px 14px rgba(3, 199, 90, 0.5);
+  }
+
+  /* Center header text and bold */
+  thead tr th {
+    text-align: center;
+    font-weight: 700;
+  }
+
+  /* Bold and center first row headers for all tables */
+  table thead tr th {
+    font-weight: 700;
     text-align: center;
   }
-  #copy-buttons button {
-    font-size: 14px;
-    padding: 10px 20px;
-    margin: 0 10px 10px 10px;
-    border-radius: 12px;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    font-family: 'NanumSquareNeo', sans-serif;
-    transition: background 0.3s ease;
-  }
-  #copy-buttons button:nth-child(1) {
-    background-color: #03c75a;
-    color: white;
-  }
-  #copy-buttons button:nth-child(1):hover {
-    background-color: #029c45;
-  }
-  #copy-buttons button:nth-child(2) {
-    background-color: #1ecb8f;
-    color: white;
-  }
-  #copy-buttons button:nth-child(2):hover {
-    background-color: #169a69;
-  }
-  #copy-buttons button:nth-child(3) {
-    background-color: #56d4b8;
-    color: white;
-  }
-  #copy-buttons button:nth-child(3):hover {
-    background-color: #3ea88a;
+
+  /* Bold first column cells for all tables */
+  table tbody tr td:first-child {
+    font-weight: 700;
   }
 </style>
 </head>
 <body>
-  <a class="header-title" href="https://mspevaluator.duckdns.org" target="_blank" rel="noopener noreferrer"
-     style="position: fixed; top: 20px; left: 30px; font-size: 20px; font-weight: 700; color: #03c75a; font-family: 'Noto Sans KR', sans-serif; text-decoration: none;">
-    NAVER Cloud
-  </a>
-  <a href="/logout"
-     style="position: fixed; top: 20px; right: 30px; font-size: 14px; font-weight: 600; color: #666; font-family: 'Noto Sans KR', sans-serif; text-decoration: none;">
-    로그아웃
-  </a>
-
-  <h1>📤 엑셀 파일 업로드 및 평가</h1>
-  <form id="uploadForm">
+<main class="container">
+  <h2>파트너사 평가 도구</h2>
+  <form id="uploadForm" autocomplete="off" novalidate>
     <label for="excelFile">엑셀 파일 (.xlsx):</label>
     <input type="file" id="excelFile" name="file" accept=".xlsx" required />
     <button type="submit">업로드 및 평가</button>
   </form>
 
+  <div id="evaluatedQuestionsTable"></div>
+  
   <div id="summaryTable"></div>
-  <div id="copy-buttons" style="display:none;">
-    <button id="copy-personnel">인적 역량 점수 복사</button>
-    <button id="copy-ai-tech">AI 기술 역량 점수 복사</button>
-    <button id="copy-solution">솔루션 역량 점수 복사</button>
-  </div>
 
-  <script>
-    const form = document.getElementById('uploadForm');
-    let result = {};
+  <button id="uploadToVectorDbBtn">벡터 DB에 업로드</button>
+</main>
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      document.getElementById('summaryTable').innerHTML = '';
-      document.getElementById('copy-buttons').style.display = 'none';
+<script>
+  const form = document.getElementById('uploadForm');
+  const evaluatedQuestionsTable = document.getElementById('evaluatedQuestionsTable');
+  const summaryTable = document.getElementById('summaryTable');
+  const vectorUploadBtn = document.getElementById('uploadToVectorDbBtn');
+  let result = {};
 
-      const fileInput = document.getElementById('excelFile');
-      const formData = new FormData();
-      formData.append('file', fileInput.files[0]);
+  function createTable(headers, rows, editableScore = false) {
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    headers.forEach(h => {
+      const th = document.createElement('th');
+      th.textContent = h;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
 
-      const res = await fetch('/api/upload_excel', { method: 'POST', body: formData });
-      result = await res.json();
+    const tbody = document.createElement('tbody');
+    rows.forEach(row => {
+      const tr = document.createElement('tr');
+      headers.forEach(header => {
+        const td = document.createElement('td');
+        const key = header.toLowerCase();
+        // Use camelCase keys for row objects
+        const camelCaseKey = key.replace(/\s+(.)/g, (match, group1) => group1.toUpperCase());
 
-      renderSummaryTable(result.summary);
+        if (editableScore && camelCaseKey === 'score') {
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.className = 'score-input';
+          input.min = 1;
+          input.max = 5;
+          input.value = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
+          input.addEventListener('change', () => {
+            row[camelCaseKey] = Number(input.value);
+          });
+          td.appendChild(input);
+        } else {
+          td.textContent = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    return table;
+  }
 
-      if (result.summary && Array.isArray(result.summary)) {
-        document.getElementById('copy-buttons').style.display = 'block';
-      }
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    evaluatedQuestionsTable.innerHTML = '<div class="spinner"></div>';
+    summaryTable.innerHTML = '';
+    vectorUploadBtn.style.display = 'none';
+
+    const fileInput = document.getElementById('excelFile');
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    const res = await fetch('/api/upload_excel', {
+      method: 'POST',
+      body: formData
     });
 
-    function renderSummaryTable(summary) {
-      if (!summary || !Array.isArray(summary)) return;
+    result = await res.json();
+
+    if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+      const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
+      evaluatedQuestionsTable.innerHTML = '';
+
+      const copyBtnWrapper = document.createElement('div');
+      copyBtnWrapper.className = 'copy-btn-wrapper';
+
+      const categoriesToCopy = ['인적역량', 'AI기술역량', '솔루션 역량'];
+
+      categoriesToCopy.forEach(category => {
+        const btn = document.createElement('button');
+        btn.textContent = `${category} 점수 복사`;
+        btn.className = 'copy-btn';
+
+        // Set distinct background gradients for each category button
+        switch(category) {
+          case '인적역량':
+            btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)';
+            btn.addEventListener('mouseover', () => {
+              btn.style.background = 'linear-gradient(90deg, #07bc2f, #028a0f)';
+            });
+            btn.addEventListener('mouseout', () => {
+              btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)';
+            });
+            break;
+          case 'AI기술역량':
+            btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)';
+            btn.addEventListener('mouseover', () => {
+              btn.style.background = 'linear-gradient(90deg, #07a0bc, #04668c)';
+            });
+            btn.addEventListener('mouseout', () => {
+              btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)';
+            });
+            break;
+          case '솔루션 역량':
+            btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)';
+            btn.addEventListener('mouseover', () => {
+              btn.style.background = 'linear-gradient(90deg, #bc8707, #8c4604)';
+            });
+            btn.addEventListener('mouseout', () => {
+              btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)';
+            });
+            break;
+        }
+
+        btn.addEventListener('click', () => {
+          const scoresToCopy = result.evaluated_questions
+            .filter(q => q.category === category)
+            .map(q => (q.score !== undefined ? q.score : ''))
+            .join('\n');
+
+          navigator.clipboard.writeText(scoresToCopy).then(() => {
+            alert(`✅ ${category} 점수가 클립보드에 복사되었습니다.`);
+          }).catch(() => {
+            alert(`❌ ${category} 점수 복사에 실패했습니다.`);
+          });
+        });
+
+        copyBtnWrapper.appendChild(btn);
+      });
+
+      evaluatedQuestionsTable.appendChild(evalTable);
+      evaluatedQuestionsTable.appendChild(copyBtnWrapper);
+
+      vectorUploadBtn.style.display = result.evaluated_questions.length ? 'block' : 'none';
+    } else {
+      evaluatedQuestionsTable.innerHTML = '';
+      vectorUploadBtn.style.display = 'none';
+    }
+
+    if (result.summary && Array.isArray(result.summary)) {
       const table = document.createElement('table');
+      table.classList.add('summary-table');
+
+      const headers = ['Category', 'Score', 'Questions'];
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
-      ['Category', 'Score', 'Questions'].forEach(h => {
+      headers.forEach(h => {
         const th = document.createElement('th');
         th.textContent = h;
         headRow.appendChild(th);
@@ -184,14 +415,16 @@
       table.appendChild(thead);
 
       const tbody = document.createElement('tbody');
-      summary.forEach(row => {
+      result.summary.forEach(row => {
         const tr = document.createElement('tr');
         let cells = [];
+
         if (Array.isArray(row)) {
           cells = row;
         } else if (typeof row === 'object') {
           cells = [row.Category || '', row.Score || '', row.Questions || ''];
         }
+
         cells.forEach(cell => {
           const td = document.createElement('td');
           td.textContent = cell;
@@ -200,37 +433,50 @@
         tbody.appendChild(tr);
       });
       table.appendChild(tbody);
-      const summaryDiv = document.getElementById('summaryTable');
-      summaryDiv.innerHTML = '';
-      summaryDiv.appendChild(table);
+
+      summaryTable.innerHTML = '';
+      summaryTable.appendChild(table);
+    } else {
+      summaryTable.innerHTML = '';
+    }
+  });
+
+  vectorUploadBtn.addEventListener('click', async () => {
+    const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
+    if (!mspName) {
+      alert("MSP 이름이 입력되지 않았습니다.");
+      return;
     }
 
-    // Copy scores vertically by category name
-    function copyCategoryScores(categoryName) {
-      if (!result.summary || !Array.isArray(result.summary)) return;
-      let lines = [];
-      result.summary.forEach(row => {
-        const cat = Array.isArray(row) ? row[0] : (row.Category || '');
-        const score = Array.isArray(row) ? row[1] : (row.Score || '');
-        if (cat === categoryName) {
-          lines.push(score);
-        }
-      });
-      if (lines.length === 0) {
-        alert(categoryName + ' 데이터가 없습니다.');
-        return;
-      }
-      const textToCopy = lines.join('\n');
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        alert(categoryName + ' 점수가 복사되었습니다.');
-      }).catch(() => {
-        alert('복사에 실패했습니다.');
+    const items = [];
+    if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+      result.evaluated_questions.forEach(q => {
+        items.push({
+          question: q.question,
+          answer: q.answer,
+          score: q.score
+        });
       });
     }
 
-    document.getElementById('copy-personnel').addEventListener('click', () => copyCategoryScores('인적역량'));
-    document.getElementById('copy-ai-tech').addEventListener('click', () => copyCategoryScores('AI기술역량'));
-    document.getElementById('copy-solution').addEventListener('click', () => copyCategoryScores('솔루션 역량'));
-  </script>
+    const response = await fetch('/api/add_to_vector_db', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        msp_name: mspName, 
+        items: items,
+        summary: result.summary
+      })
+    });
+
+    if (response.ok) {
+      alert("✅ 벡터 DB에 업로드되었습니다.");
+    } else {
+      alert("❌ 업로드 실패");
+    }
+  });
+</script>
 </body>
 </html>
