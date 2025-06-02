@@ -140,10 +140,12 @@ def compute_category_scores_from_excel_data(results_by_category):
         })
     # Append group scores under each category
     for (category, group_name), data in group_scores.items():
+        if not group_name or group_name.lower() == "nan":
+            continue
         group_avg = data["score_sum"] / (data["count"] * 5)
         summary.append({
             "Category": group_name,
-            "Score": round(group_avg * 20, 2),
+            "Score": round(group_avg * 100, 2),
             "Questions": data["count"]
         })
 
