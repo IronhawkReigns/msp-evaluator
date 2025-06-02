@@ -280,7 +280,11 @@ async def add_to_vector_db(data: dict):
         if not isinstance(items, list):
             raise HTTPException(status_code=400, detail="Missing or invalid items list")
 
-        run_from_direct_input(msp_name, items)
+        summary = data.get("summary")
+        if summary is None:
+            raise HTTPException(status_code=400, detail="Missing summary")
+
+        run_from_direct_input(msp_name, items, summary)
         return {"message": f"Successfully added {len(items)} items to vector DB for {msp_name}"}
     except Exception as e:
         import traceback
