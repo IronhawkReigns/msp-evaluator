@@ -1,6 +1,6 @@
 import pandas as pd
 from fastapi import UploadFile
-from evaluator import evaluate_answer, parse_category_sheet
+from evaluator import evaluate_answer
 
 EXPECTED_HEADERS = ["Domain", "설명", "Key Questions", "Present Lv.", "Interview Result"]
 
@@ -19,7 +19,7 @@ def evaluate_uploaded_excel(uploaded_file: UploadFile):
             continue  # Skip invalid sheets
 
         try:
-            parsed = parse_category_sheet(df)
+            parsed = parse_excel_category_sheet(df)
         except Exception as e:
             continue  # skip problematic sheet
 
@@ -44,3 +44,22 @@ def evaluate_uploaded_excel(uploaded_file: UploadFile):
             results[sheet_name] = sheet_results
 
     return results
+
+
+def parse_excel_category_sheet(df: pd.DataFrame):
+    parsed = []
+    for _, row in df.iterrows():
+        try:
+            question = str(row[2]).strip()
+            answer = str(row[4]).strip()
+            if question.lower() == "key questions":
+                continue  # Skip header
+            if not question or not answer or question == "nan":
+                continue
+            parsed.append({
+                "question": question,
+                "answer": answer
+            })
+        except Exception:
+            continue
+    return parsed
