@@ -34,7 +34,42 @@
 
             const result = await res.json();
             const output = document.getElementById('result');
-            output.innerHTML = '<h3>✅ 평가 결과 요약</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            // Render evaluated_questions as a formatted table if present
+            if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+                const evalTable = document.createElement('table');
+                evalTable.style.borderCollapse = 'collapse';
+                evalTable.style.marginTop = '2em';
+
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                ['Category', 'Question', 'Answer', 'Score'].forEach(h => {
+                    const th = document.createElement('th');
+                    th.textContent = h;
+                    th.style.border = '1px solid black';
+                    th.style.padding = '0.5em';
+                    th.style.background = '#eaf7ff';
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                evalTable.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                result.evaluated_questions.forEach(q => {
+                    const tr = document.createElement('tr');
+                    [q.category || '', q.question || '', q.answer || '', q.score !== undefined ? q.score : ''].forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell;
+                        td.style.border = '1px solid black';
+                        td.style.padding = '0.5em';
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                evalTable.appendChild(tbody);
+                document.getElementById('summaryTable').appendChild(evalTable);
+            } else {
+                output.innerHTML = '<h3>✅ 평가 결과 요약</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            }
 
             if (result.summary && Array.isArray(result.summary)) {
                 const table = document.createElement('table');
