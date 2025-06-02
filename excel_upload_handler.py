@@ -46,7 +46,8 @@ def parse_excel_category_sheets(excel_bytes: bytes):
             sheet_results.append({
                 "question": question,
                 "answer": answer,
-                "score": score
+                "score": score,
+                "group": item.get("group")
             })
 
         if sheet_results:
@@ -74,21 +75,24 @@ def parse_excel_category_sheet(df: pd.DataFrame):
         try:
             question = str(row[2]).strip()
             answer = str(row[4]).strip()
+            group = str(row[1]).strip()
             if question.lower() == "key questions":
                 continue  # Skip header
             if not question or not answer or question == "nan":
                 continue
             parsed.append({
                 "question": question,
-                "answer": answer
+                "answer": answer,
+                "group": group
             })
         except Exception:
             continue
     return parsed
 
 def compute_category_scores_from_excel_data(results_by_category):
-    """Takes dict from upload-based evaluation and computes average score per category and overall."""
+    """Takes dict from upload-based evaluation and computes average score per category, group, and overall."""
     category_scores = {}
+    group_scores = {}
     total_score = 0
     total_questions = 0
 
@@ -99,12 +103,11 @@ def compute_category_scores_from_excel_data(results_by_category):
             print(f"[WARNING] Skipping category '{category}' — expected list but got {type(items)}")
             continue
 
-        filtered_items = [item for item in items if isinstance(item, dict) and "score" in item]
-        scores = [item["score"] for item in filtered_items if isinstance(item["score"], int)]
-        if not scores:
+        filtered_items = [item for item in items if isinstance(item, dict) and "score" in item and isinstance(item["score"], int)]
+        if not filtered_items:
             continue
-        question_count = len(scores)
-        score_sum = sum(scores)
+        question_count = len(filtered_items)
+        score_sum = sum(item["score"] for item in filtered_items)
         percentage = round(score_sum / (question_count * 5), 4)
         category_scores[category] = {
             "average": percentage,
@@ -113,6 +116,17 @@ def compute_category_scores_from_excel_data(results_by_category):
         }
         total_score += score_sum
         total_questions += question_count
+
+        # Track group scores within this category
+        for item in filtered_items:
+            group = item.get("group", "")
+            if not group:
+                continue
+            key = (category, group)
+            if key not in group_scores:
+                group_scores[key] = {"score_sum": 0, "count": 0}
+            group_scores[key]["score_sum"] += item["score"]
+            group_scores[key]["count"] += 1
 
     total_max = total_questions * 5
     overall = round((total_score / total_max) * 100, 2) if total_max > 0 else 0.0
@@ -124,14 +138,13 @@ def compute_category_scores_from_excel_data(results_by_category):
             "Score": round(data['average'] * 100, 2),
             "Questions": data['count']
         })
-    # Append detailed per-question scores
-    for category, items in results_by_category.items():
-        for item in items:
-            if isinstance(item.get("score"), int):
-                summary.insert(-len(category_scores), {
-                    "Category": item["question"],
-                    "Score": round(item["score"] * 20, 2),  # score out of 100
-                    "Questions": 1
-                })
+    # Append group scores under each category
+    for (category, group_name), data in group_scores.items():
+        group_avg = data["score_sum"] / (data["count"] * 5)
+        summary.append({
+            "Category": group_name,
+            "Score": round(group_avg * 20, 2),
+            "Questions": data["count"]
+        })
 
     return pd.DataFrame(summary)
