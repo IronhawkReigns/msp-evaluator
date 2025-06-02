@@ -162,3 +162,14 @@ def run_from_msp_name(company_name: str):
         print(f"Error occurred while processing {company_name}")
         traceback.print_exc()
         raise
+
+def run_from_direct_input(company_name: str, company_data: dict, summary: dict):
+    print(f"Running vector DB update (direct input) for: {company_name}")
+    try:
+        add_msp_data_to_chroma(company_name, company_data, summary)
+        print(f"{company_name} successfully written to ChromaDB.")
+    except Exception as e:
+        import traceback
+        print(f"Error occurred while processing {company_name}")
+        traceback.print_exc()
+        raise
