@@ -1,14 +1,14 @@
 import pandas as pd
 from fastapi import UploadFile
 from evaluator import evaluate_answer
+import io
 
 EXPECTED_HEADERS = ["Domain", "설명", "Key Questions", "Present Lv.", "Interview Result"]
 
 
-def evaluate_uploaded_excel(uploaded_file: UploadFile):
+def parse_excel_category_sheets(excel_bytes: bytes):
+    excel_data = pd.ExcelFile(io.BytesIO(excel_bytes))
     results = {}
-    excel_bytes = uploaded_file.file.read()
-    excel_data = pd.ExcelFile(excel_bytes)
 
     for sheet_name in excel_data.sheet_names:
         if "역량" not in sheet_name:
@@ -50,6 +50,11 @@ def evaluate_uploaded_excel(uploaded_file: UploadFile):
             results[sheet_name] = sheet_results
 
     return results
+
+
+def evaluate_uploaded_excel(uploaded_file: UploadFile):
+    excel_bytes = uploaded_file.file.read()
+    return parse_excel_category_sheets(excel_bytes)
 
 
 def parse_excel_category_sheet(df: pd.DataFrame):
