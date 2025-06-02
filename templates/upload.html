@@ -100,27 +100,48 @@
   /* Updated table styles matching static/index.html style */
   table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     font-size: 0.9rem;
     background-color: #fff;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    border: 1px solid var(--border-color);
   }
 
   thead tr {
     background-color: #04a14b;
     color: white;
     font-weight: 600;
-    text-align: center;
     font-size: 1rem;
   }
 
   th, td {
     padding: 0.75em 1em;
-    border-bottom: 1px solid #e0e0e0;
-    text-align: center;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
     font-size: 0.85rem;
+  }
+
+  /* Remove right border for last cell in each row */
+  th:last-child, td:last-child {
+    border-right: none;
+  }
+
+  thead th {
+    text-align: center;
+  }
+
+  tbody td {
+    text-align: left;
+  }
+
+  /* Center first column (th and td) */
+  thead th:first-child,
+  tbody td:first-child {
+    text-align: center;
+    font-weight: 700;
   }
 
   tbody tr:hover {
@@ -129,11 +150,6 @@
 
   tbody tr:nth-child(even) {
     background-color: #f9f9f9;
-  }
-
-  th:first-child, td:first-child {
-    text-align: left;
-    font-weight: 700;
   }
 
   input.score-input {
@@ -168,35 +184,54 @@
 
   .summary-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     font-size: 0.9rem;
     background-color: #fff;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    border: 1px solid var(--border-color);
   }
 
   .summary-table thead tr {
     background-color: #04a14b;
     color: white;
     font-weight: 600;
-    text-align: center;
     font-size: 1rem;
   }
 
   .summary-table th, .summary-table td {
     padding: 0.75em 1em;
-    border-bottom: 1px solid #e0e0e0;
-    text-align: center;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
     font-size: 0.85rem;
   }
 
-  .summary-table tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
+  .summary-table th:last-child, .summary-table td:last-child {
+    border-right: none;
+  }
+
+  .summary-table thead th {
+    text-align: center;
+  }
+
+  .summary-table tbody td {
+    text-align: left;
+  }
+
+  .summary-table thead th:first-child,
+  .summary-table tbody td:first-child {
+    text-align: center;
+    font-weight: 700;
   }
 
   .summary-table tbody tr:hover {
     background-color: #e6f4ea;
+  }
+
+  .summary-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
   }
 
   .spinner {
