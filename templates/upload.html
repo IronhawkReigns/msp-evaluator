@@ -70,6 +70,46 @@
 
                 document.getElementById('summaryTable').appendChild(table);
             }
+
+            if (result.evaluations && Array.isArray(result.evaluations)) {
+                const detailedOutput = document.createElement('div');
+                detailedOutput.innerHTML = '<h3>📋 평가 세부 결과</h3>';
+
+                const table = document.createElement('table');
+                table.style.borderCollapse = 'collapse';
+                table.style.marginTop = '1em';
+
+                const headers = ['Category', 'Question', 'Score', 'Answer'];
+                const thead = document.createElement('thead');
+                const headRow = document.createElement('tr');
+                headers.forEach(h => {
+                    const th = document.createElement('th');
+                    th.textContent = h;
+                    th.style.border = '1px solid black';
+                    th.style.padding = '0.5em';
+                    th.style.background = '#f9f9f9';
+                    headRow.appendChild(th);
+                });
+                thead.appendChild(headRow);
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                result.evaluations.forEach(row => {
+                    const tr = document.createElement('tr');
+                    [row.category, row.question, row.score, row.answer].forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell;
+                        td.style.border = '1px solid black';
+                        td.style.padding = '0.5em';
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+                detailedOutput.appendChild(table);
+
+                document.body.appendChild(detailedOutput);
+            }
         });
     </script>
 </body>
