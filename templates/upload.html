@@ -71,7 +71,7 @@
                 document.getElementById('summaryTable').appendChild(table);
             }
 
-            if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+            if (result.evaluations && Array.isArray(result.evaluations)) {
                 const detailedOutput = document.createElement('div');
                 detailedOutput.innerHTML = '<h3>📋 평가 세부 결과</h3>';
 
@@ -94,9 +94,15 @@
                 table.appendChild(thead);
 
                 const tbody = document.createElement('tbody');
-                result.evaluated_questions.forEach(row => {
+                result.evaluations.forEach(row => {
                     const tr = document.createElement('tr');
-                    [row.category, row.question, row.score, row.answer].forEach(cell => {
+                    const cells = [
+                        row.category || '',
+                        row.question || '',
+                        row.score !== undefined ? row.score : '',
+                        row.answer || ''
+                    ];
+                    cells.forEach(cell => {
                         const td = document.createElement('td');
                         td.textContent = cell;
                         td.style.border = '1px solid black';
