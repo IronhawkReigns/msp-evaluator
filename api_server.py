@@ -8,7 +8,7 @@ from msp_core import (
     run_msp_news_summary_clova
 )
 from fastapi import File, UploadFile
-from excel_upload_handler import evaluate_uploaded_excel
+from excel_upload_handler import evaluate_uploaded_excel, compute_category_scores_from_excel_data
 from clova_router import Executor
 from pydantic import BaseModel
 from difflib import get_close_matches
@@ -204,14 +204,12 @@ async def serve_upload_page(request: Request):
 
 # Excel upload endpoint
 from fastapi import UploadFile, File
-from excel_upload_handler import parse_excel_category_sheet, compute_category_scores_from_excel_data
 
 @app.post("/api/upload_excel")
 async def upload_excel(file: UploadFile = File(...)):
     try:
-        excel_bytes = await file.read()
-        parsed_df = parse_excel_category_sheet(excel_bytes)
-        summary_df = compute_category_scores_from_excel_data(parsed_df)
+        results_by_category = evaluate_uploaded_excel(file)
+        summary_df = compute_category_scores_from_excel_data(results_by_category)
         return JSONResponse(content=summary_df.to_dict(orient="records"))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Excel 평가 처리 중 오류 발생: {str(e)}")
