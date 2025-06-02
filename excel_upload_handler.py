@@ -11,16 +11,14 @@ def evaluate_uploaded_excel(uploaded_file: UploadFile):
     excel_data = pd.ExcelFile(excel_bytes)
 
     for sheet_name in excel_data.sheet_names:
+        if "역량" not in sheet_name:
+            print(f"[DEBUG] Skipping sheet '{sheet_name}' — name does not contain '역량'")
+            continue
+
         df = pd.read_excel(excel_data, sheet_name=sheet_name, header=None)
 
         if df.shape[0] < 2 or df.shape[1] < 5:
             print(f"[DEBUG] Skipping sheet '{sheet_name}' — too small or malformed")
-            continue
-
-        # Check header row
-        header = df.iloc[0].tolist()
-        if header[:5] != EXPECTED_HEADERS:
-            print(f"[DEBUG] Skipping sheet '{sheet_name}' — headers do not match")
             continue
 
         try:
@@ -28,6 +26,7 @@ def evaluate_uploaded_excel(uploaded_file: UploadFile):
             print(f"[DEBUG] Sheet: {sheet_name}")
             print(f"[DEBUG] Parsed: {parsed}")
         except Exception as e:
+            print(f"[DEBUG] Error parsing sheet '{sheet_name}': {e}")
             continue  # skip problematic sheet
 
         sheet_results = []
@@ -70,3 +69,33 @@ def parse_excel_category_sheet(df: pd.DataFrame):
         except Exception:
             continue
     return parsed
+
+def compute_category_scores_from_excel_data(results_by_category):
+    """Takes dict from upload-based evaluation and computes average score per category and overall."""
+    category_scores = {}
+    total_score = 0
+    total_questions = 0
+
+    for category, items in results_by_category.items():
+        scores = [item['score'] for item in items if isinstance(item['score'], int)]
+        if not scores:
+            continue
+        question_count = len(scores)
+        score_sum = sum(scores)
+        percentage = round(score_sum / (question_count * 5), 4)
+        category_scores[category] = {
+            "average": percentage,
+            "count": question_count,
+            "total": score_sum
+        }
+        total_score += score_sum
+        total_questions += question_count
+
+    total_max = total_questions * 5
+    overall = round((total_score / total_max) * 100, 2) if total_max > 0 else 0.0
+
+    summary = [["총점", f"{overall:.2f}", total_questions]]
+    for category, data in category_scores.items():
+        summary.append([category, f"{data['average'] * 100:.2f}", data['count']])
+
+    return pd.DataFrame(summary, columns=["Category", "Score", "Questions"])
