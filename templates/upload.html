@@ -57,7 +57,15 @@
                 const tbody = document.createElement('tbody');
                 result.summary.forEach(row => {
                     const tr = document.createElement('tr');
-                    row.forEach(cell => {
+                    let cells = [];
+
+                    if (Array.isArray(row)) {
+                        cells = row;
+                    } else if (typeof row === 'object') {
+                        cells = [row.Category || '', row.Score || '', row.Questions || ''];
+                    }
+
+                    cells.forEach(cell => {
                         const td = document.createElement('td');
                         td.textContent = cell;
                         td.style.border = '1px solid black';
