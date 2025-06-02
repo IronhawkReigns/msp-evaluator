@@ -71,11 +71,16 @@ def evaluate_uploaded_excel(uploaded_file: UploadFile):
 
 def parse_excel_category_sheet(df: pd.DataFrame):
     parsed = []
+    last_group = None
     for _, row in df.iterrows():
         try:
             question = str(row[2]).strip()
             answer = str(row[4]).strip()
             group = str(row[1]).strip()
+            if group.lower() in ["", "nan"]:
+                group = last_group
+            else:
+                last_group = group
             if question.lower() == "key questions":
                 continue  # Skip header
             if not question or not answer or question == "nan":
