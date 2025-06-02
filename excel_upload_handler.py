@@ -89,7 +89,7 @@ def compute_category_scores_from_excel_data(results_by_category):
     total_score = 0
     total_questions = 0
 
-    for category, items in results_by_category.items():
+    for category, items in results_by_category.get("evaluated", {}).items():
         if not isinstance(items, list):
             print(f"[WARNING] Skipping category '{category}' — expected list but got {type(items)}")
             continue
