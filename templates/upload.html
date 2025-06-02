@@ -272,7 +272,7 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     evaluatedQuestionsTable.innerHTML = '<div class="spinner"></div>';
-    summaryTable.innerHTML = '<div class="spinner"></div>';
+    summaryTable.innerHTML = '';
     vectorUploadBtn.style.display = 'none';
 
     const fileInput = document.getElementById('excelFile');
