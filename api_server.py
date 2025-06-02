@@ -238,10 +238,30 @@ async def upload_excel(file: UploadFile = File(...)):
                     "score": item["score"]
                 })
 
+        # Compute group-level scores (e.g., "AI 전문 인력 구성")
+        from collections import defaultdict
+        group_scores = defaultdict(list)
+
+        for item in flat_results:
+            group = item.get("category")  # In this design, 'category' refers to the group
+            score = item.get("score")
+            if isinstance(score, (int, float)):
+                group_scores[group].append(score)
+
+        group_summary = []
+        for group, scores in group_scores.items():
+            avg_score = round(sum(scores) / len(scores), 2) if scores else 0
+            group_summary.append({
+                "name": group,
+                "score": avg_score,
+                "questions": len(scores)
+            })
+
         return JSONResponse(content={
             "evaluated_questions": flat_results,
             "summary": summary_df.to_dict(orient="records"),
-            "skipped_items": skipped_items
+            "skipped_items": skipped_items,
+            "groups": group_summary
         })
     except Exception as e:
         import traceback
