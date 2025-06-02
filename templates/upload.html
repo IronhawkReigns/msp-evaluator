@@ -534,7 +534,7 @@
           const ul = document.createElement('ul');
           subCats.forEach(subCat => {
             const li = document.createElement('li');
-            li.textContent = `${subCat.Category}: ${subCat.Questions}문항, 점수 ${subCat.Score}%`;
+            li.textContent = subCat.summary || '요약 정보가 없습니다.';
             ul.appendChild(li);
           });
           details.appendChild(ul);
