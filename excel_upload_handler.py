@@ -117,8 +117,12 @@ def compute_category_scores_from_excel_data(results_by_category):
     total_max = total_questions * 5
     overall = round((total_score / total_max) * 100, 2) if total_max > 0 else 0.0
 
-    summary = [["총점", f"{overall:.2f}", total_questions]]
+    summary = [{"Category": "총점", "Score": round(overall, 2), "Questions": total_questions}]
     for category, data in category_scores.items():
-        summary.append([category, f"{data['average'] * 100:.2f}", data['count']])
+        summary.append({
+            "Category": category,
+            "Score": round(data['average'] * 100, 2),
+            "Questions": data['count']
+        })
 
-    return pd.DataFrame(summary, columns=["Category", "Score", "Questions"])
+    return pd.DataFrame(summary)
