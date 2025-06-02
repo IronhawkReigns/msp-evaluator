@@ -35,26 +35,25 @@
             const summaryTableDiv = document.getElementById('summaryTable');
             summaryTableDiv.innerHTML = '';
 
-            // Render high-level group summary (데이터 요약)
             if (result.group_summary && Array.isArray(result.group_summary)) {
-                const summaryTable = document.createElement('table');
-                summaryTable.style.borderCollapse = 'collapse';
-                summaryTable.style.marginTop = '2em';
+                const groupTable = document.createElement('table');
+                groupTable.style.borderCollapse = 'collapse';
+                groupTable.style.marginTop = '2em';
 
-                const summaryHeader = document.createElement('thead');
-                const summaryHeadRow = document.createElement('tr');
+                const groupHeader = document.createElement('thead');
+                const groupHeadRow = document.createElement('tr');
                 ['Group', 'Score', 'Questions'].forEach(h => {
                     const th = document.createElement('th');
                     th.textContent = h;
                     th.style.border = '1px solid black';
                     th.style.padding = '0.5em';
                     th.style.background = '#dfefff';
-                    summaryHeadRow.appendChild(th);
+                    groupHeadRow.appendChild(th);
                 });
-                summaryHeader.appendChild(summaryHeadRow);
-                summaryTable.appendChild(summaryHeader);
+                groupHeader.appendChild(groupHeadRow);
+                groupTable.appendChild(groupHeader);
 
-                const summaryBody = document.createElement('tbody');
+                const groupBody = document.createElement('tbody');
                 result.group_summary.forEach(group => {
                     const tr = document.createElement('tr');
                     [group.name || '', group.score || '', group.questions || ''].forEach(cell => {
@@ -64,13 +63,13 @@
                         td.style.padding = '0.5em';
                         tr.appendChild(td);
                     });
-                    summaryBody.appendChild(tr);
+                    groupBody.appendChild(tr);
                 });
-                summaryTable.appendChild(summaryBody);
-                summaryTableDiv.appendChild(summaryTable);
+                groupTable.appendChild(groupBody);
+
+                summaryTableDiv.appendChild(groupTable);
             }
 
-            // Render per-question evaluations
             if (result.evaluations && Array.isArray(result.evaluations)) {
                 const detailedTable = document.createElement('table');
                 detailedTable.style.borderCollapse = 'collapse';
