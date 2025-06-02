@@ -151,8 +151,7 @@ def compute_category_scores_from_excel_data(results_by_category):
             summary.append({
                 "Category": group_name,
                 "Score": round(group_avg * 100, 2),
-                "Questions": data["count"],
-                "Parent": category
+                "Questions": data["count"]
             })
 
     return pd.DataFrame(summary)
