@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>엑셀 업로드 평가 | MSP Evaluator</title>
+<title>평가 도구</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css" />
 <style>
   :root {
@@ -157,11 +157,42 @@
       margin-bottom: 0.3em;
     }
   }
+
+  .summary-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 1em;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    background: white;
+  }
+
+  .summary-table thead tr {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  .summary-table th, .summary-table td {
+    padding: 0.75em 1em;
+    text-align: left;
+    border-bottom: 1px solid #e4e7eb;
+    font-size: 1rem;
+  }
+
+  .summary-table tbody tr:nth-child(even) {
+    background-color: #f7fbf9;
+  }
+
+  .summary-table tbody tr:hover {
+    background-color: #e1f3e9;
+  }
 </style>
 </head>
 <body>
 <main class="container">
-  <h2>📤 엑셀 파일 업로드 후 평가</h2>
+  <h2>파트너사 평가 도구</h2>
   <form id="uploadForm" autocomplete="off" novalidate>
     <label for="excelFile">엑셀 파일 (.xlsx):</label>
     <input type="file" id="excelFile" name="file" accept=".xlsx" required />
@@ -171,7 +202,7 @@
   <div id="evaluatedQuestionsTable"></div>
   <div id="summaryTable"></div>
 
-  <button id="uploadToVectorDbBtn">📤 벡터 DB에 업로드</button>
+  <button id="uploadToVectorDbBtn">벡터 DB에 업로드</button>
 </main>
 
 <script>
@@ -251,8 +282,7 @@
 
     if (result.summary && Array.isArray(result.summary)) {
       const table = document.createElement('table');
-      table.style.borderCollapse = 'collapse';
-      table.style.marginTop = '1em';
+      table.classList.add('summary-table');
 
       const headers = ['Category', 'Score', 'Questions'];
       const thead = document.createElement('thead');
@@ -260,9 +290,6 @@
       headers.forEach(h => {
         const th = document.createElement('th');
         th.textContent = h;
-        th.style.border = '1px solid #ccc';
-        th.style.padding = '0.75em 1em';
-        th.style.background = '#f0f0f0';
         headRow.appendChild(th);
       });
       thead.appendChild(headRow);
@@ -282,8 +309,6 @@
         cells.forEach(cell => {
           const td = document.createElement('td');
           td.textContent = cell;
-          td.style.border = '1px solid #ccc';
-          td.style.padding = '0.75em 1em';
           tr.appendChild(td);
         });
         tbody.appendChild(tr);
