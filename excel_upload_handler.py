@@ -124,5 +124,14 @@ def compute_category_scores_from_excel_data(results_by_category):
             "Score": round(data['average'] * 100, 2),
             "Questions": data['count']
         })
+    # Append detailed per-question scores
+    for category, items in results_by_category.items():
+        for item in items:
+            if isinstance(item.get("score"), int):
+                summary.insert(-len(category_scores), {
+                    "Category": item["question"],
+                    "Score": round(item["score"] * 20, 2),  # score out of 100
+                    "Questions": 1
+                })
 
     return pd.DataFrame(summary)
