@@ -203,6 +203,31 @@
     100% { transform: rotate(360deg); }
   }
 </style>
+  .copy-btn-wrapper {
+    display: flex;
+    justify-content: center;  /* Center horizontally */
+    gap: 20px;                /* Even spacing between buttons */
+    margin: 20px 0 16px;
+  }
+
+  .copy-btn {
+    background: linear-gradient(90deg, #03c75a, #1ecb8f);
+    border: none;
+    color: white;
+    border-radius: 20px;
+    padding: 10px 24px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    font-family: 'NanumSquareNeo', sans-serif !important;
+    transition: background 0.3s ease;
+    box-shadow: 0 4px 12px rgba(3, 199, 90, 0.3);
+    user-select: none;
+  }
+
+  .copy-btn:hover {
+    background: linear-gradient(90deg, #1ecb8f, #03c75a);
+  }
 </head>
 <body>
 <main class="container">
@@ -291,24 +316,16 @@
       const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
       evaluatedQuestionsTable.innerHTML = '';
 
-      // Create copy buttons wrapper
+      // Create copy buttons wrapper (refactored)
       const copyBtnWrapper = document.createElement('div');
-      copyBtnWrapper.style.display = 'flex';
-      copyBtnWrapper.style.gap = '12px';
-      copyBtnWrapper.style.margin = '16px 0';
+      copyBtnWrapper.className = 'copy-btn-wrapper';
 
       const categoriesToCopy = ['인적역량', 'AI기술역량', '솔루션 역량'];
 
       categoriesToCopy.forEach(category => {
         const btn = document.createElement('button');
         btn.textContent = `복사 ${category} 점수`;
-        btn.style.backgroundColor = 'var(--primary-color)';
-        btn.style.color = 'white';
-        btn.style.borderRadius = '12px';
-        btn.style.padding = '8px 16px';
-        btn.style.fontWeight = '700';
-        btn.style.border = 'none';
-        btn.style.cursor = 'pointer';
+        btn.className = 'copy-btn';
 
         btn.addEventListener('click', () => {
           const scoresToCopy = result.evaluated_questions
