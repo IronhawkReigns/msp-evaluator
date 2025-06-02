@@ -1,595 +1,294 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>평가 도구</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css" />
-<style>
-  :root {
-    --primary-color: #03c75a;
-    --background-color: #f5f7fa;
-    --card-bg: #fff;
-    --card-shadow: rgba(0, 0, 0, 0.1);
-    --text-color: #333;
-    --muted-color: #666;
-    --border-color: #d0d7de;
-  }
+from msp_core import (
+    run_msp_recommendation,
+    run_msp_information_summary,
+    run_msp_information_summary_claude,
+    extract_msp_name,
+    query_embed,
+    collection,
+    run_msp_news_summary_clova
+)
+from fastapi import File, UploadFile
+from excel_upload_handler import evaluate_uploaded_excel, compute_category_scores_from_excel_data, summarize_answers_for_subcategories
+from clova_router import Executor
+from pydantic import BaseModel
+from difflib import get_close_matches
+import os
+from dotenv import load_dotenv
+load_dotenv()
+from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi.responses import StreamingResponse
+import io
+class RouterQuery(BaseModel):
+    query: str
+    chat_history: list = []
+    advanced: bool = False  # NEW
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+import requests
+from vector_writer import run_from_msp_name
+from admin_protected import router as admin_router, manager
 
-  body {
-    margin: 0;
-    padding: 0;
-    background: var(--background-color);
-    font-family: 'NanumSquareNeo', sans-serif !important;
-    color: var(--text-color);
-  }
+# Register user_loader at import time to avoid "Missing user_loader callback" error
+@manager.user_loader()
+def load_user(username: str):
+    from admin_protected import User
+    env_username = os.getenv("ADMIN_USERNAME")
+    if username == env_username:
+        return User(name=username)
 
-  main.container {
-    max-width: 960px;
-    margin: 3em auto 5em;
-    padding: 2em 2.5em;
-    background: var(--card-bg);
-    box-shadow: 0 8px 24px var(--card-shadow);
-    border-radius: 12px;
-  }
+import chromadb
+from chromadb import PersistentClient
 
-  h2 {
-    color: var(--primary-color);
-    margin-bottom: 1em;
-    font-weight: 900;
-    font-size: 2rem;
-    text-align: center;
-  }
+app = FastAPI()
 
-  form#uploadForm {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    justify-content: flex-start;
-    margin-bottom: 1.5em;
-  }
+app.include_router(admin_router)
+print("📦 admin router included")
 
-  label[for="excelFile"] {
-    flex: 0 0 140px;
-    font-weight: 700;
-    color: var(--primary-color);
-    font-size: 1.1rem;
-    user-select: none;
-  }
 
-  input[type="file"] {
-    flex: 1 1 auto;
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 0.7em 1em;
-    font-size: 1rem;
-    background-color: white;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    vertical-align: middle;
-    height: 44px;
-    box-sizing: border-box;
-  }
 
-  input[type="file"]:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 10px rgba(3,199,90,0.3);
-  }
+@app.post("/run/{msp_name}")
+def run_msp_vector_pipeline(msp_name: str):
+    try:
+        run_from_msp_name(msp_name)
+        return {"message": f"Vector DB update completed for {msp_name}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-  button[type="submit"] {
-    flex: 0 0 160px;
-    background: linear-gradient(90deg, var(--primary-color), #1ecb8f);
-    border: none;
-    color: white;
-    padding: 0.7em 1.2em;
-    font-size: 1.1rem;
-    font-weight: 700;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: filter 0.25s ease;
-    user-select: none;
-    height: 44px;
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  button[type="submit"]:hover {
-    filter: brightness(1.1);
-  }
+# Serve static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-  /* Updated table styles matching static/index.html style */
-  table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.9rem;
-    background-color: #fff;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-    border: 1px solid var(--border-color);
-  }
 
-  thead tr {
-    background-color: #04a14b;
-    color: white;
-    font-weight: 600;
-    font-size: 1rem;
-  }
+@app.get("/ui")
+def serve_ui(request: Request):
+    try:
+        user = manager(request)
+        return FileResponse("static/index.html")
+    except:
+        return RedirectResponse(url="/login?next=/ui")
 
-  th, td {
-    padding: 0.75em 1em;
-    border-right: 1px solid var(--border-color);
-    border-bottom: 1px solid var(--border-color);
-    font-size: 0.85rem;
-  }
 
-  /* Remove right border for last cell in each row */
-  th:last-child, td:last-child {
-    border-right: none;
-  }
+# Serve query UI
+@app.get("/query")
+def serve_query_ui():
+    return FileResponse("static/query.html")
 
-  thead th {
-    text-align: center;
-  }
+# Load ChromaDB
+CHROMA_PATH = os.path.abspath("chroma_store")
+client = PersistentClient(path=CHROMA_PATH)
+collection = client.get_or_create_collection("msp_chunks")
 
-  tbody td {
-    text-align: left;
-  }
+@app.get("/ui/data")
+def get_filtered_chunks(question: str = None, min_score: int = 0):
+    # Return flat format for public UI compatibility
+    results = collection.get(include=["metadatas"])
+    data = []
+    for meta in results["metadatas"]:
+        if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
+            continue
+        if question and question != meta["question"]:
+            continue
+        if meta["score"] is not None and int(meta["score"]) >= min_score:
+            data.append({
+                "msp_name": meta["msp_name"],
+                "question": meta["question"],
+                "score": meta["score"],
+                "answer": meta["answer"]
+            })
+    return JSONResponse(content=data)
 
-  /* Center first column (th and td) */
-  thead th:first-child,
-  tbody td:first-child {
-    text-align: center;
-    font-weight: 700;
-  }
+# Flat data endpoint for public UI
+@app.get("/ui/data_flat")
+def get_flat_chunks(question: str = None, min_score: int = 0):
+    results = collection.get(include=["metadatas"])
+    data = []
+    for meta in results["metadatas"]:
+        if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
+            continue
+        if question and question != meta["question"]:
+            continue
+        if meta["score"] is not None and int(meta["score"]) >= min_score:
+            data.append({
+                "msp_name": meta["msp_name"],
+                "question": meta["question"],
+                "score": meta["score"],
+                "answer": meta["answer"]
+            })
+    return JSONResponse(content=data)
 
-  tbody tr:hover {
-    background-color: #e6f4ea;
-  }
+# Query/Ask endpoint
+@app.post("/query/ask")
+async def ask_question(request: Request):
+    body = await request.json()
+    question = body.get("question")
+    min_score = int(body.get("min_score", 0))
+    if not question:
+        raise HTTPException(status_code=400, detail="Missing question")
 
-  tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
-  }
+    return run_msp_recommendation(question, min_score)
 
-  input.score-input {
-    width: 3.2em;
-    font-size: 1rem;
-    padding: 0.3em 0.4em;
-    border: 1.5px solid #ccc;
-    border-radius: 8px;
-    text-align: center;
-    transition: border-color 0.3s ease;
-  }
-  input.score-input:focus {
-    border-color: var(--primary-color);
-    outline: none;
-    box-shadow: 0 0 8px rgba(3,199,90,0.3);
-  }
-
-  @media (max-width: 600px) {
-    form#uploadForm {
-      flex-direction: column;
-      align-items: stretch;
+# Router endpoint
+@app.post("/query/router")
+async def query_router(data: RouterQuery):
+    print(f"🟢 Advanced toggle received: {data.advanced}")
+    executor = Executor()
+    request_data = {
+        "query": data.query,
+        "chatHistory": data.chat_history
     }
-    input[type="file"], button[type="submit"] {
-      width: 100%;
-      flex: none;
-    }
-    label[for="excelFile"] {
-      flex: none;
-      margin-bottom: 0.3em;
-    }
-  }
+    raw_result = executor.execute(request_data)
 
-  .summary-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.9rem;
-    background-color: #fff;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-    border: 1px solid var(--border-color);
-  }
+    import json
+    import traceback
 
-  .summary-table thead tr {
-    background-color: #04a14b;
-    color: white;
-    font-weight: 600;
-    font-size: 1rem;
-  }
+    try:
+        if isinstance(raw_result, str):
+            result = json.loads(raw_result)
+        else:
+            result = raw_result
 
-  .summary-table th, .summary-table td {
-    padding: 0.75em 1em;
-    border-right: 1px solid var(--border-color);
-    border-bottom: 1px solid var(--border-color);
-    font-size: 0.85rem;
-  }
+        domain_result = result.get("domain", {}).get("result")
+        blocked = result.get("blockedContent", {}).get("result", [])
 
-  .summary-table th:last-child, .summary-table td:last-child {
-    border-right: none;
-  }
+        if domain_result == "mspevaluator":
+            extracted_name = extract_msp_name(data.query)
+            print(f"🧠 CLOVA 추출 회사명: {extracted_name}")
+            print(f"🟢 Advanced toggle received: {data.advanced}")
+            if "Information" in blocked:
+                if data.advanced:
+                    return run_msp_information_summary_claude(data.query)
+                else:
+                    return run_msp_information_summary(data.query)
+            elif "Recommend" in blocked:
+                return run_msp_recommendation(data.query, min_score=0)
+            elif "Unrelated" in blocked:
+                return {"answer": "본 시스템은 MSP 평가 도구입니다. 해당 질문은 지원하지 않습니다. 다른 질문을 입력해 주세요."}
+            else:
+                return {"answer": "질문 의도를 정확히 분류하지 못했습니다. 다시 시도해 주세요."}
+        else:
+            return {"answer": "도메인 분류에 실패했습니다. 다시 시도해 주세요."}
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Router 처리 중 오류 발생: {str(e)}")
 
-  .summary-table thead th {
-    text-align: center;
-  }
 
-  .summary-table tbody td {
-    text-align: left;
-  }
+# Advanced Naver route
+@app.post("/query/advanced_naver")
+async def query_advanced_naver(data: RouterQuery):
+    return run_msp_news_summary_clova(data.query)
 
-  .summary-table thead th:first-child,
-  .summary-table tbody td:first-child {
-    text-align: center;
-    font-weight: 700;
-  }
+# Add protected /admin route using same login logic as /ui
+@app.get("/admin")
+def serve_admin_ui(request: Request):
+    try:
+        user = manager(request)
+        return FileResponse("static/admin.html")
+    except Exception as e:
+        return RedirectResponse(url="/login?next=/admin")
 
-  .summary-table tbody tr:hover {
-    background-color: #e6f4ea;
-  }
 
-  .summary-table tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
-  }
+# Serve main page at root
+@app.get("/")
+def serve_main_page():
+    return FileResponse("static/main.html")
 
-  .spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid var(--primary-color);
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin: 30px auto;
-  }
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
 
-  .copy-btn-wrapper {
-    display: flex;
-    justify-content: center;
-    gap: 24px;
-    margin-top: 16px;
-    margin-bottom: 20px;
-  }
 
-  .copy-btn {
-    border: none;
-    color: white;
-    border-radius: 24px;
-    padding: 12px 32px;
-    font-weight: 700;
-    font-size: 0.9rem;
-    cursor: pointer;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-    transition: background 0.3s ease, box-shadow 0.2s ease;
-    box-shadow: 0 4px 10px rgba(3, 199, 90, 0.3);
-    user-select: none;
-  }
+# Serve upload page
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+templates = Jinja2Templates(directory="templates")
 
-  .copy-btn:hover {
-    box-shadow: 0 6px 14px rgba(3, 199, 90, 0.5);
-  }
-</style>
-</head>
-<body>
-<main class="container">
-  <h2>파트너사 평가 도구</h2>
-  <form id="uploadForm" autocomplete="off" novalidate>
-    <label for="excelFile">엑셀 파일 (.xlsx):</label>
-    <input type="file" id="excelFile" name="file" accept=".xlsx" required />
-    <button type="submit">업로드 및 평가</button>
-  </form>
+@app.get("/upload", response_class=HTMLResponse)
+async def serve_upload_page(request: Request):
+    return templates.TemplateResponse("upload.html", {"request": request})
 
-  <div id="evaluatedQuestionsTable"></div>
-  
-  <div id="summaryTable"></div>
-</main>
+# Excel upload endpoint
+from fastapi import UploadFile, File
 
-<script>
-  const form = document.getElementById('uploadForm');
-  const evaluatedQuestionsTable = document.getElementById('evaluatedQuestionsTable');
-  const summaryTable = document.getElementById('summaryTable');
-  const vectorUploadBtn = document.getElementById('uploadToVectorDbBtn');
-  let result = {};
+@app.post("/api/upload_excel")
+async def upload_excel(file: UploadFile = File(...)):
+    try:
+        from excel_upload_handler import evaluate_uploaded_excel, compute_category_scores_from_excel_data, summarize_answers_for_subcategories
 
-  function createTable(headers, rows, editableScore = false) {
-    const table = document.createElement('table');
-    const thead = document.createElement('thead');
-    const headRow = document.createElement('tr');
-    headers.forEach(h => {
-      const th = document.createElement('th');
-      th.textContent = h;
-      headRow.appendChild(th);
-    });
-    thead.appendChild(headRow);
-    table.appendChild(thead);
+        evaluated = evaluate_uploaded_excel(file)
+        summary_df = compute_category_scores_from_excel_data(evaluated)
+        subcategory_summaries = summarize_answers_for_subcategories(evaluated)
 
-    const tbody = document.createElement('tbody');
-    rows.forEach(row => {
-      const tr = document.createElement('tr');
-      headers.forEach(header => {
-        const td = document.createElement('td');
-        const key = header.toLowerCase();
-        // Use camelCase keys for row objects
-        const camelCaseKey = key.replace(/\s+(.)/g, (match, group1) => group1.toUpperCase());
+        flat_results = []
+        skipped_items = []
+        for category_name, qa_list in evaluated.items():
+            if not isinstance(qa_list, list):
+                skipped_items.append({
+                    "category": category_name,
+                    "item": qa_list,
+                    "reason": f"Expected a list but got: {type(qa_list)}"
+                })
+                continue
+            for item in qa_list:
+                if not isinstance(item, dict) or "question" not in item or "answer" not in item or "score" not in item:
+                    skipped_items.append({
+                        "category": category_name,
+                        "item": item,
+                        "reason": "Missing required keys or invalid format"
+                    })
+                    continue
+                flat_results.append({
+                    "category": category_name,
+                    "question": item["question"],
+                    "answer": item["answer"],
+                    "score": item["score"]
+                })
 
-        if (editableScore && camelCaseKey === 'score') {
-          const input = document.createElement('input');
-          input.type = 'number';
-          input.className = 'score-input';
-          input.min = 1;
-          input.max = 5;
-          input.value = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
-          input.addEventListener('change', () => {
-            row[camelCaseKey] = Number(input.value);
-          });
-          td.appendChild(input);
-        } else {
-          td.textContent = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
-        }
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-    return table;
-  }
+        # Compute group-level scores (e.g., "AI 전문 인력 구성")
+        from collections import defaultdict
+        group_scores = defaultdict(list)
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    evaluatedQuestionsTable.innerHTML = '<div class="spinner"></div>';
-    summaryTable.innerHTML = '';
+        for item in flat_results:
+            group = item.get("group", item.get("category"))
+            score = item.get("score")
+            if isinstance(score, (int, float)):
+                group_scores[group].append(score)
 
-    const fileInput = document.getElementById('excelFile');
-    if (!fileInput.files.length) {
-      alert('엑셀 파일을 선택해주세요.');
-      evaluatedQuestionsTable.innerHTML = '';
-      return;
-    }
+        group_summary = []
+        for group, scores in group_scores.items():
+            avg_score = round(sum(scores) / len(scores), 2) if scores else 0
+            group_summary.append({
+                "name": group,
+                "score": avg_score,
+                "questions": len(scores)
+            })
 
-    const formData = new FormData();
-    formData.append('file', fileInput.files[0]);
-
-    try {
-      const res = await fetch('/api/upload_excel', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!res.ok) {
-        throw new Error(`서버 오류: ${res.status}`);
-      }
-
-      result = await res.json();
-
-      if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
-        const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
-        evaluatedQuestionsTable.innerHTML = '';
-
-        const copyBtnWrapper = document.createElement('div');
-        copyBtnWrapper.className = 'copy-btn-wrapper';
-
-        const categoriesToCopy = ['인적역량', 'AI기술역량', '솔루션 역량'];
-
-        categoriesToCopy.forEach(category => {
-          const btn = document.createElement('button');
-          btn.textContent = `${category} 점수 복사`;
-          btn.className = 'copy-btn';
-
-          // Set distinct background gradients for each category button
-          switch(category) {
-            case '인적역량':
-              btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)';
-              btn.addEventListener('mouseover', () => {
-                btn.style.background = 'linear-gradient(90deg, #07bc2f, #028a0f)';
-              });
-              btn.addEventListener('mouseout', () => {
-                btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)';
-              });
-              break;
-            case 'AI기술역량':
-              btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)';
-              btn.addEventListener('mouseover', () => {
-                btn.style.background = 'linear-gradient(90deg, #07a0bc, #04668c)';
-              });
-              btn.addEventListener('mouseout', () => {
-                btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)';
-              });
-              break;
-            case '솔루션 역량':
-              btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)';
-              btn.addEventListener('mouseover', () => {
-                btn.style.background = 'linear-gradient(90deg, #bc8707, #8c4604)';
-              });
-              btn.addEventListener('mouseout', () => {
-                btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)';
-              });
-              break;
-          }
-
-          btn.addEventListener('click', () => {
-            const scoresToCopy = result.evaluated_questions
-              .filter(q => q.category === category)
-              .map(q => (q.score !== undefined ? q.score : ''))
-              .join('\n');
-
-            navigator.clipboard.writeText(scoresToCopy).then(() => {
-              alert(`✅ ${category} 점수가 클립보드에 복사되었습니다.`);
-            }).catch(() => {
-              alert(`❌ ${category} 점수 복사에 실패했습니다.`);
-            });
-          });
-
-          copyBtnWrapper.appendChild(btn);
-        });
-
-        evaluatedQuestionsTable.appendChild(evalTable);
-        evaluatedQuestionsTable.appendChild(copyBtnWrapper);
-
-        if (vectorUploadBtn) {
-          vectorUploadBtn.style.display = result.evaluated_questions.length ? 'block' : 'none';
-        }
-      } else {
-        evaluatedQuestionsTable.innerHTML = '';
-        if (vectorUploadBtn) {
-          vectorUploadBtn.style.display = 'none';
-        }
-      }
-
-      if (result.summary && Array.isArray(result.summary)) {
-        const table = document.createElement('table');
-        table.classList.add('summary-table');
-
-        const headers = ['Category', 'Score', 'Questions'];
-        const thead = document.createElement('thead');
-        const headRow = document.createElement('tr');
-        headers.forEach(h => {
-          const th = document.createElement('th');
-          th.textContent = h;
-          headRow.appendChild(th);
-        });
-        thead.appendChild(headRow);
-        table.appendChild(thead);
-
-        const tbody = document.createElement('tbody');
-        result.summary.forEach(row => {
-          const tr = document.createElement('tr');
-          let cells = [];
-
-          if (Array.isArray(row)) {
-            cells = row;
-          } else if (typeof row === 'object') {
-            cells = [row.Category || '', row.Score || '', row.Questions || ''];
-          }
-
-          cells.forEach(cell => {
-            const td = document.createElement('td');
-            td.textContent = cell;
-            tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
-        });
-        table.appendChild(tbody);
-
-        summaryTable.innerHTML = '';
-        summaryTable.appendChild(table);
-
-        // --- Collapsible subcategory summaries ---
-        const subCategoryContainerId = 'subCategorySummaries';
-        // Clear previous if exists
-        let subCatContainer = document.getElementById(subCategoryContainerId);
-        if (!subCatContainer) {
-          subCatContainer = document.createElement('div');
-          subCatContainer.id = subCategoryContainerId;
-          summaryTable.parentNode.insertBefore(subCatContainer, summaryTable.nextSibling);
-        } else {
-          subCatContainer.innerHTML = '';
-        }
-
-        // Define main categories to exclude from subcategory collapsibles
-        const mainCategories = ['총점', '인적역량', 'AI기술역량', '솔루션 역량'];
-
-        // Group subcategories under main categories
-        const groupedSubCats = {};
-        result.summary.forEach(row => {
-          if (!row || !row.Category) return;
-          if (mainCategories.includes(row.Category)) return;
-
-          // Heuristic: assign subcategory to main category by checking if it belongs to any main category
-          // For this, check if row.Category appears as substring of any main category or vice versa
-          let assignedMainCat = null;
-          mainCategories.forEach(mc => {
-            if (row.Category.includes(mc) || mc.includes(row.Category)) {
-              assignedMainCat = mc;
-            }
-          });
-          if (!assignedMainCat) {
-            // fallback: assign to unknown or put under '기타'
-            assignedMainCat = '기타';
-          }
-
-          if (!groupedSubCats[assignedMainCat]) {
-            groupedSubCats[assignedMainCat] = [];
-          }
-          groupedSubCats[assignedMainCat].push(row);
-        });
-
-        // Build collapsibles HTML
-        Object.entries(groupedSubCats).forEach(([mainCat, subCats]) => {
-          const details = document.createElement('details');
-          details.open = true;
-          const summary = document.createElement('summary');
-          summary.textContent = mainCat;
-          summary.style.fontWeight = '700';
-          summary.style.cursor = 'pointer';
-          summary.style.marginTop = '1em';
-          details.appendChild(summary);
-
-          const ul = document.createElement('ul');
-          subCats.forEach(subCat => {
-            const li = document.createElement('li');
-            li.textContent = subCat.summary || '요약 정보가 없습니다.';
-            ul.appendChild(li);
-          });
-          details.appendChild(ul);
-          subCatContainer.appendChild(details);
-        });
-        // --- End collapsible subcategory summaries ---
-      } else {
-        summaryTable.innerHTML = '';
-      }
-    } catch (error) {
-      evaluatedQuestionsTable.innerHTML = '';
-      summaryTable.innerHTML = '';
-      alert('업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
-      console.error(error);
-    }
-  });
-
-  if (vectorUploadBtn) {
-    vectorUploadBtn.addEventListener('click', async () => {
-      const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
-      if (!mspName) {
-        alert("MSP 이름이 입력되지 않았습니다.");
-        return;
-      }
-
-      const items = [];
-      if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
-        result.evaluated_questions.forEach(q => {
-          items.push({
-            question: q.question,
-            answer: q.answer,
-            score: q.score
-          });
-        });
-      }
-
-      const response = await fetch('/api/add_to_vector_db', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 
-          msp_name: mspName, 
-          items: items,
-          summary: result.summary
+        return JSONResponse(content={
+            "evaluated_questions": flat_results,
+            "summary": summary_df.to_dict(orient="records"),
+            "skipped_items": skipped_items,
+            "groups": group_summary,
+            "subcategory_summaries": subcategory_summaries
         })
-      });
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Excel 평가 처리 중 오류 발생: {str(e)}")
 
-      if (response.ok) {
-        alert("✅ 벡터 DB에 업로드되었습니다.");
-      } else {
-        alert("❌ 업로드 실패");
-      }
-    });
-  }
-</script>
-</body>
-</html>
+@app.post("/api/add_to_vector_db")
+async def add_to_vector_db(data: dict):
+    try:
+        from vector_writer import run_from_direct_input
+        msp_name = data.get("msp_name")
+        if not msp_name:
+            raise HTTPException(status_code=400, detail="Missing msp_name")
+
+        items = data.get("items", [])
+        if not isinstance(items, list):
+            raise HTTPException(status_code=400, detail="Missing or invalid items list")
+
+        summary = data.get("summary")
+        if summary is None:
+            raise HTTPException(status_code=400, detail="Missing summary")
+
+        run_from_direct_input(msp_name, items, summary)
+        return {"message": f"Successfully added {len(items)} items to vector DB for {msp_name}"}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Vector DB update failed: {str(e)}")
