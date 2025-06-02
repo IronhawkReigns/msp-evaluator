@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>엑셀 업로드 평가</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        label, input, button { font-size: 1rem; margin: 0.5em 0; }
+    </style>
+</head>
+<body>
+    <h2>📤 엑셀 파일 업로드 후 평가</h2>
+    <form id="uploadForm">
+        <label for="excelFile">엑셀 파일 (.xlsx):</label><br>
+        <input type="file" id="excelFile" name="file" accept=".xlsx" required><br>
+        <button type="submit">업로드 및 평가</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('excelFile');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            const res = await fetch('/api/upload_excel', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await res.json();
+            const output = document.getElementById('result');
+            output.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+        });
+    </script>
+</body>
+</html>
