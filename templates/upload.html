@@ -220,6 +220,9 @@
 
     result = await res.json();
 
+    // Store original summary for showing read-only summary table
+    const originalSummary = result.summary ? JSON.parse(JSON.stringify(result.summary)) : null;
+
     if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
       const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
       evaluatedQuestionsTable.appendChild(evalTable);
@@ -228,9 +231,8 @@
       vectorUploadBtn.style.display = 'none';
     }
 
-    if (result.summary && typeof result.summary === 'object' && !Array.isArray(result.summary)) {
-      // Convert object to array for table rendering
-      const summaryRows = Object.entries(result.summary).map(([key, val]) => ({
+    if (originalSummary && typeof originalSummary === 'object' && !Array.isArray(originalSummary)) {
+      const summaryRows = Object.entries(originalSummary).map(([key, val]) => ({
         group: key,
         score: val.score !== undefined ? val.score : '',
         questions: val.questions !== undefined ? val.questions : ''
