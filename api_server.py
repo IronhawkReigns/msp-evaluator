@@ -216,8 +216,12 @@ async def upload_excel(file: UploadFile = File(...)):
         flat_results = []
         for category_name, qa_list in evaluated.items():
             if not isinstance(qa_list, list):
-                continue  # Skip invalid data
+                print(f"[ERROR] Expected a list but got: {type(qa_list)} for category: {category_name}")
+                continue
             for item in qa_list:
+                if not isinstance(item, dict) or "question" not in item or "answer" not in item or "score" not in item:
+                    print(f"[ERROR] Invalid item format in category '{category_name}': {item}")
+                    continue
                 flat_results.append({
                     "category": category_name,
                     "question": item["question"],
