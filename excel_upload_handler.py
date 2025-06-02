@@ -13,10 +13,15 @@ def evaluate_uploaded_excel(uploaded_file: UploadFile):
     for sheet_name in excel_data.sheet_names:
         df = pd.read_excel(excel_data, sheet_name=sheet_name, header=None)
 
+        if df.shape[0] < 2 or df.shape[1] < 5:
+            print(f"[DEBUG] Skipping sheet '{sheet_name}' — too small or malformed")
+            continue
+
         # Check header row
         header = df.iloc[0].tolist()
         if header[:5] != EXPECTED_HEADERS:
-            continue  # Skip invalid sheets
+            print(f"[DEBUG] Skipping sheet '{sheet_name}' — headers do not match")
+            continue
 
         try:
             parsed = parse_excel_category_sheet(df)
