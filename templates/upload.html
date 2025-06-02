@@ -17,9 +17,11 @@
     </form>
     <div id="result"></div>
     <div id="summaryTable" style="margin-top: 2em;"></div>
+    <button id="uploadToVectorDbBtn" style="margin-top: 2em;">📤 벡터 DB에 업로드</button>
 
     <script>
         const form = document.getElementById('uploadForm');
+        let result = {};
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             document.getElementById('summaryTable').innerHTML = '';
@@ -32,7 +34,7 @@
                 body: formData
             });
 
-            const result = await res.json();
+            result = await res.json();
             const output = document.getElementById('result');
             // Render evaluated_questions as a formatted table if present
             if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
@@ -158,6 +160,40 @@
                 table.appendChild(tbody);
                 detailedOutput.appendChild(table);
                 document.getElementById('summaryTable').appendChild(detailedOutput);
+            }
+        });
+
+        const vectorUploadBtn = document.getElementById('uploadToVectorDbBtn');
+        vectorUploadBtn.addEventListener('click', async () => {
+            const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
+            if (!mspName) {
+                alert("MSP 이름이 입력되지 않았습니다.");
+                return;
+            }
+
+            const items = [];
+            if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+                result.evaluated_questions.forEach(q => {
+                    items.push({
+                        question: q.question,
+                        answer: q.answer,
+                        score: q.score
+                    });
+                });
+            }
+
+            const response = await fetch('/api/add_to_vector_db', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ msp_name: mspName, items: items })
+            });
+
+            if (response.ok) {
+                alert("✅ 벡터 DB에 업로드되었습니다.");
+            } else {
+                alert("❌ 업로드 실패");
             }
         });
     </script>
