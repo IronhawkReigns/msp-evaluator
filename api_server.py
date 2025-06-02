@@ -1,217 +1,106 @@
-from msp_core import (
-    run_msp_recommendation,
-    run_msp_information_summary,
-    run_msp_information_summary_claude,
-    extract_msp_name,
-    query_embed,
-    collection,
-    run_msp_news_summary_clova
-)
-from fastapi import File, UploadFile
-from excel_upload_handler import evaluate_uploaded_excel
-from clova_router import Executor
-from pydantic import BaseModel
-from difflib import get_close_matches
-import os
-from dotenv import load_dotenv
-load_dotenv()
-from fastapi import FastAPI, HTTPException, Depends, Request
-from fastapi.responses import StreamingResponse
+import pandas as pd
+from fastapi import UploadFile
+from evaluator import evaluate_answer
 import io
-class RouterQuery(BaseModel):
-    query: str
-    chat_history: list = []
-    advanced: bool = False  # NEW
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
-import requests
-from vector_writer import run_from_msp_name
-from admin_protected import router as admin_router, manager
 
-# Register user_loader at import time to avoid "Missing user_loader callback" error
-@manager.user_loader()
-def load_user(username: str):
-    from admin_protected import User
-    env_username = os.getenv("ADMIN_USERNAME")
-    if username == env_username:
-        return User(name=username)
-
-import chromadb
-from chromadb import PersistentClient
-
-app = FastAPI()
-
-app.include_router(admin_router)
-print("📦 admin router included")
+EXPECTED_HEADERS = ["Domain", "설명", "Key Questions", "Present Lv.", "Interview Result"]
 
 
+def parse_excel_category_sheets(excel_bytes: bytes):
+    excel_data = pd.ExcelFile(io.BytesIO(excel_bytes))
+    results = {}
 
-@app.post("/run/{msp_name}")
-def run_msp_vector_pipeline(msp_name: str):
-    try:
-        run_from_msp_name(msp_name)
-        return {"message": f"Vector DB update completed for {msp_name}"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Serve static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-
-@app.get("/ui")
-def serve_ui(request: Request):
-    try:
-        user = manager(request)
-        return FileResponse("static/index.html")
-    except:
-        return RedirectResponse(url="/login?next=/ui")
-
-
-# Serve query UI
-@app.get("/query")
-def serve_query_ui():
-    return FileResponse("static/query.html")
-
-# Load ChromaDB
-CHROMA_PATH = os.path.abspath("chroma_store")
-client = PersistentClient(path=CHROMA_PATH)
-collection = client.get_or_create_collection("msp_chunks")
-
-@app.get("/ui/data")
-def get_filtered_chunks(question: str = None, min_score: int = 0):
-    # Return flat format for public UI compatibility
-    results = collection.get(include=["metadatas"])
-    data = []
-    for meta in results["metadatas"]:
-        if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
+    for sheet_name in excel_data.sheet_names:
+        if "역량" not in sheet_name:
+            print(f"[DEBUG] Skipping sheet '{sheet_name}' — name does not contain '역량'")
             continue
-        if question and question != meta["question"]:
+
+        df = pd.read_excel(excel_data, sheet_name=sheet_name, header=None)
+
+        if df.shape[0] < 2 or df.shape[1] < 5:
+            print(f"[DEBUG] Skipping sheet '{sheet_name}' — too small or malformed")
             continue
-        if meta["score"] is not None and int(meta["score"]) >= min_score:
-            data.append({
-                "msp_name": meta["msp_name"],
-                "question": meta["question"],
-                "score": meta["score"],
-                "answer": meta["answer"]
+
+        try:
+            parsed = parse_excel_category_sheet(df)
+            print(f"[DEBUG] Sheet: {sheet_name}")
+            print(f"[DEBUG] Parsed: {parsed}")
+        except Exception as e:
+            print(f"[DEBUG] Error parsing sheet '{sheet_name}': {e}")
+            continue  # skip problematic sheet
+
+        sheet_results = []
+        for item in parsed:
+            question = item.get("question")
+            answer = item.get("answer")
+            if not isinstance(question, str) or not isinstance(answer, str):
+                continue
+            try:
+                score = evaluate_answer(question, answer)
+            except Exception as e:
+                score = f"Error: {str(e)}"
+
+            sheet_results.append({
+                "question": question,
+                "answer": answer,
+                "score": score
             })
-    return JSONResponse(content=data)
 
-# Flat data endpoint for public UI
-@app.get("/ui/data_flat")
-def get_flat_chunks(question: str = None, min_score: int = 0):
-    results = collection.get(include=["metadatas"])
-    data = []
-    for meta in results["metadatas"]:
-        if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
-            continue
-        if question and question != meta["question"]:
-            continue
-        if meta["score"] is not None and int(meta["score"]) >= min_score:
-            data.append({
-                "msp_name": meta["msp_name"],
-                "question": meta["question"],
-                "score": meta["score"],
-                "answer": meta["answer"]
+        if sheet_results:
+            results[sheet_name] = sheet_results
+
+    return results
+
+
+def evaluate_uploaded_excel(uploaded_file: UploadFile):
+    excel_bytes = uploaded_file.file.read()
+    return parse_excel_category_sheets(excel_bytes)
+
+
+def parse_excel_category_sheet(df: pd.DataFrame):
+    parsed = []
+    for _, row in df.iterrows():
+        try:
+            question = str(row[2]).strip()
+            answer = str(row[4]).strip()
+            if question.lower() == "key questions":
+                continue  # Skip header
+            if not question or not answer or question == "nan":
+                continue
+            parsed.append({
+                "question": question,
+                "answer": answer
             })
-    return JSONResponse(content=data)
+        except Exception:
+            continue
+    return parsed
 
-# Query/Ask endpoint
-@app.post("/query/ask")
-async def ask_question(request: Request):
-    body = await request.json()
-    question = body.get("question")
-    min_score = int(body.get("min_score", 0))
-    if not question:
-        raise HTTPException(status_code=400, detail="Missing question")
+def compute_category_scores_from_excel_data(results_by_category):
+    """Takes dict from upload-based evaluation and computes average score per category and overall."""
+    category_scores = {}
+    total_score = 0
+    total_questions = 0
 
-    return run_msp_recommendation(question, min_score)
+    for category, items in results_by_category.items():
+        scores = [item['score'] for item in items if isinstance(item['score'], int)]
+        if not scores:
+            continue
+        question_count = len(scores)
+        score_sum = sum(scores)
+        percentage = round(score_sum / (question_count * 5), 4)
+        category_scores[category] = {
+            "average": percentage,
+            "count": question_count,
+            "total": score_sum
+        }
+        total_score += score_sum
+        total_questions += question_count
 
-# Router endpoint
-@app.post("/query/router")
-async def query_router(data: RouterQuery):
-    print(f"🟢 Advanced toggle received: {data.advanced}")
-    executor = Executor()
-    request_data = {
-        "query": data.query,
-        "chatHistory": data.chat_history
-    }
-    raw_result = executor.execute(request_data)
+    total_max = total_questions * 5
+    overall = round((total_score / total_max) * 100, 2) if total_max > 0 else 0.0
 
-    import json
-    import traceback
+    summary = [["총점", f"{overall:.2f}", total_questions]]
+    for category, data in category_scores.items():
+        summary.append([category, f"{data['average'] * 100:.2f}", data['count']])
 
-    try:
-        if isinstance(raw_result, str):
-            result = json.loads(raw_result)
-        else:
-            result = raw_result
-
-        domain_result = result.get("domain", {}).get("result")
-        blocked = result.get("blockedContent", {}).get("result", [])
-
-        if domain_result == "mspevaluator":
-            extracted_name = extract_msp_name(data.query)
-            print(f"🧠 CLOVA 추출 회사명: {extracted_name}")
-            print(f"🟢 Advanced toggle received: {data.advanced}")
-            if "Information" in blocked:
-                if data.advanced:
-                    return run_msp_information_summary_claude(data.query)
-                else:
-                    return run_msp_information_summary(data.query)
-            elif "Recommend" in blocked:
-                return run_msp_recommendation(data.query, min_score=0)
-            elif "Unrelated" in blocked:
-                return {"answer": "본 시스템은 MSP 평가 도구입니다. 해당 질문은 지원하지 않습니다. 다른 질문을 입력해 주세요."}
-            else:
-                return {"answer": "질문 의도를 정확히 분류하지 못했습니다. 다시 시도해 주세요."}
-        else:
-            return {"answer": "도메인 분류에 실패했습니다. 다시 시도해 주세요."}
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Router 처리 중 오류 발생: {str(e)}")
-
-
-# Advanced Naver route
-@app.post("/query/advanced_naver")
-async def query_advanced_naver(data: RouterQuery):
-    return run_msp_news_summary_clova(data.query)
-
-# Add protected /admin route using same login logic as /ui
-@app.get("/admin")
-def serve_admin_ui(request: Request):
-    try:
-        user = manager(request)
-        return FileResponse("static/admin.html")
-    except Exception as e:
-        return RedirectResponse(url="/login?next=/admin")
-
-
-# Serve main page at root
-@app.get("/")
-def serve_main_page():
-    return FileResponse("static/main.html")
-
-
-
-# Serve upload page
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
-templates = Jinja2Templates(directory="templates")
-
-@app.get("/upload", response_class=HTMLResponse)
-async def serve_upload_page(request: Request):
-    return templates.TemplateResponse("upload.html", {"request": request})
-
-# Excel upload endpoint
-from fastapi import UploadFile, File
-from excel_upload_handler import parse_excel_category_sheet, compute_category_scores_from_excel_data
-
-@app.post("/api/upload_excel")
-async def upload_excel(file: UploadFile = File(...)):
-    try:
-        excel_bytes = await file.read()
-        parsed_df = parse_excel_category_sheet(excel_bytes)
-        summary_df = compute_category_scores_from_excel_data(parsed_df)
-        return JSONResponse(content=summary_df.to_dict(orient="records"))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Excel 평가 처리 중 오류 발생: {str(e)}")
+    return pd.DataFrame(summary, columns=["Category", "Score", "Questions"])
