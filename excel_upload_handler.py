@@ -20,6 +20,8 @@ def evaluate_uploaded_excel(uploaded_file: UploadFile):
 
         try:
             parsed = parse_excel_category_sheet(df)
+            print(f"[DEBUG] Sheet: {sheet_name}")
+            print(f"[DEBUG] Parsed: {parsed}")
         except Exception as e:
             continue  # skip problematic sheet
 
