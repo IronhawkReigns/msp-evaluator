@@ -243,7 +243,7 @@ async def upload_excel(file: UploadFile = File(...)):
         group_scores = defaultdict(list)
 
         for item in flat_results:
-            group = item.get("category")  # In this design, 'category' refers to the group
+            group = item.get("group", item.get("category"))
             score = item.get("score")
             if isinstance(score, (int, float)):
                 group_scores[group].append(score)
