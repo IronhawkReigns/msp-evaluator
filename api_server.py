@@ -210,6 +210,20 @@ async def upload_excel(file: UploadFile = File(...)):
     try:
         results_by_category = evaluate_uploaded_excel(file)
         summary_df = compute_category_scores_from_excel_data(results_by_category)
-        return JSONResponse(content=summary_df.to_dict(orient="records"))
+
+        flat_results = []
+        for category, results in results_by_category.items():
+            for row in results:
+                flat_results.append({
+                    "category": category,
+                    "question": row["question"],
+                    "score": row["score"],
+                    "answer": row["answer"]
+                })
+
+        return JSONResponse(content={
+            "evaluated_questions": flat_results,
+            "summary": summary_df.to_dict(orient="records")
+        })
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Excel 평가 처리 중 오류 발생: {str(e)}")
