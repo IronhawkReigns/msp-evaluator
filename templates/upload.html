@@ -219,8 +219,6 @@
     });
 
     result = await res.json();
-    const output = document.getElementById('result');
-    if(output) output.innerHTML = '';
 
     if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
       const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
@@ -231,7 +229,14 @@
     }
 
     if (result.summary && Array.isArray(result.summary)) {
-      const summaryTableEl = createTable(['Category', 'Score', 'Questions'], result.summary);
+      // Older style summary table (not editable)
+      const summaryRows = result.summary.map(item => ({
+        group: item.group || item.Category || '',
+        score: item.score !== undefined ? item.score : '',
+        questions: item.questions !== undefined ? item.questions : ''
+      }));
+
+      const summaryTableEl = createTable(['Group', 'Score', 'Questions'], summaryRows, false);
       summaryTable.appendChild(summaryTableEl);
     }
   });
