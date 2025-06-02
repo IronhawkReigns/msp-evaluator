@@ -306,6 +306,7 @@
 
         // Define the main categories for copy buttons
         const mainCategories = ['인적역량', 'AI기술역량', '솔루션 역량'];
+
         // Create a wrapper div for the copy buttons
         const copyBtnWrapper = document.createElement('div');
         copyBtnWrapper.style.display = 'flex';
@@ -314,7 +315,7 @@
 
         mainCategories.forEach(category => {
           const copyBtn = document.createElement('button');
-          copyBtn.textContent = `복사 ${category} 점수`;
+          copyBtn.textContent = `${category} 점수 복사`;
           copyBtn.style.backgroundColor = 'var(--primary-color)';
           copyBtn.style.color = 'white';
           copyBtn.style.borderRadius = '12px';
@@ -322,13 +323,15 @@
           copyBtn.style.fontWeight = '700';
           copyBtn.style.border = 'none';
           copyBtn.style.cursor = 'pointer';
+
           copyBtn.addEventListener('click', () => {
-            // Get vertical scores (one per line)
-            let text = '';
-            if (categories[category]) {
-              text = categories[category].map(q => (q.score !== undefined ? q.score : '')).join('\n');
+            if (!categories[category]) {
+              alert(`❌ ${category} 점수 데이터가 없습니다.`);
+              return;
             }
-            navigator.clipboard.writeText(text).then(() => {
+            // Copy scores vertically separated by newlines
+            const scores = categories[category].map(q => q.score !== undefined ? q.score : '').join('\n');
+            navigator.clipboard.writeText(scores).then(() => {
               alert(`✅ ${category} 점수가 클립보드에 복사되었습니다.`);
             }).catch(() => {
               alert(`❌ ${category} 점수 복사에 실패했습니다.`);
@@ -336,6 +339,7 @@
           });
           copyBtnWrapper.appendChild(copyBtn);
         });
+
         // Insert the copy buttons above the tables
         categoryTablesContainer.appendChild(copyBtnWrapper);
 
