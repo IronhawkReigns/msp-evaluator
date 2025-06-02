@@ -79,6 +79,41 @@
                 document.getElementById('summaryTable').appendChild(table);
             }
 
+            if (result.groups && Array.isArray(result.groups)) {
+                const groupTable = document.createElement('table');
+                groupTable.style.borderCollapse = 'collapse';
+                groupTable.style.marginTop = '2em';
+
+                const groupHeader = document.createElement('thead');
+                const groupHeadRow = document.createElement('tr');
+                ['Group', 'Score', 'Questions'].forEach(h => {
+                    const th = document.createElement('th');
+                    th.textContent = h;
+                    th.style.border = '1px solid black';
+                    th.style.padding = '0.5em';
+                    th.style.background = '#dfefff';
+                    groupHeadRow.appendChild(th);
+                });
+                groupHeader.appendChild(groupHeadRow);
+                groupTable.appendChild(groupHeader);
+
+                const groupBody = document.createElement('tbody');
+                result.groups.forEach(group => {
+                    const tr = document.createElement('tr');
+                    [group.name || '', group.score || '', group.questions || ''].forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell;
+                        td.style.border = '1px solid black';
+                        td.style.padding = '0.5em';
+                        tr.appendChild(td);
+                    });
+                    groupBody.appendChild(tr);
+                });
+                groupTable.appendChild(groupBody);
+
+                document.getElementById('summaryTable').appendChild(groupTable);
+            }
+
             if (result.evaluations && Array.isArray(result.evaluations)) {
                 const detailedOutput = document.createElement('div');
                 detailedOutput.innerHTML = '<h3>📋 평가 세부 결과</h3>';
