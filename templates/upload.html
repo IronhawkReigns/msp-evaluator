@@ -345,167 +345,189 @@
     e.preventDefault();
     evaluatedQuestionsTable.innerHTML = '<div class="spinner"></div>';
     summaryTable.innerHTML = '';
-    vectorUploadBtn.style.display = 'none';
 
     const fileInput = document.getElementById('excelFile');
-    const formData = new FormData();
-    formData.append('file', fileInput.files[0]);
-
-    const res = await fetch('/api/upload_excel', {
-      method: 'POST',
-      body: formData
-    });
-
-    result = await res.json();
-
-    if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
-      const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
+    if (!fileInput.files.length) {
+      alert('엑셀 파일을 선택해주세요.');
       evaluatedQuestionsTable.innerHTML = '';
-
-      const copyBtnWrapper = document.createElement('div');
-      copyBtnWrapper.className = 'copy-btn-wrapper';
-
-      const categoriesToCopy = ['인적역량', 'AI기술역량', '솔루션 역량'];
-
-      categoriesToCopy.forEach(category => {
-        const btn = document.createElement('button');
-        btn.textContent = `${category} 점수 복사`;
-        btn.className = 'copy-btn';
-
-        // Set distinct background gradients for each category button
-        switch(category) {
-          case '인적역량':
-            btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)';
-            btn.addEventListener('mouseover', () => {
-              btn.style.background = 'linear-gradient(90deg, #07bc2f, #028a0f)';
-            });
-            btn.addEventListener('mouseout', () => {
-              btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)';
-            });
-            break;
-          case 'AI기술역량':
-            btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)';
-            btn.addEventListener('mouseover', () => {
-              btn.style.background = 'linear-gradient(90deg, #07a0bc, #04668c)';
-            });
-            btn.addEventListener('mouseout', () => {
-              btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)';
-            });
-            break;
-          case '솔루션 역량':
-            btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)';
-            btn.addEventListener('mouseover', () => {
-              btn.style.background = 'linear-gradient(90deg, #bc8707, #8c4604)';
-            });
-            btn.addEventListener('mouseout', () => {
-              btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)';
-            });
-            break;
-        }
-
-        btn.addEventListener('click', () => {
-          const scoresToCopy = result.evaluated_questions
-            .filter(q => q.category === category)
-            .map(q => (q.score !== undefined ? q.score : ''))
-            .join('\n');
-
-          navigator.clipboard.writeText(scoresToCopy).then(() => {
-            alert(`✅ ${category} 점수가 클립보드에 복사되었습니다.`);
-          }).catch(() => {
-            alert(`❌ ${category} 점수 복사에 실패했습니다.`);
-          });
-        });
-
-        copyBtnWrapper.appendChild(btn);
-      });
-
-      evaluatedQuestionsTable.appendChild(evalTable);
-      evaluatedQuestionsTable.appendChild(copyBtnWrapper);
-
-      vectorUploadBtn.style.display = result.evaluated_questions.length ? 'block' : 'none';
-    } else {
-      evaluatedQuestionsTable.innerHTML = '';
-      vectorUploadBtn.style.display = 'none';
-    }
-
-    if (result.summary && Array.isArray(result.summary)) {
-      const table = document.createElement('table');
-      table.classList.add('summary-table');
-
-      const headers = ['Category', 'Score', 'Questions'];
-      const thead = document.createElement('thead');
-      const headRow = document.createElement('tr');
-      headers.forEach(h => {
-        const th = document.createElement('th');
-        th.textContent = h;
-        headRow.appendChild(th);
-      });
-      thead.appendChild(headRow);
-      table.appendChild(thead);
-
-      const tbody = document.createElement('tbody');
-      result.summary.forEach(row => {
-        const tr = document.createElement('tr');
-        let cells = [];
-
-        if (Array.isArray(row)) {
-          cells = row;
-        } else if (typeof row === 'object') {
-          cells = [row.Category || '', row.Score || '', row.Questions || ''];
-        }
-
-        cells.forEach(cell => {
-          const td = document.createElement('td');
-          td.textContent = cell;
-          tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
-      });
-      table.appendChild(tbody);
-
-      summaryTable.innerHTML = '';
-      summaryTable.appendChild(table);
-    } else {
-      summaryTable.innerHTML = '';
-    }
-  });
-
-  vectorUploadBtn.addEventListener('click', async () => {
-    const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
-    if (!mspName) {
-      alert("MSP 이름이 입력되지 않았습니다.");
       return;
     }
 
-    const items = [];
-    if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
-      result.evaluated_questions.forEach(q => {
-        items.push({
-          question: q.question,
-          answer: q.answer,
-          score: q.score
-        });
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    try {
+      const res = await fetch('/api/upload_excel', {
+        method: 'POST',
+        body: formData
       });
-    }
 
-    const response = await fetch('/api/add_to_vector_db', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-        msp_name: mspName, 
-        items: items,
-        summary: result.summary
-      })
-    });
+      if (!res.ok) {
+        throw new Error(`서버 오류: ${res.status}`);
+      }
 
-    if (response.ok) {
-      alert("✅ 벡터 DB에 업로드되었습니다.");
-    } else {
-      alert("❌ 업로드 실패");
+      result = await res.json();
+
+      if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+        const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
+        evaluatedQuestionsTable.innerHTML = '';
+
+        const copyBtnWrapper = document.createElement('div');
+        copyBtnWrapper.className = 'copy-btn-wrapper';
+
+        const categoriesToCopy = ['인적역량', 'AI기술역량', '솔루션 역량'];
+
+        categoriesToCopy.forEach(category => {
+          const btn = document.createElement('button');
+          btn.textContent = `${category} 점수 복사`;
+          btn.className = 'copy-btn';
+
+          // Set distinct background gradients for each category button
+          switch(category) {
+            case '인적역량':
+              btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)';
+              btn.addEventListener('mouseover', () => {
+                btn.style.background = 'linear-gradient(90deg, #07bc2f, #028a0f)';
+              });
+              btn.addEventListener('mouseout', () => {
+                btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)';
+              });
+              break;
+            case 'AI기술역량':
+              btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)';
+              btn.addEventListener('mouseover', () => {
+                btn.style.background = 'linear-gradient(90deg, #07a0bc, #04668c)';
+              });
+              btn.addEventListener('mouseout', () => {
+                btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)';
+              });
+              break;
+            case '솔루션 역량':
+              btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)';
+              btn.addEventListener('mouseover', () => {
+                btn.style.background = 'linear-gradient(90deg, #bc8707, #8c4604)';
+              });
+              btn.addEventListener('mouseout', () => {
+                btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)';
+              });
+              break;
+          }
+
+          btn.addEventListener('click', () => {
+            const scoresToCopy = result.evaluated_questions
+              .filter(q => q.category === category)
+              .map(q => (q.score !== undefined ? q.score : ''))
+              .join('\n');
+
+            navigator.clipboard.writeText(scoresToCopy).then(() => {
+              alert(`✅ ${category} 점수가 클립보드에 복사되었습니다.`);
+            }).catch(() => {
+              alert(`❌ ${category} 점수 복사에 실패했습니다.`);
+            });
+          });
+
+          copyBtnWrapper.appendChild(btn);
+        });
+
+        evaluatedQuestionsTable.appendChild(evalTable);
+        evaluatedQuestionsTable.appendChild(copyBtnWrapper);
+
+        if (vectorUploadBtn) {
+          vectorUploadBtn.style.display = result.evaluated_questions.length ? 'block' : 'none';
+        }
+      } else {
+        evaluatedQuestionsTable.innerHTML = '';
+        if (vectorUploadBtn) {
+          vectorUploadBtn.style.display = 'none';
+        }
+      }
+
+      if (result.summary && Array.isArray(result.summary)) {
+        const table = document.createElement('table');
+        table.classList.add('summary-table');
+
+        const headers = ['Category', 'Score', 'Questions'];
+        const thead = document.createElement('thead');
+        const headRow = document.createElement('tr');
+        headers.forEach(h => {
+          const th = document.createElement('th');
+          th.textContent = h;
+          headRow.appendChild(th);
+        });
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        result.summary.forEach(row => {
+          const tr = document.createElement('tr');
+          let cells = [];
+
+          if (Array.isArray(row)) {
+            cells = row;
+          } else if (typeof row === 'object') {
+            cells = [row.Category || '', row.Score || '', row.Questions || ''];
+          }
+
+          cells.forEach(cell => {
+            const td = document.createElement('td');
+            td.textContent = cell;
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+
+        summaryTable.innerHTML = '';
+        summaryTable.appendChild(table);
+      } else {
+        summaryTable.innerHTML = '';
+      }
+    } catch (error) {
+      evaluatedQuestionsTable.innerHTML = '';
+      summaryTable.innerHTML = '';
+      alert('업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+      console.error(error);
     }
   });
+
+  if (vectorUploadBtn) {
+    vectorUploadBtn.addEventListener('click', async () => {
+      const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
+      if (!mspName) {
+        alert("MSP 이름이 입력되지 않았습니다.");
+        return;
+      }
+
+      const items = [];
+      if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+        result.evaluated_questions.forEach(q => {
+          items.push({
+            question: q.question,
+            answer: q.answer,
+            score: q.score
+          });
+        });
+      }
+
+      const response = await fetch('/api/add_to_vector_db', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          msp_name: mspName, 
+          items: items,
+          summary: result.summary
+        })
+      });
+
+      if (response.ok) {
+        alert("✅ 벡터 DB에 업로드되었습니다.");
+      } else {
+        alert("❌ 업로드 실패");
+      }
+    });
+  }
 </script>
 </body>
 </html>
