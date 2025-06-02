@@ -116,13 +116,13 @@
 
             if (result.evaluations && Array.isArray(result.evaluations)) {
                 const detailedOutput = document.createElement('div');
-                detailedOutput.innerHTML = '<h3>📋 평가 세부 결과</h3>';
+                detailedOutput.innerHTML = '<h3>📋 질문별 평가 점수</h3>';
 
                 const table = document.createElement('table');
                 table.style.borderCollapse = 'collapse';
                 table.style.marginTop = '1em';
 
-                const headers = ['Category', 'Question', 'Score', 'Answer'];
+                const headers = ['Category', 'Question', 'Score'];
                 const thead = document.createElement('thead');
                 const headRow = document.createElement('tr');
                 headers.forEach(h => {
@@ -142,8 +142,7 @@
                     const cells = [
                         row.category || '',
                         row.question || '',
-                        row.score !== undefined ? row.score : '',
-                        row.answer || ''
+                        row.score !== undefined ? row.score : ''
                     ];
                     cells.forEach(cell => {
                         const td = document.createElement('td');
@@ -157,7 +156,7 @@
                 table.appendChild(tbody);
                 detailedOutput.appendChild(table);
 
-                document.body.appendChild(detailedOutput);
+                document.getElementById('summaryTable').appendChild(detailedOutput);
             }
         });
     </script>
