@@ -231,33 +231,48 @@
       vectorUploadBtn.style.display = 'none';
     }
 
-    if (originalSummary && typeof originalSummary === 'object') {
-      let summaryRows = [];
+    if (result.summary && Array.isArray(result.summary)) {
+      const table = document.createElement('table');
+      table.style.borderCollapse = 'collapse';
+      table.style.marginTop = '1em';
 
-      if (Array.isArray(originalSummary)) {
-        summaryRows = originalSummary.map(val => ({
-          group: val.group || '',
-          score: val.score !== undefined ? val.score : '',
-          questions: val.questions !== undefined ? val.questions : ''
-        }));
-      } else {
-        summaryRows = Object.entries(originalSummary).map(([key, val]) => ({
-          group: key,
-          score: val.score !== undefined ? val.score : '',
-          questions: val.questions !== undefined ? val.questions : ''
-        }));
-      }
-
-      // Sort summaryRows by group name (case-insensitive)
-      summaryRows.sort((a, b) => {
-        const groupA = (a.group || '').toLowerCase();
-        const groupB = (b.group || '').toLowerCase();
-        if (groupA < groupB) return -1;
-        if (groupA > groupB) return 1;
-        return 0;
+      const headers = ['Category', 'Score', 'Questions'];
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+      headers.forEach(h => {
+        const th = document.createElement('th');
+        th.textContent = h;
+        th.style.border = '1px solid black';
+        th.style.padding = '0.5em';
+        th.style.background = '#f0f0f0';
+        headRow.appendChild(th);
       });
-      const summaryTableEl = createTable(['Group', 'Score', 'Questions'], summaryRows, false);
-      summaryTable.appendChild(summaryTableEl);
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      result.summary.forEach(row => {
+        const tr = document.createElement('tr');
+        let cells = [];
+
+        if (Array.isArray(row)) {
+          cells = row;
+        } else if (typeof row === 'object') {
+          cells = [row.Category || '', row.Score || '', row.Questions || ''];
+        }
+
+        cells.forEach(cell => {
+          const td = document.createElement('td');
+          td.textContent = cell;
+          td.style.border = '1px solid black';
+          td.style.padding = '0.5em';
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+
+      document.getElementById('summaryTable').appendChild(table);
     }
   });
 
