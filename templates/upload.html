@@ -4,28 +4,41 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>엑셀 업로드 평가 | MSP Evaluator</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css" />
 <style>
-  /* Reset and base */
+  :root {
+    --primary-color: #03c75a;
+    --background-color: #f5f7fa;
+    --card-bg: #fff;
+    --card-shadow: rgba(0, 0, 0, 0.1);
+    --text-color: #333;
+    --muted-color: #666;
+    --border-color: #d0d7de;
+  }
+
   body {
-    margin: 0; padding: 0; background: #f5f7fa;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-      Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    color: #333;
+    margin: 0;
+    padding: 0;
+    background: var(--background-color);
+    font-family: 'NanumSquareNeo', sans-serif !important;
+    color: var(--text-color);
   }
 
   main.container {
     max-width: 960px;
     margin: 3em auto 5em;
-    padding: 1.5em 2em;
-    background: #fff;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    padding: 2em 2.5em;
+    background: var(--card-bg);
+    box-shadow: 0 8px 24px var(--card-shadow);
     border-radius: 12px;
   }
 
-  h2, h3 {
-    color: #1a73e8;
+  h2 {
+    color: var(--primary-color);
     margin-bottom: 1em;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 1.75rem;
+    text-align: center;
   }
 
   form#uploadForm {
@@ -33,107 +46,115 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 1em;
+    margin-bottom: 1.5em;
   }
 
   label[for="excelFile"] {
     flex: 1 1 160px;
     font-weight: 600;
+    color: var(--muted-color);
+    font-size: 1rem;
   }
 
   input[type="file"] {
     flex: 2 1 320px;
-    border: 1px solid #ccd0d5;
-    border-radius: 6px;
-    padding: 0.5em 0.75em;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.75em 1em;
     font-size: 1rem;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  input[type="file"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(3,199,90,0.3);
   }
 
   button[type="submit"], button#uploadToVectorDbBtn {
-    background-color: #1a73e8;
+    flex: 1 1 150px;
+    background: linear-gradient(90deg, var(--primary-color), #1ecb8f);
     border: none;
     color: white;
-    padding: 0.6em 1.2em;
+    padding: 0.8em 1.2em;
     font-size: 1.1rem;
-    border-radius: 8px;
+    font-weight: 700;
+    border-radius: 12px;
     cursor: pointer;
-    transition: background-color 0.25s ease;
+    transition: filter 0.25s ease;
     user-select: none;
   }
   button[type="submit"]:hover, button#uploadToVectorDbBtn:hover {
-    background-color: #155ab6;
+    filter: brightness(1.1);
   }
   button#uploadToVectorDbBtn {
-    margin-top: 2em;
+    margin-top: 1.5em;
     display: none;
     width: 100%;
     max-width: 300px;
     text-align: center;
   }
 
-  /* Table base styling */
   table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    margin-top: 1.5em;
-    border-radius: 8px;
+    margin-top: 1em;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    background: white;
   }
 
   thead tr {
-    background: #eaf3ff;
+    background: var(--primary-color);
+    color: white;
   }
 
   th, td {
     padding: 0.75em 1em;
     text-align: left;
-    border-bottom: 1px solid #dde1e6;
+    border-bottom: 1px solid #e4e7eb;
+    font-size: 1rem;
   }
 
   tbody tr:hover {
-    background-color: #f5f9ff;
+    background-color: #f7fbf9;
   }
 
   th {
-    font-weight: 600;
-    color: #1a1a1a;
+    font-weight: 700;
   }
 
-  /* Editable input styling */
   input.score-input {
-    width: 3em;
+    width: 3.2em;
     font-size: 1rem;
-    padding: 0.25em 0.4em;
+    padding: 0.3em 0.4em;
     border: 1.5px solid #ccc;
-    border-radius: 6px;
+    border-radius: 8px;
     text-align: center;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.3s ease;
   }
   input.score-input:focus {
-    border-color: #1a73e8;
+    border-color: var(--primary-color);
     outline: none;
-    box-shadow: 0 0 6px #a8c0ff;
+    box-shadow: 0 0 8px rgba(3,199,90,0.3);
   }
 
-  /* Responsive */
   @media (max-width: 600px) {
     form#uploadForm {
       flex-direction: column;
       align-items: stretch;
     }
-
-    input[type="file"] {
-      flex: unset;
+    input[type="file"], button[type="submit"], button#uploadToVectorDbBtn {
       width: 100%;
+      flex: none;
     }
-
     label[for="excelFile"] {
-      flex: unset;
-    }
-
-    button[type="submit"], button#uploadToVectorDbBtn {
-      width: 100%;
+      flex: none;
+      margin-bottom: 0.3em;
     }
   }
 </style>
@@ -141,7 +162,7 @@
 <body>
 <main class="container">
   <h2>📤 엑셀 파일 업로드 후 평가</h2>
-  <form id="uploadForm" autocomplete="off">
+  <form id="uploadForm" autocomplete="off" novalidate>
     <label for="excelFile">엑셀 파일 (.xlsx):</label>
     <input type="file" id="excelFile" name="file" accept=".xlsx" required />
     <button type="submit">업로드 및 평가</button>
@@ -220,9 +241,6 @@
 
     result = await res.json();
 
-    // Extract summary from result.data.summary or result.summary
-    const originalSummary = (result.data && result.data.summary) || result.summary || null;
-
     if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
       const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
       evaluatedQuestionsTable.appendChild(evalTable);
@@ -242,8 +260,8 @@
       headers.forEach(h => {
         const th = document.createElement('th');
         th.textContent = h;
-        th.style.border = '1px solid black';
-        th.style.padding = '0.5em';
+        th.style.border = '1px solid #ccc';
+        th.style.padding = '0.75em 1em';
         th.style.background = '#f0f0f0';
         headRow.appendChild(th);
       });
@@ -264,15 +282,15 @@
         cells.forEach(cell => {
           const td = document.createElement('td');
           td.textContent = cell;
-          td.style.border = '1px solid black';
-          td.style.padding = '0.5em';
+          td.style.border = '1px solid #ccc';
+          td.style.padding = '0.75em 1em';
           tr.appendChild(td);
         });
         tbody.appendChild(tr);
       });
       table.appendChild(tbody);
 
-      document.getElementById('summaryTable').appendChild(table);
+      summaryTable.appendChild(table);
     }
   });
 
