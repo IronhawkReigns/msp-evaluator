@@ -108,7 +108,7 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
     ids = []
 
     # Print summary types for debugging
-    print(f"Summary types for debugging: {[ (k, type(v)) for k, v in summary.items() ]}")
+    print(f"Summary types for debugging: {[ (row.get('Category'), type(row)) for row in summary ]}")
     for idx, (question, entry) in enumerate(company_data.items()):
         answer = entry["answer"]
         score = entry["score"]
@@ -121,7 +121,9 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
             uid = f"{company_name}_{idx}_{cidx}"
             # Clean summary, log and skip problematic keys
             cleaned_summary = {}
-            for k, v in summary.items():
+            for item in summary:
+                k = item.get('Category')
+                v = item.get('Score')
                 if isinstance(v, (str, int, float, bool)) or v is None:
                     cleaned_summary[k] = v
                 else:
