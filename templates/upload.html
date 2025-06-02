@@ -228,12 +228,12 @@
       vectorUploadBtn.style.display = 'none';
     }
 
-    if (result.summary && Array.isArray(result.summary)) {
-      // Older style summary table (not editable)
-      const summaryRows = result.summary.map(item => ({
-        group: item.group || item.Category || '',
-        score: item.score !== undefined ? item.score : '',
-        questions: item.questions !== undefined ? item.questions : ''
+    if (result.summary && typeof result.summary === 'object' && !Array.isArray(result.summary)) {
+      // Convert object to array for table rendering
+      const summaryRows = Object.entries(result.summary).map(([key, val]) => ({
+        group: key,
+        score: val.score !== undefined ? val.score : '',
+        questions: val.questions !== undefined ? val.questions : ''
       }));
 
       const summaryTableEl = createTable(['Group', 'Score', 'Questions'], summaryRows, false);
