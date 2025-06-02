@@ -1,177 +1,205 @@
-import chromadb
-import os
-import datetime
-from dotenv import load_dotenv
-load_dotenv()
-from chromadb import PersistentClient
-from sentence_transformers import SentenceTransformer
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>엑셀 업로드 평가</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        label, input, button { font-size: 1rem; margin: 0.5em 0; }
+    </style>
+</head>
+<body>
+    <h2>📤 엑셀 파일 업로드 후 평가</h2>
+    <form id="uploadForm">
+        <label for="excelFile">엑셀 파일 (.xlsx):</label><br>
+        <input type="file" id="excelFile" name="file" accept=".xlsx" required><br>
+        <button type="submit">업로드 및 평가</button>
+    </form>
+    <div id="result"></div>
+    <div id="summaryTable" style="margin-top: 2em;"></div>
+    <button id="uploadToVectorDbBtn" style="margin-top: 2em;">📤 벡터 DB에 업로드</button>
 
-import requests
-import uuid
-import http.client
-import json
+    <script>
+        const form = document.getElementById('uploadForm');
+        let result = {};
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            document.getElementById('summaryTable').innerHTML = '';
+            const fileInput = document.getElementById('excelFile');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
 
-def chunk_text(text: str):
-    text = text.strip()
-    if not text:
-        return []
+            const res = await fetch('/api/upload_excel', {
+                method: 'POST',
+                body: formData
+            });
 
-    host = "clovastudio.stream.ntruss.com"
-    request_id = str(uuid.uuid4().hex)
-    api_key = f"Bearer {os.getenv('CLOVA_API_KEY')}"
+            result = await res.json();
+            const output = document.getElementById('result');
+            // Render evaluated_questions as a formatted table if present
+            if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+                const evalTable = document.createElement('table');
+                evalTable.style.borderCollapse = 'collapse';
+                evalTable.style.marginTop = '2em';
 
-    headers = {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Authorization': api_key,
-        'X-NCP-CLOVASTUDIO-REQUEST-ID': request_id
-    }
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                ['Category', 'Question', 'Answer', 'Score'].forEach(h => {
+                    const th = document.createElement('th');
+                    th.textContent = h;
+                    th.style.border = '1px solid black';
+                    th.style.padding = '0.5em';
+                    th.style.background = '#eaf7ff';
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                evalTable.appendChild(thead);
 
-    completion_request = {
-        "postProcessMaxSize": 1000,
-        "alpha": 0.0,
-        "segCnt": -1,
-        "postProcessMinSize": 300,
-        "text": text,
-        "postProcess": False
-    }
-
-    try:
-        conn = http.client.HTTPSConnection(host)
-        conn.request('POST', '/testapp/v1/api-tools/segmentation', json.dumps(completion_request), headers)
-        response = conn.getresponse()
-        result = json.loads(response.read().decode(encoding='utf-8'))
-        conn.close()
-
-        if result["status"]["code"] == "20000":
-            return [' '.join(segment) for segment in result["result"]["topicSeg"]]
-        else:
-            print(f"Segmentation API error: {result}")
-            return [text]
-    except Exception as e:
-        print(f"Error calling segmentation API: {e}")
-        return [text]
-from sheets_reader import INTERVIEW_SHEET_DOC_NAME, connect_to_sheets, get_company_data_from_sheet, get_summary_scores
-
-# Initialize Chroma client and collection
-CHROMA_PATH = os.path.abspath("chroma_store")
-client = PersistentClient(path=CHROMA_PATH)
-
-# Set collection settings to expect 1024-dimension embeddings
-from chromadb.config import Settings
-from chromadb.utils import embedding_functions
-
-collection = client.get_or_create_collection(
-    name="msp_chunks",
-    metadata={"hnsw:space": "cosine"},
-    embedding_function=None,
-)
-
-# Load embedding model
-def clova_embedding(text: str):
-    host = "clovastudio.stream.ntruss.com"
-    request_id = str(uuid.uuid4().hex)
-    api_key = f"Bearer {os.getenv('CLOVA_API_KEY')}"
-
-    headers = {
-        "Content-Type": "application/json; charset=utf-8",
-        "Authorization": api_key,
-        "X-NCP-CLOVASTUDIO-REQUEST-ID": request_id
-    }
-
-    body = json.dumps({ "text": text })
-    conn = http.client.HTTPSConnection(host)
-    conn.request("POST", "/testapp/v1/api-tools/embedding/v2", body, headers)
-    response = conn.getresponse()
-    try:
-        result = json.loads(response.read().decode("utf-8"))
-    except Exception as e:
-        print(f"[Embedding API Error] Failed to parse JSON response: {e}")
-        conn.close()
-        return []
-    conn.close()
-
-    if isinstance(result, dict) and result.get("status", {}).get("code") == "20000":
-        embedding = result.get("result", {}).get("embedding")
-        if embedding and isinstance(embedding, list):
-            return embedding
-        else:
-            print(f"[Embedding API Error] Unexpected embedding format: {embedding}")
-            return []
-    else:
-        print(f"[Embedding API Error] {result}")
-        return []
-
-def add_msp_data_to_chroma(company_name, company_data, summary):
-    documents = []
-    embeddings = []
-    metadatas = []
-    ids = []
-
-    # Print summary types for debugging
-    print(f"Summary types for debugging: {[ (row.get('Category'), type(row)) for row in summary ]}")
-    for idx, (question, entry) in enumerate(company_data.items()):
-        answer = entry["answer"]
-        score = entry["score"]
-        chunks = chunk_text(answer)
-        for cidx, chunk in enumerate(chunks):
-            document = f"Q: {question}\nA: {chunk}"
-            embedding = clova_embedding(document)
-            if not embedding:
-                continue
-            uid = f"{company_name}_{idx}_{cidx}"
-            # Clean summary, log and skip problematic keys
-            cleaned_summary = {}
-            for item in summary:
-                k = item.get('Category')
-                v = item.get('Score')
-                if isinstance(v, (str, int, float, bool)) or v is None:
-                    cleaned_summary[k] = v
-                else:
-                    print(f"[Metadata Error] Key '{k}' has invalid type {type(v)}. Value: {v}")
-                    # Optionally: cleaned_summary[k] = str(v)
-
-            metadata = {
-                "msp_name": company_name,
-                "question": question,
-                "answer": chunk,
-                "score": score,
-                "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-                **cleaned_summary
+                const tbody = document.createElement('tbody');
+                result.evaluated_questions.forEach(q => {
+                    const tr = document.createElement('tr');
+                    [q.category || '', q.question || '', q.answer || '', q.score !== undefined ? q.score : ''].forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell;
+                        td.style.border = '1px solid black';
+                        td.style.padding = '0.5em';
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                evalTable.appendChild(tbody);
+                document.getElementById('summaryTable').appendChild(evalTable);
+            } else {
+                output.innerHTML = '<h3>✅ 평가 결과 요약</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
             }
-            documents.append(document)
-            embeddings.append(embedding)
-            metadatas.append(metadata)
-            ids.append(uid)
 
-    collection.add(
-        documents=documents,
-        embeddings=embeddings,
-        metadatas=metadatas,
-        ids=ids
-    )
+            if (result.summary && Array.isArray(result.summary)) {
+                const table = document.createElement('table');
+                table.style.borderCollapse = 'collapse';
+                table.style.marginTop = '1em';
 
-def run_from_msp_name(company_name: str):
-    print(f"Running vector DB update for: {company_name}")
-    try:
-        company_data = get_company_data_from_sheet(company_name)
-        print("Fetched company data")
-        summary = get_summary_scores(company_name)
-        print("Fetched summary scores")
-        add_msp_data_to_chroma(company_name, company_data, summary)
-        print(f"{company_name} successfully written to ChromaDB.")
-    except Exception as e:
-        import traceback
-        print(f"Error occurred while processing {company_name}")
-        traceback.print_exc()
-        raise
+                const headers = ['Category', 'Score', 'Questions'];
+                const thead = document.createElement('thead');
+                const headRow = document.createElement('tr');
+                headers.forEach(h => {
+                    const th = document.createElement('th');
+                    th.textContent = h;
+                    th.style.border = '1px solid black';
+                    th.style.padding = '0.5em';
+                    th.style.background = '#f0f0f0';
+                    headRow.appendChild(th);
+                });
+                thead.appendChild(headRow);
+                table.appendChild(thead);
 
-def run_from_direct_input(company_name: str, company_data: dict, summary: dict):
-    print(f"Running vector DB update (direct input) for: {company_name}")
-    try:
-        add_msp_data_to_chroma(company_name, company_data, summary)
-        print(f"{company_name} successfully written to ChromaDB.")
-    except Exception as e:
-        import traceback
-        print(f"Error occurred while processing {company_name}")
-        traceback.print_exc()
-        raise
+                const tbody = document.createElement('tbody');
+                result.summary.forEach(row => {
+                    const tr = document.createElement('tr');
+                    let cells = [];
+
+                    if (Array.isArray(row)) {
+                        cells = row;
+                    } else if (typeof row === 'object') {
+                        cells = [row.Category || '', row.Score || '', row.Questions || ''];
+                    }
+
+                    cells.forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell;
+                        td.style.border = '1px solid black';
+                        td.style.padding = '0.5em';
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+
+                document.getElementById('summaryTable').appendChild(table);
+            }
+
+
+            if (result.evaluations && Array.isArray(result.evaluations)) {
+                const detailedOutput = document.createElement('div');
+                detailedOutput.innerHTML = '<h3>📋 질문별 평가 점수</h3>';
+
+                const table = document.createElement('table');
+                table.style.borderCollapse = 'collapse';
+                table.style.marginTop = '1em';
+
+                const headers = ['Category', 'Question', 'Score'];
+                const thead = document.createElement('thead');
+                const headRow = document.createElement('tr');
+                headers.forEach(h => {
+                    const th = document.createElement('th');
+                    th.textContent = h;
+                    th.style.border = '1px solid black';
+                    th.style.padding = '0.5em';
+                    th.style.background = '#f9f9f9';
+                    headRow.appendChild(th);
+                });
+                thead.appendChild(headRow);
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                result.evaluations.forEach(row => {
+                    const tr = document.createElement('tr');
+                    const cells = [
+                        row.category || '',
+                        row.question || '',
+                        row.score !== undefined ? row.score : ''
+                    ];
+                    cells.forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell;
+                        td.style.border = '1px solid black';
+                        td.style.padding = '0.5em';
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+                detailedOutput.appendChild(table);
+                document.getElementById('summaryTable').appendChild(detailedOutput);
+            }
+        });
+
+        const vectorUploadBtn = document.getElementById('uploadToVectorDbBtn');
+        vectorUploadBtn.addEventListener('click', async () => {
+            const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
+            if (!mspName) {
+                alert("MSP 이름이 입력되지 않았습니다.");
+                return;
+            }
+
+            const items = [];
+            if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+                result.evaluated_questions.forEach(q => {
+                    items.push({
+                        question: q.question,
+                        answer: q.answer,
+                        score: q.score
+                    });
+                });
+            }
+
+            const response = await fetch('/api/add_to_vector_db', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    msp_name: mspName, 
+                    items: items,
+                    summary: result.summary
+                })
+            });
+
+            if (response.ok) {
+                alert("✅ 벡터 DB에 업로드되었습니다.");
+            } else {
+                alert("❌ 업로드 실패");
+            }
+        });
+    </script>
+</body>
+</html>
