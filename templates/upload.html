@@ -64,7 +64,7 @@
   }
   button#uploadToVectorDbBtn {
     margin-top: 2em;
-    display: block;
+    display: none;
     width: 100%;
     max-width: 300px;
     text-align: center;
@@ -147,14 +147,15 @@
     <button type="submit">업로드 및 평가</button>
   </form>
 
-  <div id="result"></div>
+  <div id="evaluatedQuestionsTable"></div>
   <div id="summaryTable"></div>
 
-  <button id="uploadToVectorDbBtn" style="display:none;">📤 벡터 DB에 업로드</button>
+  <button id="uploadToVectorDbBtn">📤 벡터 DB에 업로드</button>
 </main>
 
 <script>
   const form = document.getElementById('uploadForm');
+  const evaluatedQuestionsTable = document.getElementById('evaluatedQuestionsTable');
   const summaryTable = document.getElementById('summaryTable');
   const vectorUploadBtn = document.getElementById('uploadToVectorDbBtn');
   let result = {};
@@ -176,7 +177,8 @@
       const tr = document.createElement('tr');
       headers.forEach(header => {
         const td = document.createElement('td');
-        if (editableScore && header.toLowerCase() === 'score') {
+        const key = header.toLowerCase();
+        if (editableScore && key === 'score') {
           const input = document.createElement('input');
           input.type = 'number';
           input.className = 'score-input';
@@ -188,7 +190,7 @@
           });
           td.appendChild(input);
         } else {
-          td.textContent = row[header.toLowerCase()] !== undefined ? row[header.toLowerCase()] : '';
+          td.textContent = row[key] !== undefined ? row[key] : '';
         }
         tr.appendChild(td);
       });
@@ -200,6 +202,7 @@
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    evaluatedQuestionsTable.innerHTML = '';
     summaryTable.innerHTML = '';
     vectorUploadBtn.style.display = 'none';
 
@@ -214,19 +217,20 @@
 
     result = await res.json();
     const output = document.getElementById('result');
-    output.innerHTML = '';
+    if(output) output.innerHTML = '';
 
     if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
       const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
-      summaryTable.appendChild(evalTable);
+      evaluatedQuestionsTable.appendChild(evalTable);
+      vectorUploadBtn.style.display = result.evaluated_questions.length ? 'block' : 'none';
+    } else {
+      vectorUploadBtn.style.display = 'none';
     }
 
     if (result.summary && Array.isArray(result.summary)) {
       const summaryTableEl = createTable(['Category', 'Score', 'Questions'], result.summary);
       summaryTable.appendChild(summaryTableEl);
     }
-
-    vectorUploadBtn.style.display = result.evaluated_questions && result.evaluated_questions.length ? 'block' : 'none';
   });
 
   vectorUploadBtn.addEventListener('click', async () => {
