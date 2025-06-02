@@ -204,13 +204,13 @@ async def serve_upload_page(request: Request):
 
 # Excel upload endpoint
 from fastapi import UploadFile, File
-from excel_upload_handler import parse_category_sheets, compute_category_scores_from_excel_data
+from excel_upload_handler import parse_excel_category_sheet, compute_category_scores_from_excel_data
 
 @app.post("/api/upload_excel")
 async def upload_excel(file: UploadFile = File(...)):
     try:
         excel_bytes = await file.read()
-        parsed_df = parse_category_sheets(excel_bytes)
+        parsed_df = parse_excel_category_sheet(excel_bytes)
         summary_df = compute_category_scores_from_excel_data(parsed_df)
         return JSONResponse(content=summary_df.to_dict(orient="records"))
     except Exception as e:
