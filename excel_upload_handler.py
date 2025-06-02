@@ -49,12 +49,17 @@ def parse_excel_category_sheets(excel_bytes: bytes):
         if sheet_results:
             results[sheet_name] = sheet_results
 
-    return results
+    summary_df = compute_category_scores_from_excel_data(results)
+    return {
+        "evaluated": results,
+        "summary": summary_df.to_dict(orient="records")
+    }
 
 
 def evaluate_uploaded_excel(uploaded_file: UploadFile):
     excel_bytes = uploaded_file.file.read()
-    return parse_excel_category_sheets(excel_bytes)
+    result = parse_excel_category_sheets(excel_bytes)
+    return result
 
 
 def parse_excel_category_sheet(df: pd.DataFrame):
