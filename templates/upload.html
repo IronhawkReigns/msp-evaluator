@@ -248,6 +248,14 @@
         }));
       }
 
+      // Sort summaryRows by group name (case-insensitive)
+      summaryRows.sort((a, b) => {
+        const groupA = (a.group || '').toLowerCase();
+        const groupB = (b.group || '').toLowerCase();
+        if (groupA < groupB) return -1;
+        if (groupA > groupB) return 1;
+        return 0;
+      });
       const summaryTableEl = createTable(['Group', 'Score', 'Questions'], summaryRows, false);
       summaryTable.appendChild(summaryTableEl);
     }
