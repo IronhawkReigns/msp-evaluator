@@ -90,11 +90,25 @@ def compute_category_scores_from_excel_data(results_by_category):
     total_questions = 0
 
     for category, items in results_by_category.items():
-        scores = [item['score'] for item in items if isinstance(item['score'], int)]
-        if not scores:
+        if not isinstance(items, list):
+            print(f"[ERROR] items for category '{category}' are not a list: {items}")
             continue
-        question_count = len(scores)
-        score_sum = sum(scores)
+
+        cleaned_scores = []
+        for i, item in enumerate(items):
+            if not isinstance(item, dict):
+                print(f"[ERROR] item #{i} in category '{category}' is not a dict: {item}")
+                continue
+            if not isinstance(item.get("score", None), int):
+                print(f"[WARNING] item #{i} in category '{category}' has invalid score: {item}")
+                continue
+            cleaned_scores.append(item["score"])
+
+        if not cleaned_scores:
+            continue
+
+        question_count = len(cleaned_scores)
+        score_sum = sum(cleaned_scores)
         percentage = round(score_sum / (question_count * 5), 4)
         category_scores[category] = {
             "average": percentage,
