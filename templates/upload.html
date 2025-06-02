@@ -294,7 +294,7 @@
       evaluatedQuestionsTable.appendChild(evalTable);
       vectorUploadBtn.style.display = result.evaluated_questions.length ? 'block' : 'none';
 
-      // Group questions by category and render tables with copy buttons
+      // Group questions by category
       const categoryTablesContainer = document.getElementById('categoryTablesContainer');
       categoryTablesContainer.innerHTML = '';
       if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
@@ -303,16 +303,18 @@
           if (!categories[q.category]) categories[q.category] = [];
           categories[q.category].push(q);
         });
-        Object.keys(categories).forEach(category => {
-          // Create category header
-          const categoryHeader = document.createElement('h3');
-          categoryHeader.textContent = category;
-          categoryTablesContainer.appendChild(categoryHeader);
 
-          // Create copy button for this category
+        // Define the main categories for copy buttons
+        const mainCategories = ['인적역량', 'AI기술역량', '솔루션 역량'];
+        // Create a wrapper div for the copy buttons
+        const copyBtnWrapper = document.createElement('div');
+        copyBtnWrapper.style.display = 'flex';
+        copyBtnWrapper.style.gap = '20px';
+        copyBtnWrapper.style.marginBottom = '18px';
+
+        mainCategories.forEach(category => {
           const copyBtn = document.createElement('button');
           copyBtn.textContent = `복사 ${category} 점수`;
-          copyBtn.style.marginBottom = '10px';
           copyBtn.style.backgroundColor = 'var(--primary-color)';
           copyBtn.style.color = 'white';
           copyBtn.style.borderRadius = '12px';
@@ -320,22 +322,28 @@
           copyBtn.style.fontWeight = '700';
           copyBtn.style.border = 'none';
           copyBtn.style.cursor = 'pointer';
-
           copyBtn.addEventListener('click', () => {
+            // Get vertical scores (one per line)
             let text = '';
-            categories[category].forEach(q => {
-              text += (q.score !== undefined ? q.score : '') + '\t';
-            });
-            text = text.trim() + '\n';
+            if (categories[category]) {
+              text = categories[category].map(q => (q.score !== undefined ? q.score : '')).join('\n');
+            }
             navigator.clipboard.writeText(text).then(() => {
               alert(`✅ ${category} 점수가 클립보드에 복사되었습니다.`);
             }).catch(() => {
               alert(`❌ ${category} 점수 복사에 실패했습니다.`);
             });
           });
-          categoryTablesContainer.appendChild(copyBtn);
+          copyBtnWrapper.appendChild(copyBtn);
+        });
+        // Insert the copy buttons above the tables
+        categoryTablesContainer.appendChild(copyBtnWrapper);
 
-          // Create table for this category questions
+        // Render tables for each category (as before, but no copy buttons per table)
+        Object.keys(categories).forEach(category => {
+          const categoryHeader = document.createElement('h3');
+          categoryHeader.textContent = category;
+          categoryTablesContainer.appendChild(categoryHeader);
           const catTable = createTable(['Category', 'Question', 'Answer', 'Score'], categories[category], true);
           categoryTablesContainer.appendChild(catTable);
         });
