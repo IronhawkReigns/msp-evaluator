@@ -1,372 +1,379 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>관리자 대시보드</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>평가 도구</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css" />
+<style>
+  :root {
+    --primary-color: #03c75a;
+    --background-color: #f5f7fa;
+    --card-bg: #fff;
+    --card-shadow: rgba(0, 0, 0, 0.1);
+    --text-color: #333;
+    --muted-color: #666;
+    --border-color: #d0d7de;
   }
 
   body {
     margin: 0;
     padding: 0;
+    background: var(--background-color);
     font-family: 'NanumSquareNeo', sans-serif !important;
-    background: linear-gradient(135deg, #e8fef3 0%, #f0fbf6 100%);
-    color: #1e1e1e;
+    color: var(--text-color);
   }
 
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: calc(100% - 56px);
-    position: absolute;
-    top: 20px;
-    left: 28px;
-    right: 28px;
-    background: none;
-    box-shadow: none;
-    padding: 0;
-  }
-
-  .header-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: #03c75a;
-    font-family: 'Noto Sans KR', sans-serif !important;
-    text-decoration: none;
-  }
-
-  .header-title:hover {
-    text-decoration: none;
-    cursor: pointer;
-  }
-
-  a.logout {
-    font-size: 14px;
-    font-weight: 600;
-    color: #666;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-    text-decoration: none;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    transition: color 0.2s ease;
-  }
-
-  a.logout:hover {
-    color: #03c75a;
-  }
-
-  .card {
-    background-color: #fff;
-    padding: 2rem;
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-    max-width: 720px;
-    margin: 120px auto 2rem auto;
-    box-sizing: border-box;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-  }
-
-  h1, h2, p, ul li {
-    font-family: 'NanumSquareNeo', sans-serif !important;
-  }
-  h1 {
-    font-size: 30px;
-    color: #018d6c;
-    margin: 0 0 24px 0;
-    font-weight: 900;
-    text-align: center;
+  main.container {
+    max-width: 960px;
+    margin: 3em auto 5em;
+    padding: 2em 2.5em;
+    background: var(--card-bg);
+    box-shadow: 0 8px 24px var(--card-shadow);
+    border-radius: 12px;
   }
 
   h2 {
-    margin-top: 2.5rem;
-    margin-bottom: 0.8rem;
-    color: #222;
+    color: var(--primary-color);
+    margin-bottom: 1em;
     font-weight: 700;
-    border-bottom: 1px solid #e1e4e8;
-    padding-bottom: 0.3rem;
+    font-size: 1.75rem;
+    text-align: center;
   }
 
-  p#result-message,
-  p#rebuild-message {
-    margin-top: 0.8rem;
+  form#uploadForm {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1em;
+    margin-bottom: 1.5em;
+  }
+
+  label[for="excelFile"] {
+    flex: 1 1 160px;
     font-weight: 600;
-    line-height: 1.4;
+    color: var(--muted-color);
+    font-size: 1rem;
   }
 
-  p#result-message {
-    color: #03c75a;
-  }
-
-  p#rebuild-message {
-    color: #027a33;
-  }
-
-  select,
-  button {
-    font-size: 15px;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-    padding: 12px 16px;
+  input[type="file"] {
+    flex: 2 1 320px;
+    border: 1px solid var(--border-color);
     border-radius: 12px;
-    border: 1px solid #ccc;
-    background-color: #fff;
-    transition: box-shadow 0.3s ease, background-color 0.3s ease;
+    padding: 0.75em 1em;
+    font-size: 1rem;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  input[type="file"]:focus {
     outline: none;
-    margin-top: 1rem;
-    width: 100%;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(3,199,90,0.3);
   }
 
-  select:hover,
-  select:focus,
-  button:hover,
-  button:focus {
-    box-shadow: 0 0 0 3px rgba(3, 199, 90, 0.25);
-    background-color: #f9fff9;
-    cursor: pointer;
-  }
-
-  button {
-    font-weight: 600;
+  button[type="submit"], button#uploadToVectorDbBtn {
+    flex: 1 1 150px;
+    background: linear-gradient(90deg, var(--primary-color), #1ecb8f);
+    border: none;
     color: white;
-    background-color: #03c75a;
-    border: none;
+    padding: 0.8em 1.2em;
+    font-size: 1.1rem;
+    font-weight: 700;
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(3, 199, 90, 0.4);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease;
-    min-width: 200px;
-    font-family: 'NanumSquareNeo', sans-serif !important;
+    cursor: pointer;
+    transition: filter 0.25s ease;
+    user-select: none;
   }
-
-  button:hover {
-    background-color: #029c3b;
-    transform: translateY(-2px);
+  button[type="submit"]:hover, button#uploadToVectorDbBtn:hover {
+    filter: brightness(1.1);
   }
-
-  button:active {
-    transform: translateY(0);
-    box-shadow: 0 3px 8px rgba(2, 156, 59, 0.4);
-  }
-
-  button.delete {
-    background-color: #e74c3c;
-    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
-  }
-
-  button.delete:hover {
-    background-color: #c0392b;
-  }
-
-  hr {
-    border: none;
-    border-bottom: 1px solid #e1e4e8;
-    margin: 2rem 0;
-  }
-
-  ul {
-    padding-left: 1.5rem;
-    margin-bottom: 2rem;
-  }
-
-  ul li {
-    margin-bottom: 0.6rem;
-  }
-
-  a {
-    color: #03c75a;
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.3s ease;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-  }
-
-  a:hover {
-    color: #027a33;
-  }
-
-  #company-select {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
+  button#uploadToVectorDbBtn {
+    margin-top: 1.5em;
+    display: none;
     width: 100%;
-    padding: 18px;
-    font-size: 15px;
-    font-family: 'NanumSquareNeo', sans-serif !important;
-    border-radius: 12px;
-    border: 1px solid #d0d7de;
-    background-color: #fff;
-    background-image: url("data:image/svg+xml;utf8,<svg fill='%2303c75a' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 16px 16px;
-    transition: box-shadow 0.3s ease;
-    margin-top: 1rem;
+    max-width: 300px;
+    text-align: center;
   }
 
-  #company-select:focus {
-    box-shadow: 0 0 0 3px rgba(3, 199, 90, 0.25);
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 1em;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    background: white;
+  }
+
+  thead tr {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  th, td {
+    padding: 0.75em 1em;
+    text-align: left;
+    border-bottom: 1px solid #e4e7eb;
+    font-size: 1rem;
+  }
+
+  tbody tr:hover {
+    background-color: #f7fbf9;
+  }
+
+  th {
+    font-weight: 700;
+  }
+
+  input.score-input {
+    width: 3.2em;
+    font-size: 1rem;
+    padding: 0.3em 0.4em;
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    text-align: center;
+    transition: border-color 0.3s ease;
+  }
+  input.score-input:focus {
+    border-color: var(--primary-color);
     outline: none;
+    box-shadow: 0 0 8px rgba(3,199,90,0.3);
+  }
+
+  @media (max-width: 600px) {
+    form#uploadForm {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    input[type="file"], button[type="submit"], button#uploadToVectorDbBtn {
+      width: 100%;
+      flex: none;
+    }
+    label[for="excelFile"] {
+      flex: none;
+      margin-bottom: 0.3em;
+    }
+  }
+
+  .summary-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 1em;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    background: white;
+  }
+
+  .summary-table thead tr {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  .summary-table th, .summary-table td {
+    padding: 0.75em 1em;
+    text-align: left;
+    border-bottom: 1px solid #e4e7eb;
+    font-size: 1rem;
+  }
+
+  .summary-table tbody tr:nth-child(even) {
+    background-color: #f7fbf9;
+  }
+
+  .summary-table tbody tr:hover {
+    background-color: #e1f3e9;
+  }
+
+  .spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 30px auto;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 </style>
 </head>
 <body>
-    <div class="header">
-      <a class="header-title" href="https://mspevaluator.duckdns.org" target="_blank" rel="noopener noreferrer">NAVER Cloud</a>
-      <a href="/logout" class="logout">로그아웃</a>
-    </div>
-  <div class="card">
-    <div id="spinner" style="display:none; text-align:center; margin: 16px 0;">
-      <div style="
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #03c75a;
-        border-radius: 50%;
-        width: 36px;
-        height: 36px;
-        animation: spin 1s linear infinite;
-        margin: auto;
-      "></div>
-    </div>
-    <p>안녕하세요, <strong>{{ user.name }}</strong>님!</p>
-    <p>이 페이지에서 파트너사의 벡터 데이터를 관리할 수 있습니다.</p>
+<main class="container">
+  <h2>파트너사 평가 도구</h2>
+  <form id="uploadForm" autocomplete="off" novalidate>
+    <label for="excelFile">엑셀 파일 (.xlsx):</label>
+    <input type="file" id="excelFile" name="file" accept=".xlsx" required />
+    <button type="submit">업로드 및 평가</button>
+  </form>
 
-    <ul style="margin-top: 2rem; padding-left: 1.2rem;">
-      <li><a href="/ui">벡터 DB 뷰어 열기</a></li>
-    </ul>
+  <div id="evaluatedQuestionsTable"></div>
+  <div id="summaryTable"></div>
 
-    <hr>
+  <button id="uploadToVectorDbBtn">벡터 DB에 업로드</button>
+</main>
 
-    <h2>파트너사 삭제</h2>
-    <p>벡터 DB에서 삭제할 회사를 선택하세요:</p>
+<script>
+  const form = document.getElementById('uploadForm');
+  const evaluatedQuestionsTable = document.getElementById('evaluatedQuestionsTable');
+  const summaryTable = document.getElementById('summaryTable');
+  const vectorUploadBtn = document.getElementById('uploadToVectorDbBtn');
+  let result = {};
 
-    <select id="company-select">
-      <option value="" disabled selected>회사 선택</option>
-    </select>
+  function createTable(headers, rows, editableScore = false) {
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    headers.forEach(h => {
+      const th = document.createElement('th');
+      th.textContent = h;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
 
-    <button onclick="deleteCompany()" class="delete">
-      선택한 회사 삭제
-    </button>
+    const tbody = document.createElement('tbody');
+    rows.forEach(row => {
+      const tr = document.createElement('tr');
+      headers.forEach(header => {
+        const td = document.createElement('td');
+        const key = header.toLowerCase();
+        // Use camelCase keys for row objects
+        const camelCaseKey = key.replace(/\s+(.)/g, (match, group1) => group1.toUpperCase());
 
-    <p id="result-message"></p>
-
-
-    <hr>
-    <h2>최근 벡터 생성 시간</h2>
-    <ul id="log-list" style="padding-left: 1.2rem;"></ul>
-
-    <script>
-      function showSpinner() {
-        document.getElementById('spinner').style.display = 'block';
-      }
-
-      function hideSpinner() {
-        document.getElementById('spinner').style.display = 'none';
-      }
-
-      async function fetchCompanies() {
-        showSpinner();
-        try {
-          const res = await fetch("/ui/data");
-          const data = await res.json();
-          const select = document.getElementById("company-select");
-
-          const seen = new Set();
-          data.forEach(entry => {
-            const name = entry.msp_name;
-            if (!seen.has(name)) {
-              seen.add(name);
-              const option = document.createElement("option");
-              option.value = name;
-              option.textContent = name;
-              select.appendChild(option);
-            }
+        if (editableScore && camelCaseKey === 'score') {
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.className = 'score-input';
+          input.min = 1;
+          input.max = 5;
+          input.value = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
+          input.addEventListener('change', () => {
+            row[camelCaseKey] = Number(input.value);
           });
-        } catch (e) {
-          console.error("회사 목록 불러오기 실패:", e);
+          td.appendChild(input);
+        } else {
+          td.textContent = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
         }
-        hideSpinner();
-      }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    return table;
+  }
 
-      async function deleteCompany() {
-        const name = document.getElementById("company-select").value;
-        if (!name) return;
-        try {
-          const res = await fetch(`/ui/delete_company/${name}`, {
-            method: "DELETE"
-          });
-          const result = await res.json();
-          document.getElementById("result-message").textContent = `${name} 삭제됨 (총 ${result.count}개 항목)`;
-        } catch (e) {
-          document.getElementById("result-meYesssage").textContent = "삭제 실패";
-          console.error("삭제 에러:", e);
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    evaluatedQuestionsTable.innerHTML = '<div class="spinner"></div>';
+    summaryTable.innerHTML = '<div class="spinner"></div>';
+    vectorUploadBtn.style.display = 'none';
+
+    const fileInput = document.getElementById('excelFile');
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    const res = await fetch('/api/upload_excel', {
+      method: 'POST',
+      body: formData
+    });
+
+    result = await res.json();
+
+    if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+      const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
+      evaluatedQuestionsTable.innerHTML = '';
+      evaluatedQuestionsTable.appendChild(evalTable);
+      vectorUploadBtn.style.display = result.evaluated_questions.length ? 'block' : 'none';
+    } else {
+      evaluatedQuestionsTable.innerHTML = '';
+      vectorUploadBtn.style.display = 'none';
+    }
+
+    if (result.summary && Array.isArray(result.summary)) {
+      const table = document.createElement('table');
+      table.classList.add('summary-table');
+
+      const headers = ['Category', 'Score', 'Questions'];
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+      headers.forEach(h => {
+        const th = document.createElement('th');
+        th.textContent = h;
+        headRow.appendChild(th);
+      });
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      result.summary.forEach(row => {
+        const tr = document.createElement('tr');
+        let cells = [];
+
+        if (Array.isArray(row)) {
+          cells = row;
+        } else if (typeof row === 'object') {
+          cells = [row.Category || '', row.Score || '', row.Questions || ''];
         }
-      }
 
-      async function showTimestamps() {
-        showSpinner();
-        try {
-          const res = await fetch("/ui/data");
-          const data = await res.json();
-          const logList = document.getElementById("log-list");
-          logList.innerHTML = "";
+        cells.forEach(cell => {
+          const td = document.createElement('td');
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
 
-          const grouped = {};
-          data.forEach(entry => {
-            const name = entry.msp_name;
-            const updated = entry.last_updated;
-            if (updated && (!grouped[name] || new Date(updated) > new Date(grouped[name]))) {
-              grouped[name] = updated;
-            }
-          });
+      summaryTable.innerHTML = '';
+      summaryTable.appendChild(table);
+    } else {
+      summaryTable.innerHTML = '';
+    }
+  });
 
-          const names = Object.keys(grouped);
-          if (names.length === 0) {
-            const li = document.createElement("li");
-            li.textContent = "최근 벡터 생성 내역이 없습니다.";
-            logList.appendChild(li);
-            hideSpinner();
-            return;
-          }
+  vectorUploadBtn.addEventListener('click', async () => {
+    const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
+    if (!mspName) {
+      alert("MSP 이름이 입력되지 않았습니다.");
+      return;
+    }
 
-          names.forEach(name => {
-            const li = document.createElement("li");
-            const timestamp = grouped[name];
-            const date = new Date(timestamp);
-            const formatted = date.toLocaleString("ko-KR", {
-              timeZone: "Asia/Seoul",
-              year: "numeric", month: "2-digit", day: "2-digit",
-              hour: "2-digit", minute: "2-digit"
-            });
-            li.textContent = `${name} → 마지막 벡터 생성: ${formatted}`;
-            logList.appendChild(li);
-          });
-        } catch (e) {
-          console.error("벡터 생성 시간 로딩 실패:", e);
-        }
-        hideSpinner();
-      }
+    const items = [];
+    if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+      result.evaluated_questions.forEach(q => {
+        items.push({
+          question: q.question,
+          answer: q.answer,
+          score: q.score
+        });
+      });
+    }
 
-      fetchCompanies();
-      showTimestamps();
-    </script>
-    <script>
-      function logout() {
-          fetch("/logout")
-              .then(() => {
-                  window.location.href = "/login";
-              })
-              .catch(err => {
-                  console.error("Logout failed:", err);
-              });
-      }
-    </script>
-  </div>
+    const response = await fetch('/api/add_to_vector_db', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        msp_name: mspName, 
+        items: items,
+        summary: result.summary
+      })
+    });
+
+    if (response.ok) {
+      alert("✅ 벡터 DB에 업로드되었습니다.");
+    } else {
+      alert("❌ 업로드 실패");
+    }
+  });
+</script>
 </body>
 </html>
