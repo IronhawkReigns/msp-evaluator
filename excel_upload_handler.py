@@ -117,16 +117,17 @@ def compute_category_scores_from_excel_data(results_by_category):
         total_score += score_sum
         total_questions += question_count
 
-        # Track group scores within this category
+        # Track group scores within this category, nested by category
         for item in filtered_items:
-            group = item.get("group", "")
-            if not group:
+            group = item.get("group", "").strip()
+            if not group or group.lower() == "nan":
                 continue
-            key = (category, group)
-            if key not in group_scores:
-                group_scores[key] = {"score_sum": 0, "count": 0}
-            group_scores[key]["score_sum"] += item["score"]
-            group_scores[key]["count"] += 1
+            if category not in group_scores:
+                group_scores[category] = {}
+            if group not in group_scores[category]:
+                group_scores[category][group] = {"score_sum": 0, "count": 0}
+            group_scores[category][group]["score_sum"] += item["score"]
+            group_scores[category][group]["count"] += 1
 
     total_max = total_questions * 5
     overall = round((total_score / total_max) * 100, 2) if total_max > 0 else 0.0
@@ -138,15 +139,15 @@ def compute_category_scores_from_excel_data(results_by_category):
             "Score": round(data['average'] * 100, 2),
             "Questions": data['count']
         })
-    # Append group scores under each category
-    for (category, group_name), data in group_scores.items():
-        if not group_name or group_name.lower() == "nan":
-            continue
-        group_avg = data["score_sum"] / (data["count"] * 5)
-        summary.append({
-            "Category": group_name,
-            "Score": round(group_avg * 100, 2),
-            "Questions": data["count"]
-        })
+    # Append group scores under each category (nested)
+    for category, groups in group_scores.items():
+        for group_name, data in groups.items():
+            group_avg = data["score_sum"] / (data["count"] * 5)
+            summary.append({
+                "Category": group_name,
+                "Score": round(group_avg * 100, 2),
+                "Questions": data["count"],
+                "Parent": category
+            })
 
     return pd.DataFrame(summary)
