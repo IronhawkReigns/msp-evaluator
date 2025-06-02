@@ -220,8 +220,8 @@
 
     result = await res.json();
 
-    // Store original summary for showing read-only summary table
-    const originalSummary = result.data && result.data.summary ? JSON.parse(JSON.stringify(result.data.summary)) : null;
+    // Extract summary from result.data.summary or result.summary
+    const originalSummary = (result.data && result.data.summary) || result.summary || null;
 
     if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
       const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
@@ -231,12 +231,22 @@
       vectorUploadBtn.style.display = 'none';
     }
 
-    if (originalSummary && typeof originalSummary === 'object' && !Array.isArray(originalSummary)) {
-      const summaryRows = Object.entries(originalSummary).map(([key, val]) => ({
-        group: key,
-        score: val.score !== undefined ? val.score : '',
-        questions: val.questions !== undefined ? val.questions : ''
-      }));
+    if (originalSummary && typeof originalSummary === 'object') {
+      let summaryRows = [];
+
+      if (Array.isArray(originalSummary)) {
+        summaryRows = originalSummary.map(val => ({
+          group: val.group || '',
+          score: val.score !== undefined ? val.score : '',
+          questions: val.questions !== undefined ? val.questions : ''
+        }));
+      } else {
+        summaryRows = Object.entries(originalSummary).map(([key, val]) => ({
+          group: key,
+          score: val.score !== undefined ? val.score : '',
+          questions: val.questions !== undefined ? val.questions : ''
+        }));
+      }
 
       const summaryTableEl = createTable(['Group', 'Score', 'Questions'], summaryRows, false);
       summaryTable.appendChild(summaryTableEl);
