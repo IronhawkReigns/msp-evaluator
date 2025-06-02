@@ -267,3 +267,22 @@ async def upload_excel(file: UploadFile = File(...)):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Excel 평가 처리 중 오류 발생: {str(e)}")
+
+@app.post("/api/add_to_vector_db")
+async def add_to_vector_db(data: dict):
+    try:
+        from vector_writer import run_from_direct_input
+        msp_name = data.get("msp_name")
+        if not msp_name:
+            raise HTTPException(status_code=400, detail="Missing msp_name")
+
+        items = data.get("items", [])
+        if not isinstance(items, list):
+            raise HTTPException(status_code=400, detail="Missing or invalid items list")
+
+        run_from_direct_input(msp_name, items)
+        return {"message": f"Successfully added {len(items)} items to vector DB for {msp_name}"}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Vector DB update failed: {str(e)}")
