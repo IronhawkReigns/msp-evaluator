@@ -214,13 +214,22 @@ async def upload_excel(file: UploadFile = File(...)):
         summary_df = compute_category_scores_from_excel_data(evaluated)
 
         flat_results = []
+        skipped_items = []
         for category_name, qa_list in evaluated.items():
             if not isinstance(qa_list, list):
-                print(f"[ERROR] Expected a list but got: {type(qa_list)} for category: {category_name}")
+                skipped_items.append({
+                    "category": category_name,
+                    "item": qa_list,
+                    "reason": f"Expected a list but got: {type(qa_list)}"
+                })
                 continue
             for item in qa_list:
                 if not isinstance(item, dict) or "question" not in item or "answer" not in item or "score" not in item:
-                    print(f"[ERROR] Invalid item format in category '{category_name}': {item}")
+                    skipped_items.append({
+                        "category": category_name,
+                        "item": item,
+                        "reason": "Missing required keys or invalid format"
+                    })
                     continue
                 flat_results.append({
                     "category": category_name,
@@ -231,7 +240,8 @@ async def upload_excel(file: UploadFile = File(...)):
 
         return JSONResponse(content={
             "evaluated_questions": flat_results,
-            "summary": summary_df.to_dict(orient="records")
+            "summary": summary_df.to_dict(orient="records"),
+            "skipped_items": skipped_items
         })
     except Exception as e:
         import traceback
