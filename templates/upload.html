@@ -289,6 +289,11 @@
   <div id="evaluatedQuestionsTable"></div>
   
   <div id="summaryTable"></div>
+  <div style="text-align:center; margin-top: 24px;">
+    <button id="uploadToVectorDbBtn" class="copy-btn" style="background: linear-gradient(90deg, #028a0f, #07bc2f); display:none;">
+      벡터 DB에 업로드
+    </button>
+  </div>
 </main>
 
 <script>
@@ -368,6 +373,10 @@
 
       result = await res.json();
 
+      if (vectorUploadBtn) {
+        vectorUploadBtn.style.display = (result.evaluated_questions && result.evaluated_questions.length) ? 'inline-block' : 'none';
+      }
+
       if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
         const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
         evaluatedQuestionsTable.innerHTML = '';
@@ -432,9 +441,7 @@
         evaluatedQuestionsTable.appendChild(evalTable);
         evaluatedQuestionsTable.appendChild(copyBtnWrapper);
 
-        if (vectorUploadBtn) {
-          vectorUploadBtn.style.display = result.evaluated_questions.length ? 'block' : 'none';
-        }
+        // (vectorUploadBtn display now handled above)
       } else {
         evaluatedQuestionsTable.innerHTML = '';
         if (vectorUploadBtn) {
@@ -560,44 +567,49 @@
     }
   });
 
-  if (vectorUploadBtn) {
-    vectorUploadBtn.addEventListener('click', async () => {
-      const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
-      if (!mspName) {
-        alert("MSP 이름이 입력되지 않았습니다.");
-        return;
-      }
+  // --- 벡터 DB 업로드 버튼 핸들러 ---
+  const vectorUploadBtnScript = (() => {
+    const vectorUploadBtn = document.getElementById('uploadToVectorDbBtn');
 
-      const items = [];
-      if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
-        result.evaluated_questions.forEach(q => {
-          items.push({
-            question: q.question,
-            answer: q.answer,
-            score: q.score
+    if (vectorUploadBtn) {
+      vectorUploadBtn.addEventListener('click', async () => {
+        const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
+        if (!mspName) {
+          alert("MSP 이름이 입력되지 않았습니다.");
+          return;
+        }
+
+        const items = [];
+        if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+          result.evaluated_questions.forEach(q => {
+            items.push({
+              question: q.question,
+              answer: q.answer,
+              score: q.score
+            });
           });
+        }
+
+        const response = await fetch('/api/add_to_vector_db', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+            msp_name: mspName, 
+            items: items,
+            summary: result.summary
+          })
         });
-      }
 
-      const response = await fetch('/api/add_to_vector_db', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 
-          msp_name: mspName, 
-          items: items,
-          summary: result.summary
-        })
+        if (response.ok) {
+          alert("✅ 벡터 DB에 업로드되었습니다.");
+        } else {
+          alert("❌ 업로드 실패");
+        }
       });
-
-      if (response.ok) {
-        alert("✅ 벡터 DB에 업로드되었습니다.");
-      } else {
-        alert("❌ 업로드 실패");
-      }
-    });
-  }
+    }
+  })();
 </script>
 </body>
 </html>
