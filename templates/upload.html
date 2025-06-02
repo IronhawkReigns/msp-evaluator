@@ -16,6 +16,7 @@
         <button type="submit">업로드 및 평가</button>
     </form>
     <div id="result"></div>
+    <div id="summaryTable" style="margin-top: 2em;"></div>
 
     <script>
         const form = document.getElementById('uploadForm');
@@ -32,7 +33,43 @@
 
             const result = await res.json();
             const output = document.getElementById('result');
-            output.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            output.innerHTML = '<h3>✅ 평가 결과 요약</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+
+            if (result.summary && Array.isArray(result.summary)) {
+                const table = document.createElement('table');
+                table.style.borderCollapse = 'collapse';
+                table.style.marginTop = '1em';
+
+                const headers = ['Category', 'Score', 'Questions'];
+                const thead = document.createElement('thead');
+                const headRow = document.createElement('tr');
+                headers.forEach(h => {
+                    const th = document.createElement('th');
+                    th.textContent = h;
+                    th.style.border = '1px solid black';
+                    th.style.padding = '0.5em';
+                    th.style.background = '#f0f0f0';
+                    headRow.appendChild(th);
+                });
+                thead.appendChild(headRow);
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                result.summary.forEach(row => {
+                    const tr = document.createElement('tr');
+                    row.forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell;
+                        td.style.border = '1px solid black';
+                        td.style.padding = '0.5em';
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+
+                document.getElementById('summaryTable').appendChild(table);
+            }
         });
     </script>
 </body>
