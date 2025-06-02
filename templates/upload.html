@@ -207,17 +207,16 @@
     display: flex;
     justify-content: center;
     gap: 24px;
-    margin: 24px 0 32px;
+    margin-top: 16px;
   }
 
   .copy-btn {
-    background: linear-gradient(90deg, #03c75a, #1ecb8f);
     border: none;
     color: white;
     border-radius: 24px;
     padding: 12px 32px;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     cursor: pointer;
     font-family: 'NanumSquareNeo', sans-serif !important;
     transition: background 0.3s ease, box-shadow 0.2s ease;
@@ -226,8 +225,13 @@
   }
 
   .copy-btn:hover {
-    background: linear-gradient(90deg, #1ecb8f, #03c75a);
     box-shadow: 0 6px 14px rgba(3, 199, 90, 0.5);
+  }
+
+  /* Center header text and bold */
+  thead tr th {
+    text-align: center;
+    font-weight: 700;
   }
 </style>
 </head>
@@ -325,8 +329,39 @@
 
       categoriesToCopy.forEach(category => {
         const btn = document.createElement('button');
-        btn.textContent = `복사 ${category} 점수`;
+        btn.textContent = `${category} 점수 복사`;
         btn.className = 'copy-btn';
+
+        // Set distinct background gradients for each category button
+        switch(category) {
+          case '인적역량':
+            btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)';
+            btn.addEventListener('mouseover', () => {
+              btn.style.background = 'linear-gradient(90deg, #07bc2f, #028a0f)';
+            });
+            btn.addEventListener('mouseout', () => {
+              btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)';
+            });
+            break;
+          case 'AI기술역량':
+            btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)';
+            btn.addEventListener('mouseover', () => {
+              btn.style.background = 'linear-gradient(90deg, #07a0bc, #04668c)';
+            });
+            btn.addEventListener('mouseout', () => {
+              btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)';
+            });
+            break;
+          case '솔루션 역량':
+            btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)';
+            btn.addEventListener('mouseover', () => {
+              btn.style.background = 'linear-gradient(90deg, #bc8707, #8c4604)';
+            });
+            btn.addEventListener('mouseout', () => {
+              btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)';
+            });
+            break;
+        }
 
         btn.addEventListener('click', () => {
           const scoresToCopy = result.evaluated_questions
@@ -344,8 +379,8 @@
         copyBtnWrapper.appendChild(btn);
       });
 
-      evaluatedQuestionsTable.appendChild(copyBtnWrapper);
       evaluatedQuestionsTable.appendChild(evalTable);
+      evaluatedQuestionsTable.appendChild(copyBtnWrapper);
 
       vectorUploadBtn.style.display = result.evaluated_questions.length ? 'block' : 'none';
     } else {
