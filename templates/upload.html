@@ -202,6 +202,22 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
+
+  .copy-btn {
+    background: white;
+    border: 1.5px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: filter 0.2s ease;
+  }
+  .copy-btn:hover {
+    background: var(--primary-color);
+    color: white;
+  }
 </style>
 </head>
 <body>
@@ -300,33 +316,56 @@
       const table = document.createElement('table');
       table.classList.add('summary-table');
 
-      const headers = ['Category', 'Score', 'Questions'];
+      // Modify summary table header creation
+      const headers = ['Category', 'Score', 'Questions', ''];
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
       headers.forEach(h => {
         const th = document.createElement('th');
         th.textContent = h;
+        if(h === '') {
+          th.style.width = '60px';
+          th.style.textAlign = 'center';
+        }
         headRow.appendChild(th);
       });
       thead.appendChild(headRow);
       table.appendChild(thead);
 
       const tbody = document.createElement('tbody');
+      // Modify summary tbody row creation
       result.summary.forEach(row => {
         const tr = document.createElement('tr');
         let cells = [];
-
         if (Array.isArray(row)) {
           cells = row;
         } else if (typeof row === 'object') {
           cells = [row.Category || '', row.Score || '', row.Questions || ''];
         }
-
         cells.forEach(cell => {
           const td = document.createElement('td');
           td.textContent = cell;
           tr.appendChild(td);
         });
+
+        // Create copy button cell
+        const copyTd = document.createElement('td');
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = '복사';
+        copyBtn.className = 'copy-btn';
+        copyBtn.onclick = () => {
+          const category = cells[0];
+          const score = cells[1];
+          const textToCopy = `${category}\t${score}`;
+          navigator.clipboard.writeText(textToCopy).then(() => {
+            alert(`"${category}" 점수 복사 완료!`);
+          }).catch(() => {
+            alert('복사 실패!');
+          });
+        };
+        copyTd.appendChild(copyBtn);
+        tr.appendChild(copyTd);
+
         tbody.appendChild(tr);
       });
       table.appendChild(tbody);
