@@ -43,11 +43,15 @@
 
   form#uploadForm {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 1em;
-    margin-bottom: 1.5em;
-    /* align-items: center added for vertical alignment of children */
+    align-items: center; /* Vertically center all children */
+    gap: 1rem;           /* Space between file input and button */
+  }
+
+  input[type="file"], button[type="submit"] {
+    height: 48px;        /* Explicit same height */
+    line-height: 48px;   /* Vertically center button text */
+    font-size: 1rem;
+    box-sizing: border-box;
   }
 
   label[for="excelFile"] {
@@ -289,19 +293,8 @@
 <main class="container">
   <h2>파트너사 평가 도구</h2>
   <form id="uploadForm" autocomplete="off" novalidate>
-    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.5em;">
-      <label for="excelFile" style="font-weight: 700; font-size: 1.25rem; color: #03c75a; min-width: 160px; padding-left: 12px;">엑셀 파일 (.xlsx):</label>
-      <input
-        type="file"
-        id="excelFile"
-        name="file"
-        accept=".xlsx"
-        required
-        style="flex-grow: 1; border: 1px solid #d0d7de; border-radius: 12px; padding: 0.8em 1em; font-size: 1rem; font-family: 'NanumSquareNeo', sans-serif; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: border-color 0.3s ease, box-shadow 0.3s ease; background-color: white; height: 48px; box-sizing: border-box; vertical-align: middle;"
-        onfocus="this.style.borderColor='#03c75a'; this.style.boxShadow='0 0 10px rgba(3,199,90,0.3)';"
-        onblur="this.style.borderColor='#d0d7de'; this.style.boxShadow='none';"
-      />
-    </div>
+    <label for="excelFile" style="min-width: 160px;">엑셀 파일 (.xlsx):</label>
+    <input type="file" id="excelFile" name="file" accept=".xlsx" required />
     <button type="submit">업로드 및 평가</button>
   </form>
 
