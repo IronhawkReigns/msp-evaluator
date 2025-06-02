@@ -56,15 +56,46 @@
                 evalTable.appendChild(thead);
 
                 const tbody = document.createElement('tbody');
-                result.evaluated_questions.forEach(q => {
+                result.evaluated_questions.forEach((q, index) => {
                     const tr = document.createElement('tr');
-                    [q.category || '', q.question || '', q.answer || '', q.score !== undefined ? q.score : ''].forEach(cell => {
-                        const td = document.createElement('td');
-                        td.textContent = cell;
-                        td.style.border = '1px solid black';
-                        td.style.padding = '0.5em';
-                        tr.appendChild(td);
+
+                    const tdCategory = document.createElement('td');
+                    tdCategory.textContent = q.category || '';
+                    tdCategory.style.border = '1px solid black';
+                    tdCategory.style.padding = '0.5em';
+                    tr.appendChild(tdCategory);
+
+                    const tdQuestion = document.createElement('td');
+                    tdQuestion.textContent = q.question || '';
+                    tdQuestion.style.border = '1px solid black';
+                    tdQuestion.style.padding = '0.5em';
+                    tr.appendChild(tdQuestion);
+
+                    const tdAnswer = document.createElement('td');
+                    tdAnswer.textContent = q.answer || '';
+                    tdAnswer.style.border = '1px solid black';
+                    tdAnswer.style.padding = '0.5em';
+                    tr.appendChild(tdAnswer);
+
+                    const tdScore = document.createElement('td');
+                    tdScore.style.border = '1px solid black';
+                    tdScore.style.padding = '0.5em';
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.min = 1;
+                    input.max = 5;
+                    input.value = q.score !== undefined ? q.score : '';
+                    input.style.width = '3em';
+                    input.addEventListener('change', (event) => {
+                        let val = Number(event.target.value);
+                        if (val < 1) val = 1;
+                        if (val > 5) val = 5;
+                        event.target.value = val;
+                        result.evaluated_questions[index].score = val;
                     });
+                    tdScore.appendChild(input);
+                    tr.appendChild(tdScore);
+
                     tbody.appendChild(tr);
                 });
                 evalTable.appendChild(tbody);
