@@ -1,236 +1,270 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>엑셀 업로드 평가</title>
-    <style>
-        body { font-family: sans-serif; margin: 2em; }
-        label, input, button { font-size: 1rem; margin: 0.5em 0; }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>엑셀 업로드 평가 | MSP Evaluator</title>
+<style>
+  /* Reset and base */
+  body {
+    margin: 0; padding: 0; background: #f5f7fa;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+      Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    color: #333;
+  }
+
+  main.container {
+    max-width: 960px;
+    margin: 3em auto 5em;
+    padding: 1.5em 2em;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    border-radius: 12px;
+  }
+
+  h2, h3 {
+    color: #1a73e8;
+    margin-bottom: 1em;
+    font-weight: 600;
+  }
+
+  form#uploadForm {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1em;
+  }
+
+  label[for="excelFile"] {
+    flex: 1 1 160px;
+    font-weight: 600;
+  }
+
+  input[type="file"] {
+    flex: 2 1 320px;
+    border: 1px solid #ccd0d5;
+    border-radius: 6px;
+    padding: 0.5em 0.75em;
+    font-size: 1rem;
+  }
+
+  button[type="submit"], button#uploadToVectorDbBtn {
+    background-color: #1a73e8;
+    border: none;
+    color: white;
+    padding: 0.6em 1.2em;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.25s ease;
+    user-select: none;
+  }
+  button[type="submit"]:hover, button#uploadToVectorDbBtn:hover {
+    background-color: #155ab6;
+  }
+  button#uploadToVectorDbBtn {
+    margin-top: 2em;
+    display: block;
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+  }
+
+  /* Table base styling */
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 1.5em;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+  }
+
+  thead tr {
+    background: #eaf3ff;
+  }
+
+  th, td {
+    padding: 0.75em 1em;
+    text-align: left;
+    border-bottom: 1px solid #dde1e6;
+  }
+
+  tbody tr:hover {
+    background-color: #f5f9ff;
+  }
+
+  th {
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  /* Editable input styling */
+  input.score-input {
+    width: 3em;
+    font-size: 1rem;
+    padding: 0.25em 0.4em;
+    border: 1.5px solid #ccc;
+    border-radius: 6px;
+    text-align: center;
+    transition: border-color 0.2s ease;
+  }
+  input.score-input:focus {
+    border-color: #1a73e8;
+    outline: none;
+    box-shadow: 0 0 6px #a8c0ff;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    form#uploadForm {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    input[type="file"] {
+      flex: unset;
+      width: 100%;
+    }
+
+    label[for="excelFile"] {
+      flex: unset;
+    }
+
+    button[type="submit"], button#uploadToVectorDbBtn {
+      width: 100%;
+    }
+  }
+</style>
 </head>
 <body>
-    <h2>📤 엑셀 파일 업로드 후 평가</h2>
-    <form id="uploadForm">
-        <label for="excelFile">엑셀 파일 (.xlsx):</label><br>
-        <input type="file" id="excelFile" name="file" accept=".xlsx" required><br>
-        <button type="submit">업로드 및 평가</button>
-    </form>
-    <div id="result"></div>
-    <div id="summaryTable" style="margin-top: 2em;"></div>
-    <button id="uploadToVectorDbBtn" style="margin-top: 2em;">📤 벡터 DB에 업로드</button>
+<main class="container">
+  <h2>📤 엑셀 파일 업로드 후 평가</h2>
+  <form id="uploadForm" autocomplete="off">
+    <label for="excelFile">엑셀 파일 (.xlsx):</label>
+    <input type="file" id="excelFile" name="file" accept=".xlsx" required />
+    <button type="submit">업로드 및 평가</button>
+  </form>
 
-    <script>
-        const form = document.getElementById('uploadForm');
-        let result = {};
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            document.getElementById('summaryTable').innerHTML = '';
-            const fileInput = document.getElementById('excelFile');
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
+  <div id="result"></div>
+  <div id="summaryTable"></div>
 
-            const res = await fetch('/api/upload_excel', {
-                method: 'POST',
-                body: formData
-            });
+  <button id="uploadToVectorDbBtn" style="display:none;">📤 벡터 DB에 업로드</button>
+</main>
 
-            result = await res.json();
-            const output = document.getElementById('result');
-            // Render evaluated_questions as a formatted table if present
-            if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
-                const evalTable = document.createElement('table');
-                evalTable.style.borderCollapse = 'collapse';
-                evalTable.style.marginTop = '2em';
+<script>
+  const form = document.getElementById('uploadForm');
+  const summaryTable = document.getElementById('summaryTable');
+  const vectorUploadBtn = document.getElementById('uploadToVectorDbBtn');
+  let result = {};
 
-                const thead = document.createElement('thead');
-                const headerRow = document.createElement('tr');
-                ['Category', 'Question', 'Answer', 'Score'].forEach(h => {
-                    const th = document.createElement('th');
-                    th.textContent = h;
-                    th.style.border = '1px solid black';
-                    th.style.padding = '0.5em';
-                    th.style.background = '#eaf7ff';
-                    headerRow.appendChild(th);
-                });
-                thead.appendChild(headerRow);
-                evalTable.appendChild(thead);
+  function createTable(headers, rows, editableScore = false) {
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    headers.forEach(h => {
+      const th = document.createElement('th');
+      th.textContent = h;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
 
-                const tbody = document.createElement('tbody');
-                result.evaluated_questions.forEach((q, index) => {
-                    const tr = document.createElement('tr');
+    const tbody = document.createElement('tbody');
+    rows.forEach(row => {
+      const tr = document.createElement('tr');
+      headers.forEach(header => {
+        const td = document.createElement('td');
+        if (editableScore && header.toLowerCase() === 'score') {
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.className = 'score-input';
+          input.min = 1;
+          input.max = 5;
+          input.value = row.score !== undefined ? row.score : '';
+          input.addEventListener('change', () => {
+            row.score = Number(input.value);
+          });
+          td.appendChild(input);
+        } else {
+          td.textContent = row[header.toLowerCase()] !== undefined ? row[header.toLowerCase()] : '';
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    return table;
+  }
 
-                    const tdCategory = document.createElement('td');
-                    tdCategory.textContent = q.category || '';
-                    tdCategory.style.border = '1px solid black';
-                    tdCategory.style.padding = '0.5em';
-                    tr.appendChild(tdCategory);
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    summaryTable.innerHTML = '';
+    vectorUploadBtn.style.display = 'none';
 
-                    const tdQuestion = document.createElement('td');
-                    tdQuestion.textContent = q.question || '';
-                    tdQuestion.style.border = '1px solid black';
-                    tdQuestion.style.padding = '0.5em';
-                    tr.appendChild(tdQuestion);
+    const fileInput = document.getElementById('excelFile');
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
 
-                    const tdAnswer = document.createElement('td');
-                    tdAnswer.textContent = q.answer || '';
-                    tdAnswer.style.border = '1px solid black';
-                    tdAnswer.style.padding = '0.5em';
-                    tr.appendChild(tdAnswer);
+    const res = await fetch('/api/upload_excel', {
+      method: 'POST',
+      body: formData
+    });
 
-                    const tdScore = document.createElement('td');
-                    tdScore.style.border = '1px solid black';
-                    tdScore.style.padding = '0.5em';
-                    const input = document.createElement('input');
-                    input.type = 'number';
-                    input.min = 1;
-                    input.max = 5;
-                    input.value = q.score !== undefined ? q.score : '';
-                    input.style.width = '3em';
-                    input.addEventListener('change', (event) => {
-                        let val = Number(event.target.value);
-                        if (val < 1) val = 1;
-                        if (val > 5) val = 5;
-                        event.target.value = val;
-                        result.evaluated_questions[index].score = val;
-                    });
-                    tdScore.appendChild(input);
-                    tr.appendChild(tdScore);
+    result = await res.json();
+    const output = document.getElementById('result');
+    output.innerHTML = '';
 
-                    tbody.appendChild(tr);
-                });
-                evalTable.appendChild(tbody);
-                document.getElementById('summaryTable').appendChild(evalTable);
-            } else {
-                output.innerHTML = '<h3>✅ 평가 결과 요약</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
-            }
+    if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+      const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
+      summaryTable.appendChild(evalTable);
+    }
 
-            if (result.summary && Array.isArray(result.summary)) {
-                const table = document.createElement('table');
-                table.style.borderCollapse = 'collapse';
-                table.style.marginTop = '1em';
+    if (result.summary && Array.isArray(result.summary)) {
+      const summaryTableEl = createTable(['Category', 'Score', 'Questions'], result.summary);
+      summaryTable.appendChild(summaryTableEl);
+    }
 
-                const headers = ['Category', 'Score', 'Questions'];
-                const thead = document.createElement('thead');
-                const headRow = document.createElement('tr');
-                headers.forEach(h => {
-                    const th = document.createElement('th');
-                    th.textContent = h;
-                    th.style.border = '1px solid black';
-                    th.style.padding = '0.5em';
-                    th.style.background = '#f0f0f0';
-                    headRow.appendChild(th);
-                });
-                thead.appendChild(headRow);
-                table.appendChild(thead);
+    vectorUploadBtn.style.display = result.evaluated_questions && result.evaluated_questions.length ? 'block' : 'none';
+  });
 
-                const tbody = document.createElement('tbody');
-                result.summary.forEach(row => {
-                    const tr = document.createElement('tr');
-                    let cells = [];
+  vectorUploadBtn.addEventListener('click', async () => {
+    const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
+    if (!mspName) {
+      alert("MSP 이름이 입력되지 않았습니다.");
+      return;
+    }
 
-                    if (Array.isArray(row)) {
-                        cells = row;
-                    } else if (typeof row === 'object') {
-                        cells = [row.Category || '', row.Score || '', row.Questions || ''];
-                    }
-
-                    cells.forEach(cell => {
-                        const td = document.createElement('td');
-                        td.textContent = cell;
-                        td.style.border = '1px solid black';
-                        td.style.padding = '0.5em';
-                        tr.appendChild(td);
-                    });
-                    tbody.appendChild(tr);
-                });
-                table.appendChild(tbody);
-
-                document.getElementById('summaryTable').appendChild(table);
-            }
-
-
-            if (result.evaluations && Array.isArray(result.evaluations)) {
-                const detailedOutput = document.createElement('div');
-                detailedOutput.innerHTML = '<h3>📋 질문별 평가 점수</h3>';
-
-                const table = document.createElement('table');
-                table.style.borderCollapse = 'collapse';
-                table.style.marginTop = '1em';
-
-                const headers = ['Category', 'Question', 'Score'];
-                const thead = document.createElement('thead');
-                const headRow = document.createElement('tr');
-                headers.forEach(h => {
-                    const th = document.createElement('th');
-                    th.textContent = h;
-                    th.style.border = '1px solid black';
-                    th.style.padding = '0.5em';
-                    th.style.background = '#f9f9f9';
-                    headRow.appendChild(th);
-                });
-                thead.appendChild(headRow);
-                table.appendChild(thead);
-
-                const tbody = document.createElement('tbody');
-                result.evaluations.forEach(row => {
-                    const tr = document.createElement('tr');
-                    const cells = [
-                        row.category || '',
-                        row.question || '',
-                        row.score !== undefined ? row.score : ''
-                    ];
-                    cells.forEach(cell => {
-                        const td = document.createElement('td');
-                        td.textContent = cell;
-                        td.style.border = '1px solid black';
-                        td.style.padding = '0.5em';
-                        tr.appendChild(td);
-                    });
-                    tbody.appendChild(tr);
-                });
-                table.appendChild(tbody);
-                detailedOutput.appendChild(table);
-                document.getElementById('summaryTable').appendChild(detailedOutput);
-            }
+    const items = [];
+    if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+      result.evaluated_questions.forEach(q => {
+        items.push({
+          question: q.question,
+          answer: q.answer,
+          score: q.score
         });
+      });
+    }
 
-        const vectorUploadBtn = document.getElementById('uploadToVectorDbBtn');
-        vectorUploadBtn.addEventListener('click', async () => {
-            const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
-            if (!mspName) {
-                alert("MSP 이름이 입력되지 않았습니다.");
-                return;
-            }
+    const response = await fetch('/api/add_to_vector_db', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        msp_name: mspName, 
+        items: items,
+        summary: result.summary
+      })
+    });
 
-            const items = [];
-            if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
-                result.evaluated_questions.forEach(q => {
-                    items.push({
-                        question: q.question,
-                        answer: q.answer,
-                        score: q.score
-                    });
-                });
-            }
-
-            const response = await fetch('/api/add_to_vector_db', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    msp_name: mspName, 
-                    items: items,
-                    summary: result.summary
-                })
-            });
-
-            if (response.ok) {
-                alert("✅ 벡터 DB에 업로드되었습니다.");
-            } else {
-                alert("❌ 업로드 실패");
-            }
-        });
-    </script>
+    if (response.ok) {
+      alert("✅ 벡터 DB에 업로드되었습니다.");
+    } else {
+      alert("❌ 업로드 실패");
+    }
+  });
+</script>
 </body>
 </html>
