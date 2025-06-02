@@ -209,7 +209,7 @@ from fastapi import UploadFile, File
 async def upload_excel(file: UploadFile = File(...)):
     try:
         results_by_category = evaluate_uploaded_excel(file)
-        summary_df = compute_category_scores_from_excel_data(results_by_category)
+        summary_df = compute_category_scores_from_excel_data({"evaluated": results_by_category})
 
         flat_results = []
         for category, results in results_by_category.items():
