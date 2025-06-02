@@ -202,32 +202,34 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
-</style>
+
   .copy-btn-wrapper {
     display: flex;
-    justify-content: center;  /* Center horizontally */
-    gap: 20px;                /* Even spacing between buttons */
-    margin: 20px 0 16px;
+    justify-content: center;
+    gap: 24px;
+    margin: 24px 0 32px;
   }
 
   .copy-btn {
     background: linear-gradient(90deg, #03c75a, #1ecb8f);
     border: none;
     color: white;
-    border-radius: 20px;
-    padding: 10px 24px;
+    border-radius: 24px;
+    padding: 12px 32px;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 1.1rem;
     cursor: pointer;
     font-family: 'NanumSquareNeo', sans-serif !important;
-    transition: background 0.3s ease;
-    box-shadow: 0 4px 12px rgba(3, 199, 90, 0.3);
+    transition: background 0.3s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 10px rgba(3, 199, 90, 0.3);
     user-select: none;
   }
 
   .copy-btn:hover {
     background: linear-gradient(90deg, #1ecb8f, #03c75a);
+    box-shadow: 0 6px 14px rgba(3, 199, 90, 0.5);
   }
+</style>
 </head>
 <body>
 <main class="container">
@@ -316,7 +318,6 @@
       const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
       evaluatedQuestionsTable.innerHTML = '';
 
-      // Create copy buttons wrapper (refactored)
       const copyBtnWrapper = document.createElement('div');
       copyBtnWrapper.className = 'copy-btn-wrapper';
 
