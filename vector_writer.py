@@ -109,7 +109,8 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
 
     # Print summary types for debugging
     print(f"Summary types for debugging: {[ (row.get('Category'), type(row)) for row in summary ]}")
-    for idx, (question, entry) in enumerate(company_data.items()):
+    for idx, entry in enumerate(company_data):
+        question = entry.get('question', '')
         answer = entry["answer"]
         score = entry["score"]
         chunks = chunk_text(answer)
@@ -128,7 +129,6 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
                     cleaned_summary[k] = v
                 else:
                     print(f"[Metadata Error] Key '{k}' has invalid type {type(v)}. Value: {v}")
-                    # Optionally: cleaned_summary[k] = str(v)
 
             metadata = {
                 "msp_name": company_name,
