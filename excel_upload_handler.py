@@ -35,9 +35,12 @@ def parse_excel_category_sheets(excel_bytes: bytes):
             answer = item.get("answer")
             if not isinstance(question, str) or not isinstance(answer, str):
                 continue
+            if answer.lower() == "nan" or not answer.strip():
+                continue
             try:
                 score = evaluate_answer(question, answer)
             except Exception as e:
+                print(f"[ERROR] Failed to evaluate: {question[:20]} — {e}")
                 score = f"Error: {str(e)}"
 
             sheet_results.append({
