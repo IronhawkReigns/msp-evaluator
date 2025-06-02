@@ -221,7 +221,7 @@
     result = await res.json();
 
     // Store original summary for showing read-only summary table
-    const originalSummary = result.summary ? JSON.parse(JSON.stringify(result.summary)) : null;
+    const originalSummary = result.data && result.data.summary ? JSON.parse(JSON.stringify(result.data.summary)) : null;
 
     if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
       const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
