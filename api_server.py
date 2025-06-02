@@ -208,17 +208,21 @@ from fastapi import UploadFile, File
 @app.post("/api/upload_excel")
 async def upload_excel(file: UploadFile = File(...)):
     try:
-        results_by_category = evaluate_uploaded_excel(file)
-        summary_df = compute_category_scores_from_excel_data({"evaluated": results_by_category})
+        from excel_upload_handler import evaluate_uploaded_excel, compute_category_scores_from_excel_data
+
+        evaluated = evaluate_uploaded_excel(file)
+        summary_df = compute_category_scores_from_excel_data(evaluated)
 
         flat_results = []
-        for category, results in results_by_category.items():
-            for row in results:
+        for category_name, qa_list in evaluated.items():
+            if not isinstance(qa_list, list):
+                continue  # Skip invalid data
+            for item in qa_list:
                 flat_results.append({
-                    "category": category,
-                    "question": row["question"],
-                    "score": row["score"],
-                    "answer": row["answer"]
+                    "category": category_name,
+                    "question": item["question"],
+                    "answer": item["answer"],
+                    "score": item["score"]
                 })
 
         return JSONResponse(content={
@@ -226,4 +230,6 @@ async def upload_excel(file: UploadFile = File(...)):
             "summary": summary_df.to_dict(orient="records")
         })
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Excel 평가 처리 중 오류 발생: {str(e)}")
