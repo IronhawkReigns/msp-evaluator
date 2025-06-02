@@ -202,22 +202,6 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
-
-  .copy-btn {
-    background: white;
-    border: 1.5px solid var(--primary-color);
-    color: var(--primary-color);
-    padding: 4px 10px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: filter 0.2s ease;
-  }
-  .copy-btn:hover {
-    background: var(--primary-color);
-    color: white;
-  }
 </style>
 </head>
 <body>
@@ -230,6 +214,8 @@
   </form>
 
   <div id="evaluatedQuestionsTable"></div>
+  <div id="categoryTablesContainer" style="margin-top: 2em;"></div>
+  
   <div id="summaryTable"></div>
 
   <button id="uploadToVectorDbBtn">벡터 DB에 업로드</button>
@@ -307,65 +293,91 @@
       evaluatedQuestionsTable.innerHTML = '';
       evaluatedQuestionsTable.appendChild(evalTable);
       vectorUploadBtn.style.display = result.evaluated_questions.length ? 'block' : 'none';
+
+      // Group questions by category and render tables with copy buttons
+      const categoryTablesContainer = document.getElementById('categoryTablesContainer');
+      categoryTablesContainer.innerHTML = '';
+      if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+        const categories = {};
+        result.evaluated_questions.forEach(q => {
+          if (!categories[q.category]) categories[q.category] = [];
+          categories[q.category].push(q);
+        });
+        Object.keys(categories).forEach(category => {
+          // Create category header
+          const categoryHeader = document.createElement('h3');
+          categoryHeader.textContent = category;
+          categoryTablesContainer.appendChild(categoryHeader);
+
+          // Create copy button for this category
+          const copyBtn = document.createElement('button');
+          copyBtn.textContent = `복사 ${category} 점수`;
+          copyBtn.style.marginBottom = '10px';
+          copyBtn.style.backgroundColor = 'var(--primary-color)';
+          copyBtn.style.color = 'white';
+          copyBtn.style.borderRadius = '12px';
+          copyBtn.style.padding = '8px 16px';
+          copyBtn.style.fontWeight = '700';
+          copyBtn.style.border = 'none';
+          copyBtn.style.cursor = 'pointer';
+
+          copyBtn.addEventListener('click', () => {
+            let text = '';
+            categories[category].forEach(q => {
+              text += (q.score !== undefined ? q.score : '') + '\t';
+            });
+            text = text.trim() + '\n';
+            navigator.clipboard.writeText(text).then(() => {
+              alert(`✅ ${category} 점수가 클립보드에 복사되었습니다.`);
+            }).catch(() => {
+              alert(`❌ ${category} 점수 복사에 실패했습니다.`);
+            });
+          });
+          categoryTablesContainer.appendChild(copyBtn);
+
+          // Create table for this category questions
+          const catTable = createTable(['Category', 'Question', 'Answer', 'Score'], categories[category], true);
+          categoryTablesContainer.appendChild(catTable);
+        });
+      }
     } else {
       evaluatedQuestionsTable.innerHTML = '';
       vectorUploadBtn.style.display = 'none';
+      const categoryTablesContainer = document.getElementById('categoryTablesContainer');
+      categoryTablesContainer.innerHTML = '';
     }
 
     if (result.summary && Array.isArray(result.summary)) {
       const table = document.createElement('table');
       table.classList.add('summary-table');
 
-      // Modify summary table header creation
-      const headers = ['Category', 'Score', 'Questions', ''];
+      const headers = ['Category', 'Score', 'Questions'];
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
       headers.forEach(h => {
         const th = document.createElement('th');
         th.textContent = h;
-        if(h === '') {
-          th.style.width = '60px';
-          th.style.textAlign = 'center';
-        }
         headRow.appendChild(th);
       });
       thead.appendChild(headRow);
       table.appendChild(thead);
 
       const tbody = document.createElement('tbody');
-      // Modify summary tbody row creation
       result.summary.forEach(row => {
         const tr = document.createElement('tr');
         let cells = [];
+
         if (Array.isArray(row)) {
           cells = row;
         } else if (typeof row === 'object') {
           cells = [row.Category || '', row.Score || '', row.Questions || ''];
         }
+
         cells.forEach(cell => {
           const td = document.createElement('td');
           td.textContent = cell;
           tr.appendChild(td);
         });
-
-        // Create copy button cell
-        const copyTd = document.createElement('td');
-        const copyBtn = document.createElement('button');
-        copyBtn.textContent = '복사';
-        copyBtn.className = 'copy-btn';
-        copyBtn.onclick = () => {
-          const category = cells[0];
-          const score = cells[1];
-          const textToCopy = `${category}\t${score}`;
-          navigator.clipboard.writeText(textToCopy).then(() => {
-            alert(`"${category}" 점수 복사 완료!`);
-          }).catch(() => {
-            alert('복사 실패!');
-          });
-        };
-        copyTd.appendChild(copyBtn);
-        tr.appendChild(copyTd);
-
         tbody.appendChild(tr);
       });
       table.appendChild(tbody);
