@@ -62,7 +62,10 @@ def parse_excel_category_sheets(excel_bytes: bytes):
 def evaluate_uploaded_excel(uploaded_file: UploadFile):
     excel_bytes = uploaded_file.file.read()
     result = parse_excel_category_sheets(excel_bytes)
-    return result
+    return {
+        **result["evaluated"],
+        "summary": result["summary"]
+    }
 
 
 def parse_excel_category_sheet(df: pd.DataFrame):
@@ -89,7 +92,9 @@ def compute_category_scores_from_excel_data(results_by_category):
     total_score = 0
     total_questions = 0
 
-    for category, items in results_by_category.get("evaluated", {}).items():
+    for category, items in results_by_category.items():
+        if category == "summary":
+            continue
         if not isinstance(items, list):
             print(f"[WARNING] Skipping category '{category}' — expected list but got {type(items)}")
             continue
