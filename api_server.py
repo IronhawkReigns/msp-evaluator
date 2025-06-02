@@ -204,12 +204,14 @@ async def serve_upload_page(request: Request):
 
 # Excel upload endpoint
 from fastapi import UploadFile, File
-from excel_upload_handler import evaluate_uploaded_excel
+from excel_upload_handler import parse_category_sheets, compute_category_scores_from_excel_data
 
 @app.post("/api/upload_excel")
 async def upload_excel(file: UploadFile = File(...)):
     try:
-        result = await evaluate_uploaded_excel(file)
-        return JSONResponse(content=result)
+        excel_bytes = await file.read()
+        parsed_df = parse_category_sheets(excel_bytes)
+        summary_df = compute_category_scores_from_excel_data(parsed_df)
+        return JSONResponse(content=summary_df.to_dict(orient="records"))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Excel 평가 처리 중 오류 발생: {str(e)}")
