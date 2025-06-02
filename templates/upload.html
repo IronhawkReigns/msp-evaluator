@@ -479,6 +479,68 @@
 
         summaryTable.innerHTML = '';
         summaryTable.appendChild(table);
+
+        // --- Collapsible subcategory summaries ---
+        const subCategoryContainerId = 'subCategorySummaries';
+        // Clear previous if exists
+        let subCatContainer = document.getElementById(subCategoryContainerId);
+        if (!subCatContainer) {
+          subCatContainer = document.createElement('div');
+          subCatContainer.id = subCategoryContainerId;
+          summaryTable.parentNode.insertBefore(subCatContainer, summaryTable.nextSibling);
+        } else {
+          subCatContainer.innerHTML = '';
+        }
+
+        // Define main categories to exclude from subcategory collapsibles
+        const mainCategories = ['총점', '인적역량', 'AI기술역량', '솔루션 역량'];
+
+        // Group subcategories under main categories
+        const groupedSubCats = {};
+        result.summary.forEach(row => {
+          if (!row || !row.Category) return;
+          if (mainCategories.includes(row.Category)) return;
+
+          // Heuristic: assign subcategory to main category by checking if it belongs to any main category
+          // For this, check if row.Category appears as substring of any main category or vice versa
+          let assignedMainCat = null;
+          mainCategories.forEach(mc => {
+            if (row.Category.includes(mc) || mc.includes(row.Category)) {
+              assignedMainCat = mc;
+            }
+          });
+          if (!assignedMainCat) {
+            // fallback: assign to unknown or put under '기타'
+            assignedMainCat = '기타';
+          }
+
+          if (!groupedSubCats[assignedMainCat]) {
+            groupedSubCats[assignedMainCat] = [];
+          }
+          groupedSubCats[assignedMainCat].push(row);
+        });
+
+        // Build collapsibles HTML
+        Object.entries(groupedSubCats).forEach(([mainCat, subCats]) => {
+          const details = document.createElement('details');
+          details.open = true;
+          const summary = document.createElement('summary');
+          summary.textContent = mainCat;
+          summary.style.fontWeight = '700';
+          summary.style.cursor = 'pointer';
+          summary.style.marginTop = '1em';
+          details.appendChild(summary);
+
+          const ul = document.createElement('ul');
+          subCats.forEach(subCat => {
+            const li = document.createElement('li');
+            li.textContent = `${subCat.Category}: ${subCat.Questions}문항, 점수 ${subCat.Score}%`;
+            ul.appendChild(li);
+          });
+          details.appendChild(ul);
+          subCatContainer.appendChild(details);
+        });
+        // --- End collapsible subcategory summaries ---
       } else {
         summaryTable.innerHTML = '';
       }
