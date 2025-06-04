@@ -453,12 +453,15 @@
 
   summaryTable.innerHTML = '';
 
-  if (summaryData.summary && Array.isArray(summaryData.summary)) {
-    // existing rendering logic
+  // 실제 데이터 키는 subcategory_summaries이므로, 여기에 맞춰 처리
+  if (summaryData.subcategory_summaries && typeof summaryData.subcategory_summaries === 'object') {
+    // summaryData.subcategory_summaries 는 { 그룹명: { 하위그룹명: 요약문 } } 구조라고 가정
+    // 이를 테이블로 보기좋게 변환하여 렌더링
+
+    // 테이블 헤더 설정
+    const headers = ['Group', 'Subcategory', 'Summary'];
     const table = document.createElement('table');
     table.classList.add('summary-table');
-
-    const headers = ['Category', 'Score', 'Questions'];
     const thead = document.createElement('thead');
     const headRow = document.createElement('tr');
     headers.forEach(h => {
@@ -470,72 +473,31 @@
     table.appendChild(thead);
 
     const tbody = document.createElement('tbody');
-    summaryData.summary.forEach(row => {
-      const tr = document.createElement('tr');
-      let cells = [];
 
-      if (Array.isArray(row)) {
-        cells = row;
-      } else if (typeof row === 'object') {
-        cells = [row.Category || '', row.Score || '', row.Questions || ''];
-      }
+    // 그룹별, 하위그룹별로 요약문을 행으로 생성
+    Object.entries(summaryData.subcategory_summaries).forEach(([groupName, subcats]) => {
+      Object.entries(subcats).forEach(([subcatName, summaryText]) => {
+        const tr = document.createElement('tr');
+        const groupTd = document.createElement('td');
+        groupTd.textContent = groupName;
+        const subcatTd = document.createElement('td');
+        subcatTd.textContent = subcatName;
+        const summaryTd = document.createElement('td');
+        summaryTd.textContent = summaryText;
 
-      cells.forEach(cell => {
-        const td = document.createElement('td');
-        td.textContent = cell;
-        tr.appendChild(td);
+        tr.appendChild(groupTd);
+        tr.appendChild(subcatTd);
+        tr.appendChild(summaryTd);
+
+        tbody.appendChild(tr);
       });
-      tbody.appendChild(tr);
     });
+
     table.appendChild(tbody);
     summaryTable.appendChild(table);
 
-    // Subcategory summaries
-    const subCategoryContainerId = 'subCategorySummaries';
-    let subCatContainer = document.getElementById(subCategoryContainerId);
-    if (!subCatContainer) {
-      subCatContainer = document.createElement('div');
-      subCatContainer.id = subCategoryContainerId;
-      summaryTable.parentNode.insertBefore(subCatContainer, summaryTable.nextSibling);
-    } else {
-      subCatContainer.innerHTML = '';
-    }
-
-    summaryData.summary.forEach(row => {
-      if (!row || !row.Category) return;
-      if (['총점', '인적역량', 'AI기술역량', '솔루션 역량'].includes(row.Category)) return;
-
-      let summaryText = '요약 정보가 없습니다.';
-      if (
-        summaryData.subcategory_summaries &&
-        Object.values(summaryData.subcategory_summaries).some(group => group[row.Category])
-      ) {
-        for (const groupKey in summaryData.subcategory_summaries) {
-          if (summaryData.subcategory_summaries[groupKey][row.Category]) {
-            summaryText = summaryData.subcategory_summaries[groupKey][row.Category];
-            break;
-          }
-        }
-      }
-
-      const details = document.createElement('details');
-      details.open = true;
-      const summary = document.createElement('summary');
-      summary.textContent = row.Category;
-      summary.style.fontWeight = '700';
-      summary.style.cursor = 'pointer';
-      summary.style.marginTop = '1em';
-      details.appendChild(summary);
-
-      const p = document.createElement('p');
-      p.textContent = summaryText || '요약 정보가 없습니다.';
-      details.appendChild(p);
-
-      subCatContainer.appendChild(details);
-    });
-
   } else {
-    console.warn("DEBUG: summaryData.summary missing or not array");
+    console.warn("DEBUG: summaryData.subcategory_summaries missing or invalid");
     summaryTable.innerHTML = '<p>요약 데이터를 찾을 수 없습니다.</p>';
   }
 }
