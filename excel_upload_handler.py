@@ -187,6 +187,8 @@ def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
 
         summaries[category] = {}
         for group, answers in group_to_answers.items():
+            if not answers:
+                continue  # skip empty answer groups
             combined_text = "\n".join(answers[:5])  # limit to first 5 answers
             prompt = (
                 f"다음은 {category}의 하위 그룹 '{group}'에 대한 답변들임.\n"
