@@ -164,53 +164,22 @@ def compute_category_scores_from_excel_data(results_by_category):
     return pd.DataFrame(summary)
 
 
+# New helper function for summarizing answers per group
 def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
+    from openai import OpenAI
     import os
-    import uuid
-    import json
 
-    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
-    CLOVA_HOST = "https://clovastudio.stream.ntruss.com"
-    model_path = "/testapp/v3/chat-completions/HCX-005"
-
-    class CompletionExecutor:
-        def __init__(self, host, api_key, request_id):
-            self._host = host
-            self._api_key = api_key
-            self._request_id = request_id
-
-        def execute(self, completion_request):
-            import requests
-            headers = {
-                'Authorization': self._api_key,
-                'X-NCP-CLOVASTUDIO-REQUEST-ID': self._request_id,
-                'Content-Type': 'application/json; charset=utf-8',
-                'Accept': 'text/event-stream'
-            }
-            response_text = ""
-            with requests.post(self._host + model_path,
-                               headers=headers, json=completion_request, stream=True) as r:
-                for line in r.iter_lines():
-                    if line:
-                        decoded_line = line.decode("utf-8")
-                        if decoded_line.startswith("data: "):
-                            data_json_str = decoded_line[6:]
-                            if data_json_str == "[DONE]":
-                                break
-                            try:
-                                data_json = json.loads(data_json_str)
-                                if 'choices' in data_json:
-                                    content_part = data_json['choices'][0]['delta'].get('content', '')
-                                    response_text += content_part
-                            except Exception:
-                                continue
-            return response_text.strip()
+    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY_OPENAI")
+    API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
+    client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
+    model = "HCX-005"
 
     summaries = {}
 
     for category, items in results_by_category.items():
         if not isinstance(items, list):
             continue
+        # Group answers by 'group'
         group_to_answers = {}
         for item in items:
             group = item.get("group", "기타").strip() or "기타"
@@ -222,8 +191,8 @@ def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
         summaries[category] = {}
         for group, answers in group_to_answers.items():
             if not answers:
-                continue
-            combined_text = "\n".join(answers[:5])
+                continue  # skip empty answer groups
+            combined_text = "\n".join(answers[:5])  # limit to first 5 answers
             prompt = (
                 f"다음은 {category}의 하위 그룹 '{group}'에 대한 답변들임.\n"
                 f"이 답변들을 요약하여 정확하고 명확한 한 문장으로 작성할 것.\n"
@@ -232,35 +201,26 @@ def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
                 f"답변들:\n{combined_text}\n"
                 f"요약:"
             )
-
-            request_id = f"msp-evaluator-{uuid.uuid4()}"
-            executor = CompletionExecutor(
-                host=CLOVA_HOST,
-                api_key=f"Bearer {CLOVA_API_KEY}",
-                request_id=request_id
-            )
-            completion_request = {
-                "messages": [
-                    {"role": "system", "content": "답변을 명확하고 간결하게 한 문장으로 요약해 주세요."},
-                    {"role": "user", "content": prompt}
-                ],
-                "topP": 0.8,
-                "topK": 0,
-                "maxTokens": 60,
-                "temperature": 0.3,
-                "repetitionPenalty": 1.1,
-                "stop": [],
-                "includeAiFilters": True,
-                "seed": 0
-            }
-
             try:
-                summary = executor.execute(completion_request)
+                print(f"[DEBUG] Prompt for category '{category}', group '{group}':\n{prompt}")
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": "답변을 명확하고 간결하게 한 문장으로 요약해 주세요."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.3,
+                    max_tokens=60,
+                )
+                summary = response.choices[0].message.content.strip()
                 print(f"[DEBUG] Summary for category '{category}', group '{group}': {summary}")
             except Exception as e:
                 error_message = str(e)
+                if "429" in error_message or "rate limit" in error_message.lower():
+                    summary = "요약 실패: API 요청 제한 초과 또는 기타 오류 발생"
+                else:
+                    summary = f"요약 실패: {error_message}"
                 print(f"[ERROR] Summarization failed for category '{category}', group '{group}': {error_message}")
-                summary = f"요약 실패: {error_message}"
 
             summaries[category][group] = summary
 
