@@ -501,8 +501,7 @@
 
           Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, subcats]) => {
             Object.entries(subcats).forEach(([subcatName, summaryText]) => {
-              // Skip main categories
-              if (mainCategories.includes(subcatName)) return;
+              // Do NOT skip any subcategory keys here, show all summaries
 
               const details = document.createElement('details');
               details.open = true;
