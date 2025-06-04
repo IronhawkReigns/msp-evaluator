@@ -194,10 +194,21 @@ def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
     for category, items in results_by_category.items():
         if not isinstance(items, list):
             continue
-        # Group answers by 'group'
+        # Group answers by 'group', using same logic as parse_excel_category_sheet
         group_to_answers = {}
+        last_valid_group = None
         for item in items:
-            group = item.get("group", "기타").strip() or "기타"
+            raw_group = item.get("group")
+            if isinstance(raw_group, str) and raw_group.strip().lower() not in ["", "nan"]:
+                group = raw_group.strip()
+            else:
+                group = None
+
+            if not group:
+                group = last_valid_group if 'last_valid_group' in locals() and last_valid_group else "기타"
+            else:
+                last_valid_group = group
+
             answer = item.get("answer", "").strip()
             if not answer:
                 continue
