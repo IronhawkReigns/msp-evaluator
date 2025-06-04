@@ -449,92 +449,96 @@
   });
 
   function renderSummary(summaryData) {
-    // Clear existing summary content
-    summaryTable.innerHTML = '';
+  console.log("DEBUG: renderSummary called with:", summaryData);
 
-    if (summaryData.summary && Array.isArray(summaryData.summary)) {
-      const table = document.createElement('table');
-      table.classList.add('summary-table');
+  summaryTable.innerHTML = '';
 
-      const headers = ['Category', 'Score', 'Questions'];
-      const thead = document.createElement('thead');
-      const headRow = document.createElement('tr');
-      headers.forEach(h => {
-        const th = document.createElement('th');
-        th.textContent = h;
-        headRow.appendChild(th);
-      });
-      thead.appendChild(headRow);
-      table.appendChild(thead);
+  if (summaryData.summary && Array.isArray(summaryData.summary)) {
+    // existing rendering logic
+    const table = document.createElement('table');
+    table.classList.add('summary-table');
 
-      const tbody = document.createElement('tbody');
-      summaryData.summary.forEach(row => {
-        const tr = document.createElement('tr');
-        let cells = [];
+    const headers = ['Category', 'Score', 'Questions'];
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    headers.forEach(h => {
+      const th = document.createElement('th');
+      th.textContent = h;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
 
-        if (Array.isArray(row)) {
-          cells = row;
-        } else if (typeof row === 'object') {
-          cells = [row.Category || '', row.Score || '', row.Questions || ''];
-        }
+    const tbody = document.createElement('tbody');
+    summaryData.summary.forEach(row => {
+      const tr = document.createElement('tr');
+      let cells = [];
 
-        cells.forEach(cell => {
-          const td = document.createElement('td');
-          td.textContent = cell;
-          tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
-      });
-      table.appendChild(tbody);
-      summaryTable.appendChild(table);
-
-      // Subcategory summaries
-      const subCategoryContainerId = 'subCategorySummaries';
-      let subCatContainer = document.getElementById(subCategoryContainerId);
-      if (!subCatContainer) {
-        subCatContainer = document.createElement('div');
-        subCatContainer.id = subCategoryContainerId;
-        summaryTable.parentNode.insertBefore(subCatContainer, summaryTable.nextSibling);
-      } else {
-        subCatContainer.innerHTML = '';
+      if (Array.isArray(row)) {
+        cells = row;
+      } else if (typeof row === 'object') {
+        cells = [row.Category || '', row.Score || '', row.Questions || ''];
       }
 
-      summaryData.summary.forEach(row => {
-        if (!row || !row.Category) return;
-        if (['총점', '인적역량', 'AI기술역량', '솔루션 역량'].includes(row.Category)) return;
+      cells.forEach(cell => {
+        const td = document.createElement('td');
+        td.textContent = cell;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    summaryTable.appendChild(table);
 
-        let summaryText = '요약 정보가 없습니다.';
-        if (
-          summaryData.subcategory_summaries &&
-          Object.values(summaryData.subcategory_summaries).some(group => group[row.Category])
-        ) {
-          for (const groupKey in summaryData.subcategory_summaries) {
-            if (summaryData.subcategory_summaries[groupKey][row.Category]) {
-              summaryText = summaryData.subcategory_summaries[groupKey][row.Category];
-              break;
-            }
+    // Subcategory summaries
+    const subCategoryContainerId = 'subCategorySummaries';
+    let subCatContainer = document.getElementById(subCategoryContainerId);
+    if (!subCatContainer) {
+      subCatContainer = document.createElement('div');
+      subCatContainer.id = subCategoryContainerId;
+      summaryTable.parentNode.insertBefore(subCatContainer, summaryTable.nextSibling);
+    } else {
+      subCatContainer.innerHTML = '';
+    }
+
+    summaryData.summary.forEach(row => {
+      if (!row || !row.Category) return;
+      if (['총점', '인적역량', 'AI기술역량', '솔루션 역량'].includes(row.Category)) return;
+
+      let summaryText = '요약 정보가 없습니다.';
+      if (
+        summaryData.subcategory_summaries &&
+        Object.values(summaryData.subcategory_summaries).some(group => group[row.Category])
+      ) {
+        for (const groupKey in summaryData.subcategory_summaries) {
+          if (summaryData.subcategory_summaries[groupKey][row.Category]) {
+            summaryText = summaryData.subcategory_summaries[groupKey][row.Category];
+            break;
           }
         }
+      }
 
-        const details = document.createElement('details');
-        details.open = true;
-        const summary = document.createElement('summary');
-        summary.textContent = row.Category;
-        summary.style.fontWeight = '700';
-        summary.style.cursor = 'pointer';
-        summary.style.marginTop = '1em';
-        details.appendChild(summary);
+      const details = document.createElement('details');
+      details.open = true;
+      const summary = document.createElement('summary');
+      summary.textContent = row.Category;
+      summary.style.fontWeight = '700';
+      summary.style.cursor = 'pointer';
+      summary.style.marginTop = '1em';
+      details.appendChild(summary);
 
-        const p = document.createElement('p');
-        p.textContent = summaryText || '요약 정보가 없습니다.';
-        details.appendChild(p);
+      const p = document.createElement('p');
+      p.textContent = summaryText || '요약 정보가 없습니다.';
+      details.appendChild(p);
 
-        subCatContainer.appendChild(details);
-      });
-    } else {
-      summaryTable.innerHTML = '';
-    }
+      subCatContainer.appendChild(details);
+    });
+
+  } else {
+    console.warn("DEBUG: summaryData.summary missing or not array");
+    summaryTable.innerHTML = '<p>요약 데이터를 찾을 수 없습니다.</p>';
   }
+}
 
   // --- 벡터 DB 업로드 버튼 핸들러 ---
   const vectorUploadBtnScript = (() => {
