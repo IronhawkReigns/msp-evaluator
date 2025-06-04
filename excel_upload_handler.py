@@ -115,8 +115,6 @@ def compute_category_scores_from_excel_data(results_by_category):
             print(f"[WARNING] Skipping category '{category}' — expected list but got {type(items)}")
             continue
 
-        print(f"[DEBUG] Summarizing {len(group_to_answers)} groups in category '{category}'")
-
         filtered_items = [item for item in items if isinstance(item, dict) and "score" in item and isinstance(item["score"], int)]
         if not filtered_items:
             continue
