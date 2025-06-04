@@ -4,8 +4,48 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>평가 도구</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: calc(100% - 56px);
+    position: absolute;
+    top: 20px;
+    left: 28px;
+    right: 28px;
+    background: none;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .header-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #03c75a;
+    font-family: 'Noto Sans KR', sans-serif !important;
+    text-decoration: none;
+  }
+
+  .header-title:hover {
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .admin-link {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    font-family: 'Noto Sans KR', sans-serif;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .admin-link:hover {
+    color: #03c75a;
+  }
   /* Your existing styles unchanged */
   :root {
     --primary-color: #03c75a;
@@ -264,6 +304,10 @@
 </style>
 </head>
 <body>
+<header class="header">
+  <a class="header-title" href="https://mspevaluator.duckdns.org" target="_blank" rel="noopener noreferrer">NAVER Cloud</a>
+  <a class="admin-link" href="/login?next=/admin">관리자</a>
+</header>
 <main class="container">
   <h2>파트너사 평가 도구</h2>
   <form id="uploadForm" autocomplete="off" novalidate>
