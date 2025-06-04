@@ -505,63 +505,39 @@
 
         // Group subcategories under main categories and gather summaries
         const groupedSubCats = {};
-        // Define main categories for matching
-        const subcatMainCategories = ['인적역량', 'AI기술역량', '솔루션 역량'];
+        // Show summaries for each smaller subcategory directly (no grouping by main category)
         result.summary.forEach(row => {
           if (!row || !row.Category) return;
-          if (subcatMainCategories.includes(row.Category)) return;
+          // Skip main categories and total
+          if (['총점', '인적역량', 'AI기술역량', '솔루션 역량'].includes(row.Category)) return;
 
-          // Instead of searching evaluated_questions, assign main category by checking keys in subcategory_summaries
-          let assignedMainCat = null;
-          for (const mainCat of subcatMainCategories) {
-            if (
-              result.subcategory_summaries &&
-              result.subcategory_summaries[mainCat] &&
-              result.subcategory_summaries[mainCat][row.Category]
-            ) {
-              assignedMainCat = mainCat;
-              break;
-            }
-          }
-
-          if (!assignedMainCat) {
-            assignedMainCat = '기타';
-          }
-
-          if (!groupedSubCats[assignedMainCat]) {
-            groupedSubCats[assignedMainCat] = [];
-          }
-
-          // Attach summary from result.subcategory_summaries if available
           let summaryText = '요약 정보가 없습니다.';
           if (
             result.subcategory_summaries &&
-            result.subcategory_summaries[assignedMainCat] &&
-            result.subcategory_summaries[assignedMainCat][row.Category]
+            Object.values(result.subcategory_summaries).some(group => group[row.Category])
           ) {
-            summaryText = result.subcategory_summaries[assignedMainCat][row.Category];
+            // Find which group has this subcategory summary
+            for (const groupKey in result.subcategory_summaries) {
+              if (result.subcategory_summaries[groupKey][row.Category]) {
+                summaryText = result.subcategory_summaries[groupKey][row.Category];
+                break;
+              }
+            }
           }
-          groupedSubCats[assignedMainCat].push({ category: row.Category, summary: summaryText });
-        });
 
-        // Build collapsibles HTML
-        Object.entries(groupedSubCats).forEach(([mainCat, subCats]) => {
           const details = document.createElement('details');
           details.open = true;
           const summary = document.createElement('summary');
-          summary.textContent = mainCat;
+          summary.textContent = row.Category;
           summary.style.fontWeight = '700';
           summary.style.cursor = 'pointer';
           summary.style.marginTop = '1em';
           details.appendChild(summary);
 
-          const ul = document.createElement('ul');
-          subCats.forEach(subCat => {
-            const li = document.createElement('li');
-            li.textContent = subCat.summary || '요약 정보가 없습니다.';
-            ul.appendChild(li);
-          });
-          details.appendChild(ul);
+          const p = document.createElement('p');
+          p.textContent = summaryText || '요약 정보가 없습니다.';
+          details.appendChild(p);
+
           subCatContainer.appendChild(details);
         });
         // --- End collapsible subcategory summaries ---
