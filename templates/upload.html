@@ -6,6 +6,7 @@
 <title>평가 도구</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css" />
 <style>
+  /* Your existing styles unchanged */
   :root {
     --primary-color: #03c75a;
     --background-color: #f5f7fa;
@@ -15,7 +16,6 @@
     --muted-color: #666;
     --border-color: #d0d7de;
   }
-
   body {
     margin: 0;
     padding: 0;
@@ -23,7 +23,6 @@
     font-family: 'NanumSquareNeo', sans-serif !important;
     color: var(--text-color);
   }
-
   main.container {
     max-width: 960px;
     margin: 3em auto 5em;
@@ -32,7 +31,6 @@
     box-shadow: 0 8px 24px var(--card-shadow);
     border-radius: 12px;
   }
-
   h2 {
     color: var(--primary-color);
     margin-bottom: 1em;
@@ -40,7 +38,6 @@
     font-size: 2rem;
     text-align: center;
   }
-
   form#uploadForm {
     display: flex;
     align-items: center;
@@ -48,7 +45,6 @@
     justify-content: flex-start;
     margin-bottom: 1.5em;
   }
-
   label[for="excelFile"] {
     flex: 0 0 140px;
     font-weight: 700;
@@ -56,7 +52,6 @@
     font-size: 1.1rem;
     user-select: none;
   }
-
   input[type="file"] {
     flex: 1 1 auto;
     border: 1px solid var(--border-color);
@@ -70,13 +65,11 @@
     height: 44px;
     box-sizing: border-box;
   }
-
   input[type="file"]:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 10px rgba(3,199,90,0.3);
   }
-
   button[type="submit"] {
     flex: 0 0 160px;
     background: linear-gradient(90deg, var(--primary-color), #1ecb8f);
@@ -98,8 +91,6 @@
   button[type="submit"]:hover {
     filter: brightness(1.1);
   }
-
-  /* Updated table styles matching static/index.html style */
   table {
     width: 100%;
     border-collapse: separate;
@@ -111,49 +102,38 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.12);
     border: 1px solid var(--border-color);
   }
-
   thead tr {
     background-color: #04a14b;
     color: white;
     font-weight: 600;
     font-size: 1rem;
   }
-
   th, td {
     padding: 0.75em 1em;
     border-right: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
     font-size: 0.85rem;
   }
-
-  /* Remove right border for last cell in each row */
   th:last-child, td:last-child {
     border-right: none;
   }
-
   thead th {
     text-align: center;
   }
-
   tbody td {
     text-align: left;
   }
-
-  /* Center first column (th and td) */
   thead th:first-child,
   tbody td:first-child {
     text-align: center;
     font-weight: 700;
   }
-
   tbody tr:hover {
     background-color: #e6f4ea;
   }
-
   tbody tr:nth-child(even) {
     background-color: #f9f9f9;
   }
-
   input.score-input {
     width: 3.2em;
     font-size: 1rem;
@@ -168,7 +148,6 @@
     outline: none;
     box-shadow: 0 0 8px rgba(3,199,90,0.3);
   }
-
   @media (max-width: 600px) {
     form#uploadForm {
       flex-direction: column;
@@ -183,7 +162,6 @@
       margin-bottom: 0.3em;
     }
   }
-
   .summary-table {
     width: 100%;
     border-collapse: separate;
@@ -195,47 +173,38 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.12);
     border: 1px solid var(--border-color);
   }
-
   .summary-table thead tr {
     background-color: #04a14b;
     color: white;
     font-weight: 600;
     font-size: 1rem;
   }
-
   .summary-table th, .summary-table td {
     padding: 0.75em 1em;
     border-right: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
     font-size: 0.85rem;
   }
-
   .summary-table th:last-child, .summary-table td:last-child {
     border-right: none;
   }
-
   .summary-table thead th {
     text-align: center;
   }
-
   .summary-table tbody td {
     text-align: left;
   }
-
   .summary-table thead th:first-child,
   .summary-table tbody td:first-child {
     text-align: center;
     font-weight: 700;
   }
-
   .summary-table tbody tr:hover {
     background-color: #e6f4ea;
   }
-
   .summary-table tbody tr:nth-child(even) {
     background-color: #f9f9f9;
   }
-
   .spinner {
     border: 4px solid #f3f3f3;
     border-top: 4px solid var(--primary-color);
@@ -249,7 +218,6 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
-
   .copy-btn-wrapper {
     display: flex;
     justify-content: center;
@@ -257,7 +225,6 @@
     margin-top: 16px;
     margin-bottom: 20px;
   }
-
   .copy-btn {
     border: none;
     color: white;
@@ -271,7 +238,6 @@
     box-shadow: 0 4px 10px rgba(3, 199, 90, 0.3);
     user-select: none;
   }
-
   .copy-btn:hover {
     box-shadow: 0 6px 14px rgba(3, 199, 90, 0.5);
   }
@@ -389,227 +355,233 @@
       if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
         const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
         evaluatedQuestionsTable.innerHTML = '';
+
+        // Copy buttons container
+        const copyBtnWrapper = document.createElement('div');
+        copyBtnWrapper.className = 'copy-btn-wrapper';
+
+        // Categories for which to add copy buttons
+        const categoriesToCopy = ['인적역량', 'AI기술역량', '솔루션 역량'];
+
+        categoriesToCopy.forEach(category => {
+          const btn = document.createElement('button');
+          btn.textContent = `${category} 점수 복사`;
+          btn.className = 'copy-btn';
+
+          // Set distinct gradient backgrounds
+          switch(category) {
+            case '인적역량':
+              btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)';
+              btn.addEventListener('mouseover', () => { btn.style.background = 'linear-gradient(90deg, #07bc2f, #028a0f)'; });
+              btn.addEventListener('mouseout', () => { btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)'; });
+              break;
+            case 'AI기술역량':
+              btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)';
+              btn.addEventListener('mouseover', () => { btn.style.background = 'linear-gradient(90deg, #07a0bc, #04668c)'; });
+              btn.addEventListener('mouseout', () => { btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)'; });
+              break;
+            case '솔루션 역량':
+              btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)';
+              btn.addEventListener('mouseover', () => { btn.style.background = 'linear-gradient(90deg, #bc8707, #8c4604)'; });
+              btn.addEventListener('mouseout', () => { btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)'; });
+              break;
+          }
+
+          btn.addEventListener('click', () => {
+            const scoresToCopy = result.evaluated_questions
+              .filter(q => q.category === category)
+              .map(q => (q.score !== undefined ? q.score : ''))
+              .join('\n');
+            navigator.clipboard.writeText(scoresToCopy).then(() => {
+              alert(`✅ ${category} 점수가 클립보드에 복사되었습니다.`);
+            }).catch(() => {
+              alert(`❌ ${category} 점수 복사에 실패했습니다.`);
+            });
+          });
+
+          copyBtnWrapper.appendChild(btn);
+        });
+
         evaluatedQuestionsTable.appendChild(evalTable);
+        evaluatedQuestionsTable.appendChild(copyBtnWrapper);
+
       } else {
         evaluatedQuestionsTable.innerHTML = '';
         if (vectorUploadBtn) vectorUploadBtn.style.display = 'none';
       }
 
-      // Hide summary area initially
-      summaryTable.innerHTML = '';
+      if (result.summary && Array.isArray(result.summary)) {
+        const table = document.createElement('table');
+        table.classList.add('summary-table');
 
-      // Add or show the "Request Summary" button
-      let requestSummaryBtn = document.getElementById('requestSummaryBtn');
-      if (!requestSummaryBtn) {
-        requestSummaryBtn = document.createElement('button');
-        requestSummaryBtn.id = 'requestSummaryBtn';
-        requestSummaryBtn.textContent = '요약 요청하기';
-        requestSummaryBtn.className = 'copy-btn';
-        requestSummaryBtn.style.marginTop = '16px';
-        summaryTable.parentNode.insertBefore(requestSummaryBtn, summaryTable.nextSibling);
+        const headers = ['Category', 'Score', 'Questions'];
+        const thead = document.createElement('thead');
+        const headRow = document.createElement('tr');
+        headers.forEach(h => {
+          const th = document.createElement('th');
+          th.textContent = h;
+          headRow.appendChild(th);
+        });
+        thead.appendChild(headRow);
+        table.appendChild(thead);
 
-        requestSummaryBtn.addEventListener('click', async () => {
-          try {
-            requestSummaryBtn.disabled = true;
-            requestSummaryBtn.textContent = '요약 생성 중...';
+        const tbody = document.createElement('tbody');
+        result.summary.forEach(row => {
+          const tr = document.createElement('tr');
+          let cells = [];
 
-            // Call new summary API
-            const response = await fetch('/api/get_summary', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({ evaluated: result.evaluated_questions })
-            });
-
-            if (!response.ok) throw new Error('요약 요청 실패');
-
-            const summaryResult = await response.json();
-
-            renderSummary(summaryResult);
-
-            requestSummaryBtn.textContent = '요약 요청하기';
-            requestSummaryBtn.disabled = false;
-          } catch (error) {
-            alert('요약 요청 중 오류 발생');
-            requestSummaryBtn.textContent = '요약 요청하기';
-            requestSummaryBtn.disabled = false;
-            console.error(error);
+          if (Array.isArray(row)) {
+            cells = row;
+          } else if (typeof row === 'object') {
+            cells = [row.Category || '', row.Score || '', row.Questions || ''];
           }
+
+          cells.forEach(cell => {
+            const td = document.createElement('td');
+            td.textContent = cell;
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+          table.appendChild(tbody);
+          summaryTable.innerHTML = '';
+          summaryTable.appendChild(table);
+        });
+
+        // --- Collapsible subcategory summaries ---
+        const subCategoryContainerId = 'subCategorySummaries';
+        let subCatContainer = document.getElementById(subCategoryContainerId);
+        if (!subCatContainer) {
+          subCatContainer = document.createElement('div');
+          subCatContainer.id = subCategoryContainerId;
+          summaryTable.parentNode.insertBefore(subCatContainer, summaryTable.nextSibling);
+        } else {
+          subCatContainer.innerHTML = '';
+        }
+
+        const mainCategories = ['총점', '인적역량', 'AI기술역량', '솔루션 역량'];
+
+        result.summary.forEach(row => {
+          if (!row || !row.Category) return;
+          if (mainCategories.includes(row.Category)) return;
+
+          let summaryText = '요약 정보가 없습니다.';
+          if (
+            result.subcategory_summaries &&
+            Object.values(result.subcategory_summaries).some(group => group[row.Category])
+          ) {
+            for (const groupKey in result.subcategory_summaries) {
+              if (result.subcategory_summaries[groupKey][row.Category]) {
+                summaryText = result.subcategory_summaries[groupKey][row.Category];
+                break;
+              }
+            }
+          }
+
+          const details = document.createElement('details');
+          details.open = true;
+          const summary = document.createElement('summary');
+          summary.textContent = row.Category;
+          summary.style.fontWeight = '700';
+          summary.style.cursor = 'pointer';
+          summary.style.marginTop = '1em';
+          details.appendChild(summary);
+
+          const p = document.createElement('p');
+          p.textContent = summaryText || '요약 정보가 없습니다.';
+          details.appendChild(p);
+
+          subCatContainer.appendChild(details);
         });
       } else {
-        // If button exists from before, just show it
-        requestSummaryBtn.style.display = 'inline-block';
+        summaryTable.innerHTML = '';
       }
-
     } catch (error) {
       console.error("DEBUG: Upload error:", error);
       evaluatedQuestionsTable.innerHTML = '';
       summaryTable.innerHTML = '';
       alert('업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+      console.error(error);
     }
   });
 
-  function renderSummary(summaryData) {
-    console.log("DEBUG: renderSummary called with:", summaryData);
+  // --- Separate 요약 요청하기 button logic ---
+  let requestSummaryBtn = null;
 
-    summaryTable.innerHTML = '';
+  function createOrShowRequestSummaryBtn() {
+    if (!requestSummaryBtn) {
+      requestSummaryBtn = document.createElement('button');
+      requestSummaryBtn.id = 'requestSummaryBtn';
+      requestSummaryBtn.textContent = '요약 요청하기';
+      requestSummaryBtn.className = 'copy-btn';
+      requestSummaryBtn.style.marginTop = '16px';
+      summaryTable.parentNode.insertBefore(requestSummaryBtn, summaryTable.nextSibling);
 
-    // 1) Render the main summary table (big categories)
-    if (summaryData.summary && Array.isArray(summaryData.summary)) {
-      const table = document.createElement('table');
-      table.classList.add('summary-table');
+      requestSummaryBtn.addEventListener('click', async () => {
+        try {
+          requestSummaryBtn.disabled = true;
+          requestSummaryBtn.textContent = '요약 생성 중...';
 
-      const headers = ['Category', 'Score', 'Questions'];
-      const thead = document.createElement('thead');
-      const headRow = document.createElement('tr');
-      headers.forEach(h => {
-        const th = document.createElement('th');
-        th.textContent = h;
-        headRow.appendChild(th);
-      });
-      thead.appendChild(headRow);
-      table.appendChild(thead);
-
-      const tbody = document.createElement('tbody');
-      summaryData.summary.forEach(row => {
-        const tr = document.createElement('tr');
-        let cells = [];
-
-        if (Array.isArray(row)) {
-          cells = row;
-        } else if (typeof row === 'object') {
-          cells = [row.Category || '', row.Score || '', row.Questions || ''];
-        }
-
-        cells.forEach(cell => {
-          const td = document.createElement('td');
-          td.textContent = cell;
-          tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
-      });
-      table.appendChild(tbody);
-      summaryTable.appendChild(table);
-    } else {
-      console.warn("DEBUG: summaryData.summary missing or not array");
-      summaryTable.innerHTML = '<p>요약 데이터를 찾을 수 없습니다.</p>';
-      return;
-    }
-
-    // 2) Add copy buttons for main summary table and subcategory summaries
-    const copyBtnWrapperId = 'copyBtnWrapper';
-    let copyBtnWrapper = document.getElementById(copyBtnWrapperId);
-
-    if (!copyBtnWrapper) {
-      copyBtnWrapper = document.createElement('div');
-      copyBtnWrapper.id = copyBtnWrapperId;
-      copyBtnWrapper.className = 'copy-btn-wrapper';
-      summaryTable.parentNode.insertBefore(copyBtnWrapper, summaryTable.nextSibling);
-
-      // Copy summary button
-      const copySummaryBtn = document.createElement('button');
-      copySummaryBtn.className = 'copy-btn';
-      copySummaryBtn.textContent = '요약 결과 복사';
-      copyBtnWrapper.appendChild(copySummaryBtn);
-
-      copySummaryBtn.addEventListener('click', () => {
-        const textLines = [];
-        if (summaryData.summary && Array.isArray(summaryData.summary)) {
-          summaryData.summary.forEach(row => {
-            if (Array.isArray(row)) {
-              textLines.push(row.join('\t'));
-            } else if (typeof row === 'object') {
-              textLines.push(`${row.Category}\t${row.Score}\t${row.Questions}`);
-            }
+          const response = await fetch('/api/get_summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ evaluated: result.evaluated_questions })
           });
-        }
-        navigator.clipboard.writeText(textLines.join('\n')).then(() => {
-          alert('요약 결과가 클립보드에 복사되었습니다.');
-        });
-      });
 
-      // Copy subcategory summaries button
-      const copySubcatBtn = document.createElement('button');
-      copySubcatBtn.className = 'copy-btn';
-      copySubcatBtn.textContent = '세부 요약 복사';
-      copyBtnWrapper.appendChild(copySubcatBtn);
+          if (!response.ok) throw new Error('요약 요청 실패');
 
-      copySubcatBtn.addEventListener('click', () => {
-        const texts = [];
-        if (summaryData.subcategory_summaries && typeof summaryData.subcategory_summaries === 'object') {
-          Object.values(summaryData.subcategory_summaries).forEach(group => {
-            Object.entries(group).forEach(([subcatName, text]) => {
-              texts.push(`${subcatName}\n${text}\n`);
+          const summaryResult = await response.json();
+
+          // Show text-based subcategory summaries in collapsibles
+          const subCategoryContainerId = 'subCategorySummaries';
+          let subCatContainer = document.getElementById(subCategoryContainerId);
+          if (!subCatContainer) {
+            subCatContainer = document.createElement('div');
+            subCatContainer.id = subCategoryContainerId;
+            summaryTable.parentNode.insertBefore(subCatContainer, summaryTable.nextSibling);
+          } else {
+            subCatContainer.innerHTML = '';
+          }
+
+          Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, subcats]) => {
+            Object.entries(subcats).forEach(([subcatName, summaryText]) => {
+              const details = document.createElement('details');
+              details.open = true;
+
+              const summary = document.createElement('summary');
+              summary.textContent = `${groupName} > ${subcatName}`;
+              summary.style.fontWeight = '700';
+              summary.style.cursor = 'pointer';
+              summary.style.marginTop = '1em';
+              details.appendChild(summary);
+
+              const p = document.createElement('p');
+              p.textContent = summaryText || '요약 정보가 없습니다.';
+              details.appendChild(p);
+
+              subCatContainer.appendChild(details);
             });
           });
+
+          requestSummaryBtn.textContent = '요약 요청하기';
+          requestSummaryBtn.disabled = false;
+        } catch (error) {
+          alert('요약 요청 중 오류 발생');
+          requestSummaryBtn.textContent = '요약 요청하기';
+          requestSummaryBtn.disabled = false;
+          console.error(error);
         }
-        navigator.clipboard.writeText(texts.join('\n')).then(() => {
-          alert('세부 요약이 클립보드에 복사되었습니다.');
-        });
       });
-    } else {
-      copyBtnWrapper.style.display = 'flex';
     }
-
-    // 3) Render subcategory summary table as default view
-    if (summaryData.subcategory_summaries && typeof summaryData.subcategory_summaries === 'object') {
-      const subcatTableId = 'subCategorySummaryTable';
-      let subcatTable = document.getElementById(subcatTableId);
-
-      if (!subcatTable) {
-        subcatTable = document.createElement('table');
-        subcatTable.id = subcatTableId;
-        subcatTable.classList.add('summary-table');
-        summaryTable.parentNode.insertBefore(subcatTable, copyBtnWrapper.nextSibling);
-      } else {
-        subcatTable.innerHTML = '';
-      }
-
-      const headers = ['Group', 'Subcategory', 'Summary'];
-      const thead = document.createElement('thead');
-      const headRow = document.createElement('tr');
-      headers.forEach(h => {
-        const th = document.createElement('th');
-        th.textContent = h;
-        headRow.appendChild(th);
-      });
-      thead.appendChild(headRow);
-      subcatTable.appendChild(thead);
-
-      const tbody = document.createElement('tbody');
-      Object.entries(summaryData.subcategory_summaries).forEach(([groupName, subcats]) => {
-        Object.entries(subcats).forEach(([subcatName, summaryText]) => {
-          const tr = document.createElement('tr');
-
-          const tdGroup = document.createElement('td');
-          tdGroup.textContent = groupName;
-          tr.appendChild(tdGroup);
-
-          const tdSubcat = document.createElement('td');
-          tdSubcat.textContent = subcatName;
-          tr.appendChild(tdSubcat);
-
-          const tdSummary = document.createElement('td');
-          tdSummary.textContent = summaryText || '요약 정보가 없습니다.';
-          tr.appendChild(tdSummary);
-
-          tbody.appendChild(tr);
-        });
-      });
-      subcatTable.appendChild(tbody);
-    }
-
-    // 4) Hide the collapsible text subcategory summaries by default
-    const subCategoryContainerId = 'subCategorySummaries';
-    let subCatContainer = document.getElementById(subCategoryContainerId);
-    if (subCatContainer) {
-      subCatContainer.style.display = 'none';
-    }
+    requestSummaryBtn.style.display = 'inline-block';
   }
+
+  // Show the 요약 요청하기 button on initial load so user can request detailed summaries anytime
+  window.addEventListener('load', () => {
+    createOrShowRequestSummaryBtn();
+  });
 
   // --- 벡터 DB 업로드 버튼 핸들러 ---
   const vectorUploadBtnScript = (() => {
-    const vectorUploadBtn = document.getElementById('uploadToVectorDbBtn');
-
     if (vectorUploadBtn) {
       vectorUploadBtn.addEventListener('click', async () => {
         const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
@@ -634,8 +606,8 @@
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ 
-            msp_name: mspName, 
+          body: JSON.stringify({
+            msp_name: mspName,
             items: items,
             summary: result.summary
           })
