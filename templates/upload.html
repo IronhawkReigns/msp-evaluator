@@ -347,6 +347,11 @@
 
       result = await res.json();
       console.log("DEBUG: API result", result);
+      // ========== DEBUG LOGS for subcategory_summaries ==========
+      console.log("DEBUG: Subcategory summaries keys:", Object.keys(result.subcategory_summaries || {}));
+      Object.entries(result.subcategory_summaries || {}).forEach(([group, subcats]) => {
+        console.log(`DEBUG: Group '${group}' subcategories:`, Object.keys(subcats));
+      });
 
       if (vectorUploadBtn) {
         vectorUploadBtn.style.display = (result.evaluated_questions && result.evaluated_questions.length) ? 'inline-block' : 'none';
@@ -492,6 +497,11 @@
           if (!response.ok) throw new Error('요약 요청 실패');
 
           const summaryResult = await response.json();
+          // ========== DEBUG LOGS for 요약 요청 subcategory_summaries ==========
+          console.log("DEBUG: 요약 요청 결과 subcategory_summaries:", summaryResult.subcategory_summaries);
+          Object.entries(summaryResult.subcategory_summaries || {}).forEach(([group, subcats]) => {
+            console.log(`DEBUG: 요약 요청 그룹 '${group}' 하위 카테고리:`, Object.keys(subcats));
+          });
 
           // Remove or clear previous subcategory summaries container
           const subCategoryContainerId = 'subCategorySummaries';
