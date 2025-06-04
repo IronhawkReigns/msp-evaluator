@@ -218,6 +218,9 @@ def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
             if not answers:
                 continue  # skip empty answer groups
             combined_text = "\n".join(answers[:5])  # limit to first 5 answers
+            print(f"[DEBUG] Category: {category}, Group: {group}")
+            print(f"[DEBUG] Answer count: {len(answers)}")
+            print(f"[DEBUG] Combined Text:\n{combined_text}")
             prompt = (
                 f"다음은 {category}의 하위 그룹 '{group}'에 대한 답변들임.\n"
                 f"이 답변들을 요약하여 정확하고 명확한 한 문장으로 작성할 것.\n"
