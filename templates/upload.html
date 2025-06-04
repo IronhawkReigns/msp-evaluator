@@ -1,237 +1,600 @@
-import pandas as pd
-from fastapi import UploadFile
-from evaluator import evaluate_answer
-import io
-
-EXPECTED_HEADERS = ["Domain", "설명", "Key Questions", "Present Lv.", "Interview Result"]
-
-
-def parse_excel_category_sheets(excel_bytes: bytes):
-    excel_data = pd.ExcelFile(io.BytesIO(excel_bytes))
-    results = {}
-
-    for sheet_name in excel_data.sheet_names:
-        if "역량" not in sheet_name:
-            print(f"[DEBUG] Skipping sheet '{sheet_name}' — name does not contain '역량'")
-            continue
-
-        df = pd.read_excel(excel_data, sheet_name=sheet_name, header=None)
-
-        if df.shape[0] < 2 or df.shape[1] < 5:
-            print(f"[DEBUG] Skipping sheet '{sheet_name}' — too small or malformed")
-            continue
-
-        try:
-            parsed = parse_excel_category_sheet(df)
-            print(f"[DEBUG] Sheet: {sheet_name}")
-            print(f"[DEBUG] Parsed: {parsed}")
-        except Exception as e:
-            print(f"[DEBUG] Error parsing sheet '{sheet_name}': {e}")
-            continue  # skip problematic sheet
-
-        sheet_results = []
-        for item in parsed:
-            question = item.get("question")
-            answer = item.get("answer")
-            if not isinstance(question, str) or not isinstance(answer, str):
-                continue
-            if answer.lower() == "nan" or not answer.strip():
-                continue
-            if answer.lower() == "nan" or not answer.strip():
-                print(f"[DEBUG] Skipping empty answer for question '{question}' in group '{item.get('group')}' of sheet '{sheet_name}'")
-                continue
-            try:
-                score = evaluate_answer(question, answer)
-            except Exception as e:
-                print(f"[ERROR] Failed to evaluate: {question[:20]} — {e}")
-                score = f"Error: {str(e)}"
-
-            sheet_results.append({
-                "question": question,
-                "answer": answer,
-                "score": score,
-                "group": item.get("group")
-            })
-
-        if sheet_results:
-            results[sheet_name] = sheet_results
-
-    summary_df = compute_category_scores_from_excel_data(results)
-    # Removed call to summarize_answers_for_subcategories
-    return {
-        "evaluated": results,
-        "summary": summary_df.to_dict(orient="records"),
-        # "answer_summaries": answer_summaries
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>평가 도구</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css" />
+<style>
+  /* Your existing styles unchanged */
+  :root {
+    --primary-color: #03c75a;
+    --background-color: #f5f7fa;
+    --card-bg: #fff;
+    --card-shadow: rgba(0, 0, 0, 0.1);
+    --text-color: #333;
+    --muted-color: #666;
+    --border-color: #d0d7de;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--background-color);
+    font-family: 'NanumSquareNeo', sans-serif !important;
+    color: var(--text-color);
+  }
+  main.container {
+    max-width: 960px;
+    margin: 3em auto 5em;
+    padding: 2em 2.5em;
+    background: var(--card-bg);
+    box-shadow: 0 8px 24px var(--card-shadow);
+    border-radius: 12px;
+  }
+  h2 {
+    color: var(--primary-color);
+    margin-bottom: 1em;
+    font-weight: 900;
+    font-size: 2rem;
+    text-align: center;
+  }
+  form#uploadForm {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    justify-content: flex-start;
+    margin-bottom: 1.5em;
+  }
+  label[for="excelFile"] {
+    flex: 0 0 140px;
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    user-select: none;
+  }
+  input[type="file"] {
+    flex: 1 1 auto;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.7em 1em;
+    font-size: 1rem;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    vertical-align: middle;
+    height: 44px;
+    box-sizing: border-box;
+  }
+  input[type="file"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(3,199,90,0.3);
+  }
+  button[type="submit"] {
+    flex: 0 0 160px;
+    background: linear-gradient(90deg, var(--primary-color), #1ecb8f);
+    border: none;
+    color: white;
+    padding: 0.7em 1.2em;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: filter 0.25s ease;
+    user-select: none;
+    height: 44px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  button[type="submit"]:hover {
+    filter: brightness(1.1);
+  }
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9rem;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    border: 1px solid var(--border-color);
+  }
+  thead tr {
+    background-color: #04a14b;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  th, td {
+    padding: 0.75em 1em;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.85rem;
+  }
+  th:last-child, td:last-child {
+    border-right: none;
+  }
+  thead th {
+    text-align: center;
+  }
+  tbody td {
+    text-align: left;
+  }
+  thead th:first-child,
+  tbody td:first-child {
+    text-align: center;
+    font-weight: 700;
+  }
+  tbody tr:hover {
+    background-color: #e6f4ea;
+  }
+  tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  input.score-input {
+    width: 3.2em;
+    font-size: 1rem;
+    padding: 0.3em 0.4em;
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    text-align: center;
+    transition: border-color 0.3s ease;
+  }
+  input.score-input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 8px rgba(3,199,90,0.3);
+  }
+  @media (max-width: 600px) {
+    form#uploadForm {
+      flex-direction: column;
+      align-items: stretch;
     }
-
-
-def generate_summary_for_evaluation(results_by_category: dict) -> dict:
-    return summarize_answers_for_subcategories(results_by_category)
-
-
-def evaluate_uploaded_excel(uploaded_file: UploadFile):
-    excel_bytes = uploaded_file.file.read()
-    result = parse_excel_category_sheets(excel_bytes)
-    return {
-        **result["evaluated"],
-        "summary": result["summary"],
-        # Removed answer_summaries from return
-        # "answer_summaries": result["answer_summaries"]
+    input[type="file"], button[type="submit"] {
+      width: 100%;
+      flex: none;
     }
+    label[for="excelFile"] {
+      flex: none;
+      margin-bottom: 0.3em;
+    }
+  }
+  .summary-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9rem;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    border: 1px solid var(--border-color);
+  }
+  .summary-table thead tr {
+    background-color: #04a14b;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .summary-table th, .summary-table td {
+    padding: 0.75em 1em;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.85rem;
+  }
+  .summary-table th:last-child, .summary-table td:last-child {
+    border-right: none;
+  }
+  .summary-table thead th {
+    text-align: center;
+  }
+  .summary-table tbody td {
+    text-align: left;
+  }
+  .summary-table thead th:first-child,
+  .summary-table tbody td:first-child {
+    text-align: center;
+    font-weight: 700;
+  }
+  .summary-table tbody tr:hover {
+    background-color: #e6f4ea;
+  }
+  .summary-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  .spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 30px auto;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .copy-btn-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 16px;
+    margin-bottom: 20px;
+  }
+  .copy-btn {
+    border: none;
+    color: white;
+    border-radius: 24px;
+    padding: 12px 32px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: 'NanumSquareNeo', sans-serif !important;
+    transition: background 0.3s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 10px rgba(3, 199, 90, 0.3);
+    user-select: none;
+  }
+  .copy-btn:hover {
+    box-shadow: 0 6px 14px rgba(3, 199, 90, 0.5);
+  }
+</style>
+</head>
+<body>
+<main class="container">
+  <h2>파트너사 평가 도구</h2>
+  <form id="uploadForm" autocomplete="off" novalidate>
+    <label for="excelFile">엑셀 파일 (.xlsx):</label>
+    <input type="file" id="excelFile" name="file" accept=".xlsx" required />
+    <button type="submit">업로드 및 평가</button>
+  </form>
 
+  <div id="evaluatedQuestionsTable"></div>
+  
+  <div id="summaryTable"></div>
+  <div style="text-align:center; margin-top: 24px;">
+    <button id="uploadToVectorDbBtn" class="copy-btn" style="background: linear-gradient(90deg, #028a0f, #07bc2f); display:none;">
+      벡터 DB에 업로드
+    </button>
+  </div>
+</main>
 
-def parse_excel_category_sheet(df: pd.DataFrame):
-    parsed = []
-    last_group = None
-    for _, row in df.iterrows():
-        try:
-            question = str(row[2]).strip()
-            answer = str(row[4]).strip()
-            group_raw = str(row[1]).strip()
-            # Treat empty or 'nan' group values as None
-            if group_raw.lower() in ["", "nan"]:
-                group = None
-            else:
-                group = group_raw
-                last_group = group
+<script>
+  const form = document.getElementById('uploadForm');
+  const evaluatedQuestionsTable = document.getElementById('evaluatedQuestionsTable');
+  const summaryTable = document.getElementById('summaryTable');
+  const vectorUploadBtn = document.getElementById('uploadToVectorDbBtn');
+  let result = {};
 
-            if group is None:
-                group = last_group
+  function createTable(headers, rows, editableScore = false) {
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    headers.forEach(h => {
+      const th = document.createElement('th');
+      th.textContent = h;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
 
-            if question.lower() == "key questions":
-                continue  # Skip header
-            if not question or not answer or question == "nan":
-                continue
-            parsed.append({
-                "question": question,
-                "answer": answer,
-                "group": group or "기타"  # Fallback to 기타 only if absolutely None
-            })
-        except Exception:
-            continue
-    return parsed
+    const tbody = document.createElement('tbody');
+    rows.forEach(row => {
+      const tr = document.createElement('tr');
+      headers.forEach(header => {
+        const td = document.createElement('td');
+        const key = header.toLowerCase();
+        // Use camelCase keys for row objects
+        const camelCaseKey = key.replace(/\s+(.)/g, (match, group1) => group1.toUpperCase());
 
-def compute_category_scores_from_excel_data(results_by_category):
-    """Takes dict from upload-based evaluation and computes average score per category, group, and overall."""
-    category_scores = {}
-    group_scores = {}
-    total_score = 0
-    total_questions = 0
-
-    for category, items in results_by_category.items():
-        if category == "summary":
-            continue
-        if not isinstance(items, list):
-            print(f"[WARNING] Skipping category '{category}' — expected list but got {type(items)}")
-            continue
-
-        filtered_items = [item for item in items if isinstance(item, dict) and "score" in item and isinstance(item["score"], int)]
-        if not filtered_items:
-            continue
-        question_count = len(filtered_items)
-        score_sum = sum(item["score"] for item in filtered_items)
-        percentage = round(score_sum / (question_count * 5), 4)
-        category_scores[category] = {
-            "average": percentage,
-            "count": question_count,
-            "total": score_sum
+        if (editableScore && camelCaseKey === 'score') {
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.className = 'score-input';
+          input.min = 1;
+          input.max = 5;
+          input.value = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
+          input.addEventListener('change', () => {
+            row[camelCaseKey] = Number(input.value);
+          });
+          td.appendChild(input);
+        } else {
+          td.textContent = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
         }
-        total_score += score_sum
-        total_questions += question_count
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    return table;
+  }
 
-        # Track group scores within this category, nested by category
-        for item in filtered_items:
-            group = item.get("group", "").strip()
-            if not group or group.lower() == "nan":
-                continue
-            if category not in group_scores:
-                group_scores[category] = {}
-            if group not in group_scores[category]:
-                group_scores[category][group] = {"score_sum": 0, "count": 0}
-            group_scores[category][group]["score_sum"] += item["score"]
-            group_scores[category][group]["count"] += 1
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    console.log("DEBUG: Upload started");
 
-    total_max = total_questions * 5
-    overall = round((total_score / total_max) * 100, 2) if total_max > 0 else 0.0
+    evaluatedQuestionsTable.innerHTML = '<div class="spinner"></div>';
+    summaryTable.innerHTML = '';
 
-    summary = [{"Category": "총점", "Score": round(overall, 2), "Questions": total_questions}]
-    for category, data in category_scores.items():
-        summary.append({
-            "Category": category,
-            "Score": round(data['average'] * 100, 2),
-            "Questions": data['count']
-        })
-    # Append group scores under each category (nested)
-    for category, groups in group_scores.items():
-        for group_name, data in groups.items():
-            group_avg = data["score_sum"] / (data["count"] * 5)
-            summary.append({
-                "Category": group_name,
-                "Score": round(group_avg * 100, 2),
-                "Questions": data["count"]
-            })
+    // Remove previous subcategory summary container if any
+    const oldSubCatContainer = document.getElementById('subCategorySummaries');
+    if (oldSubCatContainer) oldSubCatContainer.innerHTML = '';
 
-    return pd.DataFrame(summary)
+    const fileInput = document.getElementById('excelFile');
+    if (!fileInput.files.length) {
+      alert('엑셀 파일을 선택해주세요.');
+      evaluatedQuestionsTable.innerHTML = '';
+      return;
+    }
 
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
 
-# New helper function for summarizing answers per group
-def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
-    from openai import OpenAI
-    import os
+    try {
+      console.log("DEBUG: Sending upload request...");
+      const res = await fetch('/api/upload_excel', {
+        method: 'POST',
+        body: formData
+      });
 
-    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY_OPENAI")
-    API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
-    client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
-    model = "HCX-005"
+      if (!res.ok) {
+        console.error(`DEBUG: Server responded with error: ${res.status}`);
+        throw new Error(`서버 오류: ${res.status}`);
+      }
 
-    summaries = {}
+      result = await res.json();
+      console.log("DEBUG: API result", result);
+      // ========== DEBUG LOGS for subcategory_summaries ==========
+      console.log("DEBUG: Subcategory summaries keys:", Object.keys(result.subcategory_summaries || {}));
+      Object.entries(result.subcategory_summaries || {}).forEach(([group, subcats]) => {
+        console.log(`DEBUG: Group '${group}' subcategories:`, Object.keys(subcats));
+      });
 
-    for category, items in results_by_category.items():
-        if not isinstance(items, list):
-            continue
-        # Group answers by 'group'
-        group_to_answers = {}
-        for item in items:
-            group = item.get("group", "기타").strip() or "기타"
-            answer = item.get("answer", "").strip()
-            if not answer:
-                continue
-            group_to_answers.setdefault(group, []).append(answer)
+      if (vectorUploadBtn) {
+        vectorUploadBtn.style.display = (result.evaluated_questions && result.evaluated_questions.length) ? 'inline-block' : 'none';
+      }
 
-        summaries[category] = {}
-        for group, answers in group_to_answers.items():
-            if not answers:
-                continue  # skip empty answer groups
-            combined_text = "\n".join(answers[:5])  # limit to first 5 answers
-            prompt = (
-                f"다음은 {category}의 하위 그룹 '{group}'에 대한 답변들임.\n"
-                f"이 답변들을 요약하여 정확하고 명확한 한 문장으로 작성할 것.\n"
-                f"중복된 내용 없이, 핵심만 간결하게 포함하며, 문장은 '~함' 형태로 작성할 것.\n"
-                f"요약은 반드시 한 문장이어야 하며, 군더더기 없이 명확하게 표현되어야 함.\n"
-                f"답변들:\n{combined_text}\n"
-                f"요약:"
-            )
-            try:
-                print(f"[DEBUG] Prompt for category '{category}', group '{group}':\n{prompt}")
-                response = client.chat.completions.create(
-                    model=model,
-                    messages=[
-                        {"role": "system", "content": "답변을 명확하고 간결하게 한 문장으로 요약해 주세요."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.3,
-                    max_tokens=60,
-                )
-                summary = response.choices[0].message.content.strip()
-                print(f"[DEBUG] Summary for category '{category}', group '{group}': {summary}")
-            except Exception as e:
-                error_message = str(e)
-                if "429" in error_message or "rate limit" in error_message.lower():
-                    summary = "요약 실패: API 요청 제한 초과 또는 기타 오류 발생"
-                else:
-                    summary = f"요약 실패: {error_message}"
-                print(f"[ERROR] Summarization failed for category '{category}', group '{group}': {error_message}")
+      if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+        const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
+        evaluatedQuestionsTable.innerHTML = '';
 
-            summaries[category][group] = summary
+        // Copy buttons container
+        const copyBtnWrapper = document.createElement('div');
+        copyBtnWrapper.className = 'copy-btn-wrapper';
 
-    return summaries
+        // Categories for which to add copy buttons
+        const categoriesToCopy = ['인적역량', 'AI기술역량', '솔루션 역량'];
+
+        categoriesToCopy.forEach(category => {
+          const btn = document.createElement('button');
+          btn.textContent = `${category} 점수 복사`;
+          btn.className = 'copy-btn';
+
+          // Set distinct gradient backgrounds
+          switch(category) {
+            case '인적역량':
+              btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)';
+              btn.addEventListener('mouseover', () => { btn.style.background = 'linear-gradient(90deg, #07bc2f, #028a0f)'; });
+              btn.addEventListener('mouseout', () => { btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)'; });
+              break;
+            case 'AI기술역량':
+              btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)';
+              btn.addEventListener('mouseover', () => { btn.style.background = 'linear-gradient(90deg, #07a0bc, #04668c)'; });
+              btn.addEventListener('mouseout', () => { btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)'; });
+              break;
+            case '솔루션 역량':
+              btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)';
+              btn.addEventListener('mouseover', () => { btn.style.background = 'linear-gradient(90deg, #bc8707, #8c4604)'; });
+              btn.addEventListener('mouseout', () => { btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)'; });
+              break;
+          }
+
+          btn.addEventListener('click', () => {
+            const scoresToCopy = result.evaluated_questions
+              .filter(q => q.category === category)
+              .map(q => (q.score !== undefined ? q.score : ''))
+              .join('\n');
+            navigator.clipboard.writeText(scoresToCopy).then(() => {
+              alert(`✅ ${category} 점수가 클립보드에 복사되었습니다.`);
+            }).catch(() => {
+              alert(`❌ ${category} 점수 복사에 실패했습니다.`);
+            });
+          });
+
+          copyBtnWrapper.appendChild(btn);
+        });
+
+        evaluatedQuestionsTable.appendChild(evalTable);
+        evaluatedQuestionsTable.appendChild(copyBtnWrapper);
+
+      } else {
+        evaluatedQuestionsTable.innerHTML = '';
+        if (vectorUploadBtn) vectorUploadBtn.style.display = 'none';
+      }
+
+      if (result.summary && Array.isArray(result.summary)) {
+        const table = document.createElement('table');
+        table.classList.add('summary-table');
+
+        const headers = ['Category', 'Score', 'Questions'];
+        const thead = document.createElement('thead');
+        const headRow = document.createElement('tr');
+        headers.forEach(h => {
+          const th = document.createElement('th');
+          th.textContent = h;
+          headRow.appendChild(th);
+        });
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        result.summary.forEach(row => {
+          const tr = document.createElement('tr');
+          let cells = [];
+
+          if (Array.isArray(row)) {
+            cells = row;
+          } else if (typeof row === 'object') {
+            cells = [row.Category || '', row.Score || '', row.Questions || ''];
+          }
+
+          cells.forEach(cell => {
+            const td = document.createElement('td');
+            td.textContent = cell;
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        summaryTable.innerHTML = '';
+        summaryTable.appendChild(table);
+      } else {
+        summaryTable.innerHTML = '';
+      }
+
+      // Remove subcategory summaries container after upload (if exists)
+      const subCatSummariesDiv = document.getElementById('subCategorySummaries');
+      if (subCatSummariesDiv) subCatSummariesDiv.innerHTML = '';
+
+      // --- Remove/comment out subcategory summaries rendering here ---
+      // (No subcategory summary rendering after upload)
+      // (All subcategory summary rendering is now handled by the 요약 요청하기 button)
+    } catch (error) {
+      console.error("DEBUG: Upload error:", error);
+      evaluatedQuestionsTable.innerHTML = '';
+      summaryTable.innerHTML = '';
+      alert('업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+      console.error(error);
+    }
+  });
+
+  // --- Separate 요약 요청하기 button logic ---
+  let requestSummaryBtn = null;
+  function createOrShowRequestSummaryBtn() {
+    if (!requestSummaryBtn) {
+      requestSummaryBtn = document.createElement('button');
+      requestSummaryBtn.id = 'requestSummaryBtn';
+      requestSummaryBtn.textContent = '요약 요청하기';
+      requestSummaryBtn.className = 'copy-btn';
+      requestSummaryBtn.style.marginTop = '16px';
+      // Place button after summaryTable
+      summaryTable.parentNode.insertBefore(requestSummaryBtn, summaryTable.nextSibling);
+
+      requestSummaryBtn.addEventListener('click', async () => {
+        try {
+          requestSummaryBtn.disabled = true;
+          requestSummaryBtn.textContent = '요약 생성 중...';
+
+          const response = await fetch('/api/get_summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ evaluated: result.evaluated_questions })
+          });
+
+          if (!response.ok) throw new Error('요약 요청 실패');
+
+          const summaryResult = await response.json();
+          // ========== DEBUG LOGS for 요약 요청 subcategory_summaries ==========
+          console.log("DEBUG: 요약 요청 결과 subcategory_summaries:", summaryResult.subcategory_summaries);
+          Object.entries(summaryResult.subcategory_summaries || {}).forEach(([group, subcats]) => {
+            console.log(`DEBUG: 요약 요청 그룹 '${group}' 하위 카테고리:`, Object.keys(subcats));
+          });
+
+          // Remove or clear previous subcategory summaries container
+          const subCategoryContainerId = 'subCategorySummaries';
+          let subCatContainer = document.getElementById(subCategoryContainerId);
+          if (!subCatContainer) {
+            subCatContainer = document.createElement('div');
+            subCatContainer.id = subCategoryContainerId;
+            summaryTable.parentNode.insertBefore(subCatContainer, requestSummaryBtn.nextSibling);
+          } else {
+            subCatContainer.innerHTML = '';
+          }
+
+          // Only show subcategory summaries (skip main categories)
+          // Main categories: '총점', '인적역량', 'AI기술역량', '솔루션 역량'
+          // The structure is: summaryResult.subcategory_summaries[group][subcat] = text
+          const MAIN_CATEGORIES = ['총점', '인적역량', 'AI기술역량', '솔루션 역량'];
+          Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, subcats]) => {
+            Object.entries(subcats).forEach(([subcatName, summaryText]) => {
+              // Only show if subcatName is not a main category (skip if in MAIN_CATEGORIES)
+              if (MAIN_CATEGORIES.includes(subcatName)) return;
+              const details = document.createElement('details');
+              details.open = true;
+              const summaryElem = document.createElement('summary');
+              summaryElem.textContent = `${groupName} > ${subcatName}`;
+              summaryElem.style.fontWeight = '700';
+              summaryElem.style.cursor = 'pointer';
+              summaryElem.style.marginTop = '1em';
+              details.appendChild(summaryElem);
+              const p = document.createElement('p');
+              p.textContent = summaryText || '요약 정보가 없습니다.';
+              details.appendChild(p);
+              subCatContainer.appendChild(details);
+            });
+          });
+
+          requestSummaryBtn.textContent = '요약 요청하기';
+          requestSummaryBtn.disabled = false;
+        } catch (error) {
+          alert('요약 요청 중 오류 발생');
+          requestSummaryBtn.textContent = '요약 요청하기';
+          requestSummaryBtn.disabled = false;
+          console.error(error);
+        }
+      });
+    }
+    requestSummaryBtn.style.display = 'inline-block';
+  }
+  // Show the 요약 요청하기 button on initial load so user can request detailed summaries anytime
+  window.addEventListener('load', () => {
+    createOrShowRequestSummaryBtn();
+  });
+
+  // --- 벡터 DB 업로드 버튼 핸들러 ---
+  const vectorUploadBtnScript = (() => {
+    if (vectorUploadBtn) {
+      vectorUploadBtn.addEventListener('click', async () => {
+        const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
+        if (!mspName) {
+          alert("MSP 이름이 입력되지 않았습니다.");
+          return;
+        }
+
+        const items = [];
+        if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+          result.evaluated_questions.forEach(q => {
+            items.push({
+              question: q.question,
+              answer: q.answer,
+              score: q.score
+            });
+          });
+        }
+
+        const response = await fetch('/api/add_to_vector_db', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            msp_name: mspName,
+            items: items,
+            summary: result.summary
+          })
+        });
+
+        if (response.ok) {
+          alert("✅ 벡터 DB에 업로드되었습니다.");
+        } else {
+          alert("❌ 업로드 실패");
+        }
+      });
+    }
+  })();
+</script>
+</body>
+</html>
