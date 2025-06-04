@@ -409,6 +409,7 @@
 
         evaluatedQuestionsTable.appendChild(evalTable);
         evaluatedQuestionsTable.appendChild(copyBtnWrapper);
+        createOrShowRequestSummaryBtn();
         if (requestSummaryBtn) requestSummaryBtn.style.display = 'inline-block';
 
       } else {
@@ -603,7 +604,7 @@
   })();
 
   // Show the 요약 요청하기 button only after successful upload
-  fform.addEventListener('submit', async (e) => {
+  form.addEventListener('submit', async (e) => {
   if (requestSummaryBtn) requestSummaryBtn.style.display = 'none';
 });
 </script>
