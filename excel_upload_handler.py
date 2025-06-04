@@ -189,10 +189,10 @@ def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
         for group, answers in group_to_answers.items():
             combined_text = "\n".join(answers[:5])  # limit to first 5 answers
             prompt = (
-                f"다음은 {category}의 하위 그룹 '{group}'에 대한 답변들입니다. "
-                f"이 답변들을 요약하여 정확하고 명확한 한 문장으로 작성해 주세요. "
-                f"중복된 내용 없이, 핵심만 간결하게 포함하십시오. "
-                f"요약은 반드시 한 문장이어야 하며, 군더더기 없이 명확하게 표현되어야 합니다.\n"
+                f"다음은 {category}의 하위 그룹 '{group}'에 대한 답변들임.\n"
+                f"이 답변들을 요약하여 정확하고 명확한 한 문장으로 작성할 것.\n"
+                f"중복된 내용 없이, 핵심만 간결하게 포함하며, 문장은 '~함' 형태로 작성할 것.\n"
+                f"요약은 반드시 한 문장이어야 하며, 군더더기 없이 명확하게 표현되어야 함.\n"
                 f"답변들:\n{combined_text}\n"
                 f"요약:"
             )
