@@ -499,9 +499,23 @@
           // Main categories to exclude from showing summaries here
           const mainCategories = ['총점', '인적역량', 'AI기술역량', '솔루션 역량'];
 
+          // Extract categories from result.summary for filtering
+          let summaryCategories = [];
+          if (result.summary && Array.isArray(result.summary)) {
+            summaryCategories = result.summary.map(row => {
+              if (Array.isArray(row)) {
+                return row[0];
+              } else if (typeof row === 'object') {
+                return row.Category || '';
+              }
+              return '';
+            });
+          }
+
           Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, subcats]) => {
             Object.entries(subcats).forEach(([subcatName, summaryText]) => {
-              // Do NOT skip any subcategory keys here, show all summaries
+              // Only add details if subcatName is present in summaryCategories
+              if (!summaryCategories.includes(subcatName)) return;
 
               const details = document.createElement('details');
               details.open = true;
