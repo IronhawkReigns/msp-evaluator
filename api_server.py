@@ -16,7 +16,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 from fastapi import FastAPI, HTTPException, Depends, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 import io
 class RouterQuery(BaseModel):
     query: str
@@ -239,7 +239,6 @@ async def upload_excel(file: UploadFile = File(...)):
                     "score": item["score"]
                 })
 
-        # Compute group-level scores (e.g., "AI 전문 인력 구성")
         from collections import defaultdict
         group_scores = defaultdict(list)
 
@@ -269,6 +268,25 @@ async def upload_excel(file: UploadFile = File(...)):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Excel 평가 처리 중 오류 발생: {str(e)}")
+
+
+# New endpoint: /api/get_summary
+from fastapi import Request
+@app.post("/api/get_summary")
+async def get_summary(request: Request):
+    try:
+        data = await request.json()
+        evaluated = data.get("evaluated")
+        if evaluated is None:
+            raise HTTPException(status_code=400, detail="Missing 'evaluated' data")
+
+        from excel_upload_handler import summarize_answers_for_subcategories
+        summary = summarize_answers_for_subcategories(evaluated)
+        return JSONResponse(content={"subcategory_summaries": summary})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Summary processing failed: {str(e)}")
 
 @app.post("/api/add_to_vector_db")
 async def add_to_vector_db(data: dict):
