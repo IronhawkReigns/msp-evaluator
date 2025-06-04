@@ -496,32 +496,13 @@
             subCatContainer.innerHTML = '';
           }
 
-          // Main categories to exclude from showing summaries here
-          const mainCategories = ['총점', '인적역량', 'AI기술역량', '솔루션 역량'];
+          console.log("DEBUG: Received subcategory_summaries keys:", Object.keys(summaryResult.subcategory_summaries || {}));
 
-          // Extract categories from result.summary for filtering
-          let summaryCategories = [];
-          if (result.summary && Array.isArray(result.summary)) {
-            summaryCategories = result.summary.map(row => {
-              if (Array.isArray(row)) {
-                return row[0];
-              } else if (typeof row === 'object') {
-                return row.Category || '';
-              }
-              return '';
-            });
-          }
-
-          // Debug logs for subcategory summary matching
-          console.log("DEBUG subcategory_summaries keys:", Object.keys(summaryResult.subcategory_summaries || {}));
-          console.log("DEBUG summaryCategories:", summaryCategories);
-
-          const normalizedSummaryCategories = summaryCategories.map(s => s.trim().toLowerCase());
-
+          // Instead of filtering by main categories or summary categories, show all subcategory summaries
           Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, subcats]) => {
+            console.log(`DEBUG: Processing group '${groupName}' with subcategories:`, Object.keys(subcats));
             Object.entries(subcats).forEach(([subcatName, summaryText]) => {
-              console.log(`Checking subcategory: '${subcatName}', included in summaryCategories?`, normalizedSummaryCategories.includes(subcatName.trim().toLowerCase()));
-              if (!normalizedSummaryCategories.includes(subcatName.trim().toLowerCase())) return;
+              console.log(`DEBUG: Adding summary for subcategory '${subcatName}'`);
 
               const details = document.createElement('details');
               details.open = true;
