@@ -348,8 +348,17 @@
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    console.log("DEBUG: Upload started");
+
     evaluatedQuestionsTable.innerHTML = '<div class="spinner"></div>';
     summaryTable.innerHTML = '';
+
+    // Clear previous subcategory summary container if it exists
+    const oldSubCatContainer = document.getElementById('subCategorySummaries');
+    if (oldSubCatContainer) {
+      console.log("DEBUG: Clearing previous subcategory summaries");
+      oldSubCatContainer.innerHTML = '';
+    }
 
     const fileInput = document.getElementById('excelFile');
     if (!fileInput.files.length) {
@@ -362,12 +371,14 @@
     formData.append('file', fileInput.files[0]);
 
     try {
+      console.log("DEBUG: Sending upload request...");
       const res = await fetch('/api/upload_excel', {
         method: 'POST',
         body: formData
       });
 
       if (!res.ok) {
+        console.error(`DEBUG: Server responded with error: ${res.status}`);
         throw new Error(`서버 오류: ${res.status}`);
       }
 
@@ -392,7 +403,6 @@
           btn.textContent = `${category} 점수 복사`;
           btn.className = 'copy-btn';
 
-          // Set distinct background gradients for each category button
           switch(category) {
             case '인적역량':
               btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)';
@@ -441,8 +451,6 @@
 
         evaluatedQuestionsTable.appendChild(evalTable);
         evaluatedQuestionsTable.appendChild(copyBtnWrapper);
-
-        // (vectorUploadBtn display now handled above)
       } else {
         evaluatedQuestionsTable.innerHTML = '';
         if (vectorUploadBtn) {
@@ -490,25 +498,19 @@
 
         // --- Collapsible subcategory summaries ---
         const subCategoryContainerId = 'subCategorySummaries';
-        // Clear previous if exists
         let subCatContainer = document.getElementById(subCategoryContainerId);
         if (!subCatContainer) {
           subCatContainer = document.createElement('div');
           subCatContainer.id = subCategoryContainerId;
           summaryTable.parentNode.insertBefore(subCatContainer, summaryTable.nextSibling);
         } else {
+          console.log("DEBUG: Clearing previous subcategory summaries");
           subCatContainer.innerHTML = '';
         }
 
-        // Define main categories to exclude from subcategory collapsibles
-        const mainCategories = ['총점', '인적역량', 'AI기술역량', '솔루션 역량'];
-
-        // Group subcategories under main categories and gather summaries
-        const groupedSubCats = {};
-        // Show summaries for each smaller subcategory directly (no grouping by main category)
+        // Show only smaller subcategories (not main categories)
         result.summary.forEach(row => {
           if (!row || !row.Category) return;
-          // Skip main categories and total
           if (['총점', '인적역량', 'AI기술역량', '솔루션 역량'].includes(row.Category)) return;
 
           let summaryText = '요약 정보가 없습니다.';
@@ -516,7 +518,6 @@
             result.subcategory_summaries &&
             Object.values(result.subcategory_summaries).some(group => group[row.Category])
           ) {
-            // Find which group has this subcategory summary
             for (const groupKey in result.subcategory_summaries) {
               if (result.subcategory_summaries[groupKey][row.Category]) {
                 summaryText = result.subcategory_summaries[groupKey][row.Category];
@@ -540,15 +541,14 @@
 
           subCatContainer.appendChild(details);
         });
-        // --- End collapsible subcategory summaries ---
       } else {
         summaryTable.innerHTML = '';
       }
     } catch (error) {
+      console.error("DEBUG: Upload error:", error);
       evaluatedQuestionsTable.innerHTML = '';
       summaryTable.innerHTML = '';
       alert('업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
-      console.error(error);
     }
   });
 
