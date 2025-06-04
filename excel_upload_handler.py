@@ -164,22 +164,47 @@ def compute_category_scores_from_excel_data(results_by_category):
     return pd.DataFrame(summary)
 
 
-# New helper function for summarizing answers per group
 def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
-    from openai import OpenAI
     import os
+    import json
+    import random
+    from http.client import HTTPSConnection
+
+    class CompletionExecutor:
+        def __init__(self, host, api_key, request_id):
+            self._host = host
+            self._api_key = api_key
+            self._request_id = request_id
+
+        def _send_request(self, completion_request):
+            headers = {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Authorization': self._api_key,
+                'X-NCP-CLOVASTUDIO-REQUEST-ID': self._request_id
+            }
+            conn = HTTPSConnection(self._host)
+            conn.request('POST', '/serviceapp/v1/api-tools/segmentation', json.dumps(completion_request), headers)
+            response = conn.getresponse()
+            result = json.loads(response.read().decode('utf-8'))
+            conn.close()
+            return result
+
+        def execute(self, completion_request):
+            res = self._send_request(completion_request)
+            if res['status']['code'] == '20000':
+                return res['result']['topicSeg']
+            else:
+                return f"Error: {res.get('status', {}).get('message', 'Unknown error')}"
 
     CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
-    API_URL = "https://clovastudio.stream.ntruss.com/serviceapp/v1/api-tools/segmentation"
-    client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
-    model = "HCX-005"
+    host = "clovastudio.stream.ntruss.com"
+    api_key = f"Bearer {CLOVA_API_KEY}"
 
     summaries = {}
 
     for category, items in results_by_category.items():
         if not isinstance(items, list):
             continue
-        # Group answers by 'group'
         group_to_answers = {}
         for item in items:
             group = item.get("group", "기타").strip() or "기타"
@@ -191,9 +216,11 @@ def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
         summaries[category] = {}
         for group, answers in group_to_answers.items():
             if not answers:
-                continue  # skip empty answer groups
-            combined_text = "\n".join(answers[:5])  # limit to first 5 answers
-            prompt = (
+                continue
+
+            combined_text = "\n".join(answers[:5])
+
+            prompt_text = (
                 f"다음은 {category}의 하위 그룹 '{group}'에 대한 답변들임.\n"
                 f"이 답변들을 요약하여 정확하고 명확한 한 문장으로 작성할 것.\n"
                 f"중복된 내용 없이, 핵심만 간결하게 포함하며, 문장은 '~함' 형태로 작성할 것.\n"
@@ -201,18 +228,22 @@ def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
                 f"답변들:\n{combined_text}\n"
                 f"요약:"
             )
+
+            request_id = f"msp-evaluator-{random.randint(100000,999999)}"
+            completion_executor = CompletionExecutor(host, api_key, request_id)
+
+            request_data = {
+                "postProcessMaxSize": 1000,
+                "alpha": 0.0,
+                "segCnt": -1,
+                "postProcessMinSize": 300,
+                "text": prompt_text,
+                "postProcess": False
+            }
+
             try:
-                print(f"[DEBUG] Prompt for category '{category}', group '{group}':\n{prompt}")
-                response = client.chat.completions.create(
-                    model=model,
-                    messages=[
-                        {"role": "system", "content": "답변을 명확하고 간결하게 한 문장으로 요약해 주세요."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.3,
-                    max_tokens=60,
-                )
-                summary = response.choices[0].message.content.strip()
+                print(f"[DEBUG] Prompt for category '{category}', group '{group}':\n{prompt_text}")
+                summary = completion_executor.execute(request_data)
                 print(f"[DEBUG] Summary for category '{category}', group '{group}': {summary}")
             except Exception as e:
                 error_message = str(e)
