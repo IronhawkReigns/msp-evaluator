@@ -82,7 +82,7 @@ def run_msp_recommendation(question: str, min_score: int):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
 
-    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
+    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY_OPENAI")
     API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
     client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
     model = "HCX-005"
@@ -155,7 +155,7 @@ def run_msp_information_summary(question: str):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
 
-    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
+    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY_OPENAI")
     API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
     client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
     model = "HCX-005"
@@ -268,7 +268,7 @@ def extract_msp_name(question: str) -> str:
     from openai import OpenAI
     import os
 
-    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
+    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY_OPENAI")
     API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
     client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
     model = "HCX-005"
