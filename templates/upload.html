@@ -512,10 +512,16 @@
             });
           }
 
+          // Debug logs for subcategory summary matching
+          console.log("DEBUG subcategory_summaries keys:", Object.keys(summaryResult.subcategory_summaries || {}));
+          console.log("DEBUG summaryCategories:", summaryCategories);
+
+          const normalizedSummaryCategories = summaryCategories.map(s => s.trim().toLowerCase());
+
           Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, subcats]) => {
             Object.entries(subcats).forEach(([subcatName, summaryText]) => {
-              // Only add details if subcatName is present in summaryCategories
-              if (!summaryCategories.includes(subcatName)) return;
+              console.log(`Checking subcategory: '${subcatName}', included in summaryCategories?`, normalizedSummaryCategories.includes(subcatName.trim().toLowerCase()));
+              if (!normalizedSummaryCategories.includes(subcatName.trim().toLowerCase())) return;
 
               const details = document.createElement('details');
               details.open = true;
