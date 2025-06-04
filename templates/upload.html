@@ -514,27 +514,20 @@
             subCatContainer.innerHTML = '';
           }
 
-          // Only show subcategory summaries (skip main categories)
-          // Main categories: '총점', '인적역량', 'AI기술역량', '솔루션 역량'
-          // The structure is: summaryResult.subcategory_summaries[group][subcat] = text
-          const MAIN_CATEGORIES = ['총점', '인적역량', 'AI기술역량', '솔루션 역량'];
-          Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, subcats]) => {
-            Object.entries(subcats).forEach(([subcatName, summaryText]) => {
-              // Only show if subcatName is not a main category (skip if in MAIN_CATEGORIES)
-              if (MAIN_CATEGORIES.includes(subcatName)) return;
-              const details = document.createElement('details');
-              details.open = true;
-              const summaryElem = document.createElement('summary');
-              summaryElem.textContent = `${groupName} > ${subcatName}`;
-              summaryElem.style.fontWeight = '700';
-              summaryElem.style.cursor = 'pointer';
-              summaryElem.style.marginTop = '1em';
-              details.appendChild(summaryElem);
-              const p = document.createElement('p');
-              p.textContent = summaryText || '요약 정보가 없습니다.';
-              details.appendChild(p);
-              subCatContainer.appendChild(details);
-            });
+          // Render flat group-based summaries from the backend
+          Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, summaryText]) => {
+            const details = document.createElement('details');
+            details.open = true;
+            const summaryElem = document.createElement('summary');
+            summaryElem.textContent = groupName;
+            summaryElem.style.fontWeight = '700';
+            summaryElem.style.cursor = 'pointer';
+            summaryElem.style.marginTop = '1em';
+            details.appendChild(summaryElem);
+            const p = document.createElement('p');
+            p.textContent = summaryText || '요약 정보가 없습니다.';
+            details.appendChild(p);
+            subCatContainer.appendChild(details);
           });
 
           requestSummaryBtn.textContent = '요약 요청하기';
