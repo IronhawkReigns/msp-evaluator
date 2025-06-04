@@ -317,6 +317,7 @@
     console.log("DEBUG: Upload started");
 
     evaluatedQuestionsTable.innerHTML = '<div class="spinner"></div>';
+    if (requestSummaryBtn) requestSummaryBtn.style.display = 'inline-block';
     summaryTable.innerHTML = '';
 
     // Remove previous subcategory summary container if any
@@ -540,9 +541,6 @@
               subCatContainer.appendChild(p);
             } else if (typeof summaryData === 'object') {
               Object.entries(summaryData).forEach(([subkey, summaryText]) => {
-                const subheading = document.createElement('strong');
-                subheading.textContent = subkey;
-                subCatContainer.appendChild(subheading);
                 const p = document.createElement('p');
                 p.textContent = summaryText;
                 subCatContainer.appendChild(p);
@@ -605,10 +603,9 @@
   })();
 
   // Show the 요약 요청하기 button only after successful upload
-  form.addEventListener('submit', async (e) => {
-    createOrShowRequestSummaryBtn();
-    if (requestSummaryBtn) requestSummaryBtn.style.display = 'inline-block';
-  });
+  fform.addEventListener('submit', async (e) => {
+  if (requestSummaryBtn) requestSummaryBtn.style.display = 'none';
+});
 </script>
 </body>
 </html>
