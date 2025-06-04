@@ -113,8 +113,14 @@
     border-right: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
     font-size: 0.85rem;
+    white-space: normal;
+    word-break: keep-all;
+  }
+
+  thead th:first-child,
+  tbody td:first-child {
     white-space: nowrap;
-    max-width: 200px;
+    max-width: 140px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -188,8 +194,14 @@
     border-right: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
     font-size: 0.85rem;
+    white-space: normal;
+    word-break: keep-all;
+  }
+
+  .summary-table thead th:first-child,
+  .summary-table tbody td:first-child {
     white-space: nowrap;
-    max-width: 200px;
+    max-width: 140px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
