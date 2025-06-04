@@ -208,11 +208,10 @@ from fastapi import UploadFile, File
 @app.post("/api/upload_excel")
 async def upload_excel(file: UploadFile = File(...)):
     try:
-        from excel_upload_handler import evaluate_uploaded_excel, compute_category_scores_from_excel_data, summarize_answers_for_subcategories
+        from excel_upload_handler import evaluate_uploaded_excel, compute_category_scores_from_excel_data
 
         evaluated = evaluate_uploaded_excel(file)
         summary_df = compute_category_scores_from_excel_data(evaluated)
-        subcategory_summaries = summarize_answers_for_subcategories(evaluated)
 
         flat_results = []
         skipped_items = []
@@ -261,8 +260,7 @@ async def upload_excel(file: UploadFile = File(...)):
             "evaluated_questions": flat_results,
             "summary": summary_df.to_dict(orient="records"),
             "skipped_items": skipped_items,
-            "groups": group_summary,
-            "subcategory_summaries": subcategory_summaries
+            "groups": group_summary
         })
     except Exception as e:
         import traceback
