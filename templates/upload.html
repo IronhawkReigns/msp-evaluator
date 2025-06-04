@@ -514,8 +514,8 @@
             subCatContainer.innerHTML = '';
           }
 
-          // Render flat group-based summaries from the backend
-          Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, summaryText]) => {
+          // Render both flat and nested group-based summaries from the backend
+          Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, summaryData]) => {
             const details = document.createElement('details');
             details.open = true;
             const summaryElem = document.createElement('summary');
@@ -524,9 +524,19 @@
             summaryElem.style.cursor = 'pointer';
             summaryElem.style.marginTop = '1em';
             details.appendChild(summaryElem);
-            const p = document.createElement('p');
-            p.textContent = summaryText || '요약 정보가 없습니다.';
-            details.appendChild(p);
+
+            if (typeof summaryData === 'string') {
+              const p = document.createElement('p');
+              p.textContent = summaryData;
+              details.appendChild(p);
+            } else if (typeof summaryData === 'object') {
+              Object.entries(summaryData).forEach(([subkey, summaryText]) => {
+                const p = document.createElement('p');
+                p.innerHTML = `<strong>${subkey}</strong><br>${summaryText}`;
+                details.appendChild(p);
+              });
+            }
+
             subCatContainer.appendChild(details);
           });
 
