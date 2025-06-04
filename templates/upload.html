@@ -442,56 +442,10 @@
             tr.appendChild(td);
           });
           tbody.appendChild(tr);
-          table.appendChild(tbody);
-          summaryTable.innerHTML = '';
-          summaryTable.appendChild(table);
         });
-
-        // --- Collapsible subcategory summaries ---
-        const subCategoryContainerId = 'subCategorySummaries';
-        let subCatContainer = document.getElementById(subCategoryContainerId);
-        if (!subCatContainer) {
-          subCatContainer = document.createElement('div');
-          subCatContainer.id = subCategoryContainerId;
-          summaryTable.parentNode.insertBefore(subCatContainer, summaryTable.nextSibling);
-        } else {
-          subCatContainer.innerHTML = '';
-        }
-
-        const mainCategories = ['총점', '인적역량', 'AI기술역량', '솔루션 역량'];
-
-        result.summary.forEach(row => {
-          if (!row || !row.Category) return;
-          if (mainCategories.includes(row.Category)) return;
-
-          let summaryText = '요약 정보가 없습니다.';
-          if (
-            result.subcategory_summaries &&
-            Object.values(result.subcategory_summaries).some(group => group[row.Category])
-          ) {
-            for (const groupKey in result.subcategory_summaries) {
-              if (result.subcategory_summaries[groupKey][row.Category]) {
-                summaryText = result.subcategory_summaries[groupKey][row.Category];
-                break;
-              }
-            }
-          }
-
-          const details = document.createElement('details');
-          details.open = true;
-          const summary = document.createElement('summary');
-          summary.textContent = row.Category;
-          summary.style.fontWeight = '700';
-          summary.style.cursor = 'pointer';
-          summary.style.marginTop = '1em';
-          details.appendChild(summary);
-
-          const p = document.createElement('p');
-          p.textContent = summaryText || '요약 정보가 없습니다.';
-          details.appendChild(p);
-
-          subCatContainer.appendChild(details);
-        });
+        table.appendChild(tbody);
+        summaryTable.innerHTML = '';
+        summaryTable.appendChild(table);
       } else {
         summaryTable.innerHTML = '';
       }
