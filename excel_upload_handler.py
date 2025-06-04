@@ -215,8 +215,12 @@ def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
                 summary = response.choices[0].message.content.strip()
                 print(f"[DEBUG] Summary for category '{category}', group '{group}': {summary}")
             except Exception as e:
-                summary = f"요약 실패: {e}"
-                print(f"[ERROR] Summarization failed for category '{category}', group '{group}': {e}")
+                error_message = str(e)
+                if "429" in error_message or "rate limit" in error_message.lower():
+                    summary = "요약 실패: API 요청 제한 초과 또는 기타 오류 발생"
+                else:
+                    summary = f"요약 실패: {error_message}"
+                print(f"[ERROR] Summarization failed for category '{category}', group '{group}': {error_message}")
 
             summaries[category][group] = summary
 
