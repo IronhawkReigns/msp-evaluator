@@ -37,7 +37,7 @@ def chunk_text(text: str):
 
     try:
         conn = http.client.HTTPSConnection(host)
-        conn.request('POST', '/testapp/v1/api-tools/segmentation', json.dumps(completion_request), headers)
+        conn.request('POST', '/serviceapp/v1/api-tools/segmentation', json.dumps(completion_request), headers)
         response = conn.getresponse()
         result = json.loads(response.read().decode(encoding='utf-8'))
         conn.close()
@@ -80,7 +80,7 @@ def clova_embedding(text: str):
 
     body = json.dumps({ "text": text })
     conn = http.client.HTTPSConnection(host)
-    conn.request("POST", "/testapp/v1/api-tools/embedding/v2", body, headers)
+    conn.request("POST", "/serviceapp/v1/api-tools/embedding/v2", body, headers)
     response = conn.getresponse()
     try:
         result = json.loads(response.read().decode("utf-8"))
