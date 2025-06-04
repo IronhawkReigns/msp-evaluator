@@ -87,11 +87,17 @@ def parse_excel_category_sheet(df: pd.DataFrame):
         try:
             question = str(row[2]).strip()
             answer = str(row[4]).strip()
-            group = str(row[1]).strip()
-            if group.lower() in ["", "nan"]:
-                group = last_group
+            group_raw = str(row[1]).strip()
+            # Treat empty or 'nan' group values as None
+            if group_raw.lower() in ["", "nan"]:
+                group = None
             else:
+                group = group_raw
                 last_group = group
+
+            if group is None:
+                group = last_group
+
             if question.lower() == "key questions":
                 continue  # Skip header
             if not question or not answer or question == "nan":
@@ -99,7 +105,7 @@ def parse_excel_category_sheet(df: pd.DataFrame):
             parsed.append({
                 "question": question,
                 "answer": answer,
-                "group": group
+                "group": group or "기타"  # Fallback to 기타 only if absolutely None
             })
         except Exception:
             continue
