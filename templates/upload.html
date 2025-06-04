@@ -317,7 +317,6 @@
     console.log("DEBUG: Upload started");
 
     evaluatedQuestionsTable.innerHTML = '<div class="spinner"></div>';
-    if (requestSummaryBtn) requestSummaryBtn.style.display = 'inline-block';
     summaryTable.innerHTML = '';
 
     // Remove previous subcategory summary container if any
@@ -410,6 +409,7 @@
 
         evaluatedQuestionsTable.appendChild(evalTable);
         evaluatedQuestionsTable.appendChild(copyBtnWrapper);
+        if (requestSummaryBtn) requestSummaryBtn.style.display = 'inline-block';
 
       } else {
         evaluatedQuestionsTable.innerHTML = '';
