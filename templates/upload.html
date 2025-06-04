@@ -449,58 +449,162 @@
   });
 
   function renderSummary(summaryData) {
-  console.log("DEBUG: renderSummary called with:", summaryData);
+    console.log("DEBUG: renderSummary called with:", summaryData);
 
-  summaryTable.innerHTML = '';
+    summaryTable.innerHTML = '';
 
-  // 실제 데이터 키는 subcategory_summaries이므로, 여기에 맞춰 처리
-  if (summaryData.subcategory_summaries && typeof summaryData.subcategory_summaries === 'object') {
-    // summaryData.subcategory_summaries 는 { 그룹명: { 하위그룹명: 요약문 } } 구조라고 가정
-    // 이를 테이블로 보기좋게 변환하여 렌더링
+    // 1) Render the main summary table (big categories)
+    if (summaryData.summary && Array.isArray(summaryData.summary)) {
+      const table = document.createElement('table');
+      table.classList.add('summary-table');
 
-    // 테이블 헤더 설정
-    const headers = ['Group', 'Subcategory', 'Summary'];
-    const table = document.createElement('table');
-    table.classList.add('summary-table');
-    const thead = document.createElement('thead');
-    const headRow = document.createElement('tr');
-    headers.forEach(h => {
-      const th = document.createElement('th');
-      th.textContent = h;
-      headRow.appendChild(th);
-    });
-    thead.appendChild(headRow);
-    table.appendChild(thead);
+      const headers = ['Category', 'Score', 'Questions'];
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+      headers.forEach(h => {
+        const th = document.createElement('th');
+        th.textContent = h;
+        headRow.appendChild(th);
+      });
+      thead.appendChild(headRow);
+      table.appendChild(thead);
 
-    const tbody = document.createElement('tbody');
-
-    // 그룹별, 하위그룹별로 요약문을 행으로 생성
-    Object.entries(summaryData.subcategory_summaries).forEach(([groupName, subcats]) => {
-      Object.entries(subcats).forEach(([subcatName, summaryText]) => {
+      const tbody = document.createElement('tbody');
+      summaryData.summary.forEach(row => {
         const tr = document.createElement('tr');
-        const groupTd = document.createElement('td');
-        groupTd.textContent = groupName;
-        const subcatTd = document.createElement('td');
-        subcatTd.textContent = subcatName;
-        const summaryTd = document.createElement('td');
-        summaryTd.textContent = summaryText;
+        let cells = [];
 
-        tr.appendChild(groupTd);
-        tr.appendChild(subcatTd);
-        tr.appendChild(summaryTd);
+        if (Array.isArray(row)) {
+          cells = row;
+        } else if (typeof row === 'object') {
+          cells = [row.Category || '', row.Score || '', row.Questions || ''];
+        }
 
+        cells.forEach(cell => {
+          const td = document.createElement('td');
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
         tbody.appendChild(tr);
       });
-    });
+      table.appendChild(tbody);
+      summaryTable.appendChild(table);
+    } else {
+      console.warn("DEBUG: summaryData.summary missing or not array");
+      summaryTable.innerHTML = '<p>요약 데이터를 찾을 수 없습니다.</p>';
+      return;
+    }
 
-    table.appendChild(tbody);
-    summaryTable.appendChild(table);
+    // 2) Add copy buttons for main summary table and subcategory summaries
+    const copyBtnWrapperId = 'copyBtnWrapper';
+    let copyBtnWrapper = document.getElementById(copyBtnWrapperId);
 
-  } else {
-    console.warn("DEBUG: summaryData.subcategory_summaries missing or invalid");
-    summaryTable.innerHTML = '<p>요약 데이터를 찾을 수 없습니다.</p>';
+    if (!copyBtnWrapper) {
+      copyBtnWrapper = document.createElement('div');
+      copyBtnWrapper.id = copyBtnWrapperId;
+      copyBtnWrapper.className = 'copy-btn-wrapper';
+      summaryTable.parentNode.insertBefore(copyBtnWrapper, summaryTable.nextSibling);
+
+      // Copy summary button
+      const copySummaryBtn = document.createElement('button');
+      copySummaryBtn.className = 'copy-btn';
+      copySummaryBtn.textContent = '요약 결과 복사';
+      copyBtnWrapper.appendChild(copySummaryBtn);
+
+      copySummaryBtn.addEventListener('click', () => {
+        const textLines = [];
+        if (summaryData.summary && Array.isArray(summaryData.summary)) {
+          summaryData.summary.forEach(row => {
+            if (Array.isArray(row)) {
+              textLines.push(row.join('\t'));
+            } else if (typeof row === 'object') {
+              textLines.push(`${row.Category}\t${row.Score}\t${row.Questions}`);
+            }
+          });
+        }
+        navigator.clipboard.writeText(textLines.join('\n')).then(() => {
+          alert('요약 결과가 클립보드에 복사되었습니다.');
+        });
+      });
+
+      // Copy subcategory summaries button
+      const copySubcatBtn = document.createElement('button');
+      copySubcatBtn.className = 'copy-btn';
+      copySubcatBtn.textContent = '세부 요약 복사';
+      copyBtnWrapper.appendChild(copySubcatBtn);
+
+      copySubcatBtn.addEventListener('click', () => {
+        const texts = [];
+        if (summaryData.subcategory_summaries && typeof summaryData.subcategory_summaries === 'object') {
+          Object.values(summaryData.subcategory_summaries).forEach(group => {
+            Object.entries(group).forEach(([subcatName, text]) => {
+              texts.push(`${subcatName}\n${text}\n`);
+            });
+          });
+        }
+        navigator.clipboard.writeText(texts.join('\n')).then(() => {
+          alert('세부 요약이 클립보드에 복사되었습니다.');
+        });
+      });
+    } else {
+      copyBtnWrapper.style.display = 'flex';
+    }
+
+    // 3) Render subcategory summary table as default view
+    if (summaryData.subcategory_summaries && typeof summaryData.subcategory_summaries === 'object') {
+      const subcatTableId = 'subCategorySummaryTable';
+      let subcatTable = document.getElementById(subcatTableId);
+
+      if (!subcatTable) {
+        subcatTable = document.createElement('table');
+        subcatTable.id = subcatTableId;
+        subcatTable.classList.add('summary-table');
+        summaryTable.parentNode.insertBefore(subcatTable, copyBtnWrapper.nextSibling);
+      } else {
+        subcatTable.innerHTML = '';
+      }
+
+      const headers = ['Group', 'Subcategory', 'Summary'];
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+      headers.forEach(h => {
+        const th = document.createElement('th');
+        th.textContent = h;
+        headRow.appendChild(th);
+      });
+      thead.appendChild(headRow);
+      subcatTable.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      Object.entries(summaryData.subcategory_summaries).forEach(([groupName, subcats]) => {
+        Object.entries(subcats).forEach(([subcatName, summaryText]) => {
+          const tr = document.createElement('tr');
+
+          const tdGroup = document.createElement('td');
+          tdGroup.textContent = groupName;
+          tr.appendChild(tdGroup);
+
+          const tdSubcat = document.createElement('td');
+          tdSubcat.textContent = subcatName;
+          tr.appendChild(tdSubcat);
+
+          const tdSummary = document.createElement('td');
+          tdSummary.textContent = summaryText || '요약 정보가 없습니다.';
+          tr.appendChild(tdSummary);
+
+          tbody.appendChild(tr);
+        });
+      });
+      subcatTable.appendChild(tbody);
+    }
+
+    // 4) Hide the collapsible text subcategory summaries by default
+    const subCategoryContainerId = 'subCategorySummaries';
+    let subCatContainer = document.getElementById(subCategoryContainerId);
+    if (subCatContainer) {
+      subCatContainer.style.display = 'none';
+    }
   }
-}
 
   // --- 벡터 DB 업로드 버튼 핸들러 ---
   const vectorUploadBtnScript = (() => {
