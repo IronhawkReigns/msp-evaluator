@@ -68,7 +68,8 @@ def evaluate_uploaded_excel(uploaded_file: UploadFile):
     result = parse_excel_category_sheets(excel_bytes)
     return {
         **result["evaluated"],
-        "summary": result["summary"]
+        "summary": result["summary"],
+        "answer_summaries": result["answer_summaries"]
     }
 
 
@@ -189,15 +190,17 @@ def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
             combined_text = "\n".join(answers[:5])  # limit to first 5 answers
             prompt = (
                 f"다음은 {category}의 하위 그룹 '{group}'에 대한 답변들입니다. "
-                f"이 답변들을 요약하여 한 문장으로 표현해 주세요:\n"
-                f"{combined_text}\n"
+                f"이 답변들을 요약하여 정확하고 명확한 한 문장으로 작성해 주세요. "
+                f"중복된 내용 없이, 핵심만 간결하게 포함하십시오. "
+                f"요약은 반드시 한 문장이어야 하며, 군더더기 없이 명확하게 표현되어야 합니다.\n"
+                f"답변들:\n{combined_text}\n"
                 f"요약:"
             )
             try:
                 response = client.chat.completions.create(
                     model=model,
                     messages=[
-                        {"role": "system", "content": "답변을 간결하게 요약해 주세요."},
+                        {"role": "system", "content": "답변을 명확하고 간결하게 한 문장으로 요약해 주세요."},
                         {"role": "user", "content": prompt}
                     ],
                     temperature=0.3,
