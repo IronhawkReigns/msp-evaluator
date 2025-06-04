@@ -372,6 +372,7 @@
       }
 
       result = await res.json();
+      console.log("DEBUG: API result", result);
 
       if (vectorUploadBtn) {
         vectorUploadBtn.style.display = (result.evaluated_questions && result.evaluated_questions.length) ? 'inline-block' : 'none';
@@ -529,6 +530,9 @@
 
           // Attach summary from result.subcategory_summaries if available
           let summaryText = '요약 정보가 없습니다.';
+          // --- DEBUG LOGS for subcategory summaries ---
+          console.log("DEBUG mainCat:", assignedMainCat, "subCat:", row.Category);
+          console.log("DEBUG summary found:", result.subcategory_summaries?.[assignedMainCat]?.[row.Category]);
           if (
             result.subcategory_summaries &&
             result.subcategory_summaries[assignedMainCat] &&
