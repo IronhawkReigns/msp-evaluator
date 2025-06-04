@@ -37,6 +37,9 @@ def parse_excel_category_sheets(excel_bytes: bytes):
                 continue
             if answer.lower() == "nan" or not answer.strip():
                 continue
+            if answer.lower() == "nan" or not answer.strip():
+                print(f"[DEBUG] Skipping empty answer for question '{question}' in group '{item.get('group')}' of sheet '{sheet_name}'")
+                continue
             try:
                 score = evaluate_answer(question, answer)
             except Exception as e:
@@ -111,6 +114,8 @@ def compute_category_scores_from_excel_data(results_by_category):
         if not isinstance(items, list):
             print(f"[WARNING] Skipping category '{category}' — expected list but got {type(items)}")
             continue
+
+        print(f"[DEBUG] Summarizing {len(group_to_answers)} groups in category '{category}'")
 
         filtered_items = [item for item in items if isinstance(item, dict) and "score" in item and isinstance(item["score"], int)]
         if not filtered_items:
@@ -199,6 +204,7 @@ def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
                 f"요약:"
             )
             try:
+                print(f"[DEBUG] Prompt for category '{category}', group '{group}':\n{prompt}")
                 response = client.chat.completions.create(
                     model=model,
                     messages=[
@@ -209,8 +215,10 @@ def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
                     max_tokens=60,
                 )
                 summary = response.choices[0].message.content.strip()
+                print(f"[DEBUG] Summary for category '{category}', group '{group}': {summary}")
             except Exception as e:
                 summary = f"요약 실패: {e}"
+                print(f"[ERROR] Summarization failed for category '{category}', group '{group}': {e}")
 
             summaries[category][group] = summary
 
