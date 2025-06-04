@@ -480,8 +480,16 @@
       requestSummaryBtn.textContent = '요약 요청하기';
       requestSummaryBtn.className = 'copy-btn';
       requestSummaryBtn.style.marginTop = '16px';
-      // Place button after summaryTable
-      summaryTable.parentNode.insertBefore(requestSummaryBtn, summaryTable.nextSibling);
+      requestSummaryBtn.style.display = 'none'; // initially hidden
+
+      // Wrap in centered div
+      const btnWrapper = document.createElement('div');
+      btnWrapper.id = 'summaryRequestWrapper';
+      btnWrapper.style.textAlign = 'center';
+      btnWrapper.style.marginTop = '24px';
+      btnWrapper.appendChild(requestSummaryBtn);
+
+      summaryTable.parentNode.insertBefore(btnWrapper, summaryTable.nextSibling);
 
       requestSummaryBtn.addEventListener('click', async () => {
         try {
@@ -509,35 +517,37 @@
           if (!subCatContainer) {
             subCatContainer = document.createElement('div');
             subCatContainer.id = subCategoryContainerId;
-            summaryTable.parentNode.insertBefore(subCatContainer, requestSummaryBtn.nextSibling);
+            summaryTable.parentNode.insertBefore(subCatContainer, btnWrapper.nextSibling);
           } else {
             subCatContainer.innerHTML = '';
           }
 
-          // Render both flat and nested group-based summaries from the backend
+          // Render subcategory summaries as flat readable text under group headers
           Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, summaryData]) => {
-            const details = document.createElement('details');
-            details.open = true;
-            const summaryElem = document.createElement('summary');
-            summaryElem.textContent = groupName;
-            summaryElem.style.fontWeight = '700';
-            summaryElem.style.cursor = 'pointer';
-            summaryElem.style.marginTop = '1em';
-            details.appendChild(summaryElem);
+            const title = document.createElement('h3');
+            title.textContent = groupName;
+            title.style.marginTop = '1.8em';
+            title.style.fontSize = '1.1rem';
+            title.style.color = '#03c75a';
+            title.style.borderBottom = '1px solid #ccc';
+            title.style.paddingBottom = '0.2em';
+            subCatContainer.appendChild(title);
 
             if (typeof summaryData === 'string') {
               const p = document.createElement('p');
               p.textContent = summaryData;
-              details.appendChild(p);
+              p.style.marginTop = '0.5em';
+              subCatContainer.appendChild(p);
             } else if (typeof summaryData === 'object') {
               Object.entries(summaryData).forEach(([subkey, summaryText]) => {
+                const subheading = document.createElement('strong');
+                subheading.textContent = subkey;
+                subCatContainer.appendChild(subheading);
                 const p = document.createElement('p');
-                p.innerHTML = `<strong>${subkey}</strong><br>${summaryText}`;
-                details.appendChild(p);
+                p.textContent = summaryText;
+                subCatContainer.appendChild(p);
               });
             }
-
-            subCatContainer.appendChild(details);
           });
 
           requestSummaryBtn.textContent = '요약 요청하기';
@@ -550,12 +560,7 @@
         }
       });
     }
-    requestSummaryBtn.style.display = 'inline-block';
   }
-  // Show the 요약 요청하기 button on initial load so user can request detailed summaries anytime
-  window.addEventListener('load', () => {
-    createOrShowRequestSummaryBtn();
-  });
 
   // --- 벡터 DB 업로드 버튼 핸들러 ---
   const vectorUploadBtnScript = (() => {
@@ -598,6 +603,12 @@
       });
     }
   })();
+
+  // Show the 요약 요청하기 button only after successful upload
+  form.addEventListener('submit', async (e) => {
+    createOrShowRequestSummaryBtn();
+    if (requestSummaryBtn) requestSummaryBtn.style.display = 'inline-block';
+  });
 </script>
 </body>
 </html>
