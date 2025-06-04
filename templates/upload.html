@@ -417,7 +417,7 @@
             const response = await fetch('/api/get_summary', {
               method: 'POST',
               headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({ items: result.evaluated_questions })
+              body: JSON.stringify({ evaluated: result.evaluated_questions })
             });
 
             if (!response.ok) throw new Error('요약 요청 실패');
