@@ -278,11 +278,11 @@ async def get_summary(request: Request):
         if evaluated is None:
             raise HTTPException(status_code=400, detail="Missing 'evaluated' data")
 
-        # Group by category
+        # Group by group field (fallback to category if missing)
         grouped = {}
         for item in evaluated:
-            category = item.get("category", "Unknown")
-            grouped.setdefault(category, []).append(item)
+            group = item.get("group") or item.get("category") or "Unknown"
+            grouped.setdefault(group, []).append(item)
 
         from excel_upload_handler import summarize_answers_for_subcategories
         summary = summarize_answers_for_subcategories(grouped)
