@@ -82,30 +82,35 @@ def evaluate_uploaded_excel(uploaded_file: UploadFile):
 
 def parse_excel_category_sheet(df: pd.DataFrame):
     parsed = []
-    last_group = None
+    last_valid_group = None
     for _, row in df.iterrows():
         try:
             question = str(row[2]).strip()
             answer = str(row[4]).strip()
-            group_raw = str(row[1]).strip()
-            # Treat empty or 'nan' group values as None
-            if group_raw.lower() in ["", "nan"]:
+            raw_group = str(row[1]).strip()
+
+            # If the raw_group is empty or 'nan', treat as None
+            if raw_group.lower() in ["", "nan"]:
                 group = None
             else:
-                group = group_raw
-                last_group = group
+                group = raw_group
+                last_valid_group = group
 
+            # If no valid group found yet, fallback to None (no "기타" fallback here)
             if group is None:
-                group = last_group
+                group = last_valid_group
 
+            # Skip header rows or invalid questions/answers
             if question.lower() == "key questions":
-                continue  # Skip header
+                continue
             if not question or not answer or question == "nan":
                 continue
+
+            # Append with proper group value, no forced "기타" fallback
             parsed.append({
                 "question": question,
                 "answer": answer,
-                "group": group or "기타"  # Fallback to 기타 only if absolutely None
+                "group": group
             })
         except Exception:
             continue
