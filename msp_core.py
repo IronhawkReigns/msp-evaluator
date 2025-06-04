@@ -371,7 +371,7 @@ def run_msp_news_summary_clova(question: str):
             f"- 기업의 수상 실적, 협업, 투자, 인력 구성 등 핵심 정보를 간결하게 요약해 주세요."
         )
 
-        CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
+        CLOVA_API_KEY = os.getenv("CLOVA_API_KEY_OPENAI")
         API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
         from openai import OpenAI
         client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
