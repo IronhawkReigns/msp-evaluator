@@ -449,6 +449,14 @@
       } else {
         summaryTable.innerHTML = '';
       }
+
+      // Remove subcategory summaries container after upload (if exists)
+      const subCatSummariesDiv = document.getElementById('subCategorySummaries');
+      if (subCatSummariesDiv) subCatSummariesDiv.innerHTML = '';
+
+      // --- Remove/comment out subcategory summaries rendering here ---
+      // (No subcategory summary rendering after upload)
+      // (All subcategory summary rendering is now handled by the 요약 요청하기 button)
     } catch (error) {
       console.error("DEBUG: Upload error:", error);
       evaluatedQuestionsTable.innerHTML = '';
@@ -460,7 +468,6 @@
 
   // --- Separate 요약 요청하기 button logic ---
   let requestSummaryBtn = null;
-
   function createOrShowRequestSummaryBtn() {
     if (!requestSummaryBtn) {
       requestSummaryBtn = document.createElement('button');
@@ -468,6 +475,7 @@
       requestSummaryBtn.textContent = '요약 요청하기';
       requestSummaryBtn.className = 'copy-btn';
       requestSummaryBtn.style.marginTop = '16px';
+      // Place button after summaryTable
       summaryTable.parentNode.insertBefore(requestSummaryBtn, summaryTable.nextSibling);
 
       requestSummaryBtn.addEventListener('click', async () => {
@@ -485,39 +493,36 @@
 
           const summaryResult = await response.json();
 
-          // Show text-based subcategory summaries in collapsibles
+          // Remove or clear previous subcategory summaries container
           const subCategoryContainerId = 'subCategorySummaries';
           let subCatContainer = document.getElementById(subCategoryContainerId);
           if (!subCatContainer) {
             subCatContainer = document.createElement('div');
             subCatContainer.id = subCategoryContainerId;
-            summaryTable.parentNode.insertBefore(subCatContainer, summaryTable.nextSibling);
+            summaryTable.parentNode.insertBefore(subCatContainer, requestSummaryBtn.nextSibling);
           } else {
             subCatContainer.innerHTML = '';
           }
 
-          console.log("DEBUG: Received subcategory_summaries keys:", Object.keys(summaryResult.subcategory_summaries || {}));
-
-          // Instead of filtering by main categories or summary categories, show all subcategory summaries
+          // Only show subcategory summaries (skip main categories)
+          // Main categories: '총점', '인적역량', 'AI기술역량', '솔루션 역량'
+          // The structure is: summaryResult.subcategory_summaries[group][subcat] = text
+          const MAIN_CATEGORIES = ['총점', '인적역량', 'AI기술역량', '솔루션 역량'];
           Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, subcats]) => {
-            console.log(`DEBUG: Processing group '${groupName}' with subcategories:`, Object.keys(subcats));
             Object.entries(subcats).forEach(([subcatName, summaryText]) => {
-              console.log(`DEBUG: Adding summary for subcategory '${subcatName}'`);
-
+              // Only show if subcatName is not a main category (skip if in MAIN_CATEGORIES)
+              if (MAIN_CATEGORIES.includes(subcatName)) return;
               const details = document.createElement('details');
               details.open = true;
-
-              const summary = document.createElement('summary');
-              summary.textContent = `${groupName} > ${subcatName}`;
-              summary.style.fontWeight = '700';
-              summary.style.cursor = 'pointer';
-              summary.style.marginTop = '1em';
-              details.appendChild(summary);
-
+              const summaryElem = document.createElement('summary');
+              summaryElem.textContent = `${groupName} > ${subcatName}`;
+              summaryElem.style.fontWeight = '700';
+              summaryElem.style.cursor = 'pointer';
+              summaryElem.style.marginTop = '1em';
+              details.appendChild(summaryElem);
               const p = document.createElement('p');
               p.textContent = summaryText || '요약 정보가 없습니다.';
               details.appendChild(p);
-
               subCatContainer.appendChild(details);
             });
           });
@@ -534,7 +539,6 @@
     }
     requestSummaryBtn.style.display = 'inline-block';
   }
-
   // Show the 요약 요청하기 button on initial load so user can request detailed summaries anytime
   window.addEventListener('load', () => {
     createOrShowRequestSummaryBtn();
