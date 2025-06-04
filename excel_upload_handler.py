@@ -1,316 +1,252 @@
-from msp_core import (
-    run_msp_recommendation,
-    run_msp_information_summary,
-    run_msp_information_summary_claude,
-    extract_msp_name,
-    query_embed,
-    collection,
-    run_msp_news_summary_clova
-)
-from fastapi import File, UploadFile
-from excel_upload_handler import evaluate_uploaded_excel, compute_category_scores_from_excel_data, summarize_answers_for_subcategories
-from clova_router import Executor
-from pydantic import BaseModel
-from difflib import get_close_matches
-import os
-from dotenv import load_dotenv
-load_dotenv()
-from fastapi import FastAPI, HTTPException, Depends, Request
-from fastapi.responses import StreamingResponse, JSONResponse
+import pandas as pd
+from fastapi import UploadFile
+from evaluator import evaluate_answer
 import io
-class RouterQuery(BaseModel):
-    query: str
-    chat_history: list = []
-    advanced: bool = False  # NEW
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
-import requests
-from vector_writer import run_from_msp_name
-from admin_protected import router as admin_router, manager
 
-# Register user_loader at import time to avoid "Missing user_loader callback" error
-@manager.user_loader()
-def load_user(username: str):
-    from admin_protected import User
-    env_username = os.getenv("ADMIN_USERNAME")
-    if username == env_username:
-        return User(name=username)
-
-import chromadb
-from chromadb import PersistentClient
-
-app = FastAPI()
-
-app.include_router(admin_router)
-print("📦 admin router included")
+EXPECTED_HEADERS = ["Domain", "설명", "Key Questions", "Present Lv.", "Interview Result"]
 
 
+def parse_excel_category_sheets(excel_bytes: bytes):
+    excel_data = pd.ExcelFile(io.BytesIO(excel_bytes))
+    results = {}
 
-@app.post("/run/{msp_name}")
-def run_msp_vector_pipeline(msp_name: str):
-    try:
-        run_from_msp_name(msp_name)
-        return {"message": f"Vector DB update completed for {msp_name}"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Serve static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-
-@app.get("/ui")
-def serve_ui(request: Request):
-    try:
-        user = manager(request)
-        return FileResponse("static/index.html")
-    except:
-        return RedirectResponse(url="/login?next=/ui")
-
-
-# Serve query UI
-@app.get("/query")
-def serve_query_ui():
-    return FileResponse("static/query.html")
-
-# Load ChromaDB
-CHROMA_PATH = os.path.abspath("chroma_store")
-client = PersistentClient(path=CHROMA_PATH)
-collection = client.get_or_create_collection("msp_chunks")
-
-@app.get("/ui/data")
-def get_filtered_chunks(question: str = None, min_score: int = 0):
-    # Return flat format for public UI compatibility
-    results = collection.get(include=["metadatas"])
-    data = []
-    for meta in results["metadatas"]:
-        if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
+    for sheet_name in excel_data.sheet_names:
+        if "역량" not in sheet_name:
+            print(f"[DEBUG] Skipping sheet '{sheet_name}' — name does not contain '역량'")
             continue
-        if question and question != meta["question"]:
+
+        df = pd.read_excel(excel_data, sheet_name=sheet_name, header=None)
+
+        if df.shape[0] < 2 or df.shape[1] < 5:
+            print(f"[DEBUG] Skipping sheet '{sheet_name}' — too small or malformed")
             continue
-        if meta["score"] is not None and int(meta["score"]) >= min_score:
-            data.append({
-                "msp_name": meta["msp_name"],
-                "question": meta["question"],
-                "score": meta["score"],
-                "answer": meta["answer"]
-            })
-    return JSONResponse(content=data)
 
-# Flat data endpoint for public UI
-@app.get("/ui/data_flat")
-def get_flat_chunks(question: str = None, min_score: int = 0):
-    results = collection.get(include=["metadatas"])
-    data = []
-    for meta in results["metadatas"]:
-        if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
-            continue
-        if question and question != meta["question"]:
-            continue
-        if meta["score"] is not None and int(meta["score"]) >= min_score:
-            data.append({
-                "msp_name": meta["msp_name"],
-                "question": meta["question"],
-                "score": meta["score"],
-                "answer": meta["answer"]
-            })
-    return JSONResponse(content=data)
+        try:
+            parsed = parse_excel_category_sheet(df)
+            print(f"[DEBUG] Sheet: {sheet_name}")
+            print(f"[DEBUG] Parsed: {parsed}")
+        except Exception as e:
+            print(f"[DEBUG] Error parsing sheet '{sheet_name}': {e}")
+            continue  # skip problematic sheet
 
-# Query/Ask endpoint
-@app.post("/query/ask")
-async def ask_question(request: Request):
-    body = await request.json()
-    question = body.get("question")
-    min_score = int(body.get("min_score", 0))
-    if not question:
-        raise HTTPException(status_code=400, detail="Missing question")
-
-    return run_msp_recommendation(question, min_score)
-
-# Router endpoint
-@app.post("/query/router")
-async def query_router(data: RouterQuery):
-    print(f"🟢 Advanced toggle received: {data.advanced}")
-    executor = Executor()
-    request_data = {
-        "query": data.query,
-        "chatHistory": data.chat_history
-    }
-    raw_result = executor.execute(request_data)
-
-    import json
-    import traceback
-
-    try:
-        if isinstance(raw_result, str):
-            result = json.loads(raw_result)
-        else:
-            result = raw_result
-
-        domain_result = result.get("domain", {}).get("result")
-        blocked = result.get("blockedContent", {}).get("result", [])
-
-        if domain_result == "mspevaluator":
-            extracted_name = extract_msp_name(data.query)
-            print(f"🧠 CLOVA 추출 회사명: {extracted_name}")
-            print(f"🟢 Advanced toggle received: {data.advanced}")
-            if "Information" in blocked:
-                if data.advanced:
-                    return run_msp_information_summary_claude(data.query)
-                else:
-                    return run_msp_information_summary(data.query)
-            elif "Recommend" in blocked:
-                return run_msp_recommendation(data.query, min_score=0)
-            elif "Unrelated" in blocked:
-                return {"answer": "본 시스템은 MSP 평가 도구입니다. 해당 질문은 지원하지 않습니다. 다른 질문을 입력해 주세요."}
-            else:
-                return {"answer": "질문 의도를 정확히 분류하지 못했습니다. 다시 시도해 주세요."}
-        else:
-            return {"answer": "도메인 분류에 실패했습니다. 다시 시도해 주세요."}
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Router 처리 중 오류 발생: {str(e)}")
-
-
-# Advanced Naver route
-@app.post("/query/advanced_naver")
-async def query_advanced_naver(data: RouterQuery):
-    return run_msp_news_summary_clova(data.query)
-
-# Add protected /admin route using same login logic as /ui
-@app.get("/admin")
-def serve_admin_ui(request: Request):
-    try:
-        user = manager(request)
-        return FileResponse("static/admin.html")
-    except Exception as e:
-        return RedirectResponse(url="/login?next=/admin")
-
-
-# Serve main page at root
-@app.get("/")
-def serve_main_page():
-    return FileResponse("static/main.html")
-
-
-
-# Serve upload page
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
-templates = Jinja2Templates(directory="templates")
-
-@app.get("/upload", response_class=HTMLResponse)
-async def serve_upload_page(request: Request):
-    return templates.TemplateResponse("upload.html", {"request": request})
-
-# Excel upload endpoint
-from fastapi import UploadFile, File
-
-@app.post("/api/upload_excel")
-async def upload_excel(file: UploadFile = File(...)):
-    try:
-        from excel_upload_handler import evaluate_uploaded_excel, compute_category_scores_from_excel_data
-
-        evaluated = evaluate_uploaded_excel(file)
-        summary_df = compute_category_scores_from_excel_data(evaluated)
-
-        flat_results = []
-        skipped_items = []
-        for category_name, qa_list in evaluated.items():
-            if not isinstance(qa_list, list):
-                skipped_items.append({
-                    "category": category_name,
-                    "item": qa_list,
-                    "reason": f"Expected a list but got: {type(qa_list)}"
-                })
+        sheet_results = []
+        for item in parsed:
+            question = item.get("question")
+            answer = item.get("answer")
+            if not isinstance(question, str) or not isinstance(answer, str):
                 continue
-            for item in qa_list:
-                if not isinstance(item, dict) or "question" not in item or "answer" not in item or "score" not in item:
-                    skipped_items.append({
-                        "category": category_name,
-                        "item": item,
-                        "reason": "Missing required keys or invalid format"
-                    })
-                    continue
-                flat_results.append({
-                    "category": category_name,
-                    "question": item["question"],
-                    "answer": item["answer"],
-                    "score": item["score"]
-                })
+            if answer.lower() == "nan" or not answer.strip():
+                continue
+            if answer.lower() == "nan" or not answer.strip():
+                print(f"[DEBUG] Skipping empty answer for question '{question}' in group '{item.get('group')}' of sheet '{sheet_name}'")
+                continue
+            try:
+                score = evaluate_answer(question, answer)
+            except Exception as e:
+                print(f"[ERROR] Failed to evaluate: {question[:20]} — {e}")
+                score = f"Error: {str(e)}"
 
-        from collections import defaultdict
-        group_scores = defaultdict(list)
-
-        for item in flat_results:
-            group = item.get("group", item.get("category"))
-            score = item.get("score")
-            if isinstance(score, (int, float)):
-                group_scores[group].append(score)
-
-        group_summary = []
-        for group, scores in group_scores.items():
-            avg_score = round(sum(scores) / len(scores), 2) if scores else 0
-            group_summary.append({
-                "name": group,
-                "score": avg_score,
-                "questions": len(scores)
+            sheet_results.append({
+                "question": question,
+                "answer": answer,
+                "score": score,
+                "group": item.get("group")
             })
 
-        return JSONResponse(content={
-            "evaluated_questions": flat_results,
-            "summary": summary_df.to_dict(orient="records"),
-            "skipped_items": skipped_items,
-            "groups": group_summary
-        })
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Excel 평가 처리 중 오류 발생: {str(e)}")
+        if sheet_results:
+            results[sheet_name] = sheet_results
+
+    summary_df = compute_category_scores_from_excel_data(results)
+    # Removed call to summarize_answers_for_subcategories
+    return {
+        "evaluated": results,
+        "summary": summary_df.to_dict(orient="records"),
+        # "answer_summaries": answer_summaries
+    }
 
 
-# New endpoint: /api/get_summary
-from fastapi import Request
-@app.post("/api/get_summary")
-async def get_summary(request: Request):
-    try:
-        data = await request.json()
-        evaluated = data.get("evaluated")
-        if evaluated is None:
-            raise HTTPException(status_code=400, detail="Missing 'evaluated' data")
+def generate_summary_for_evaluation(results_by_category: dict) -> dict:
+    return summarize_answers_for_subcategories(results_by_category)
 
-        # Group by group field (fallback to category if missing)
-        grouped = {}
-        for item in evaluated:
-            group = item.get("group") or item.get("category") or "Unknown"
-            grouped.setdefault(group, []).append(item)
 
-        from excel_upload_handler import summarize_answers_for_subcategories
-        summary = summarize_answers_for_subcategories(grouped)
-        return JSONResponse(content={"subcategory_summaries": summary})
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Summary processing failed: {str(e)}")
+def evaluate_uploaded_excel(uploaded_file: UploadFile):
+    excel_bytes = uploaded_file.file.read()
+    result = parse_excel_category_sheets(excel_bytes)
+    return {
+        **result["evaluated"],
+        "summary": result["summary"],
+        # Removed answer_summaries from return
+        # "answer_summaries": result["answer_summaries"]
+    }
 
-@app.post("/api/add_to_vector_db")
-async def add_to_vector_db(data: dict):
-    try:
-        from vector_writer import run_from_direct_input
-        msp_name = data.get("msp_name")
-        if not msp_name:
-            raise HTTPException(status_code=400, detail="Missing msp_name")
 
-        items = data.get("items", [])
+def parse_excel_category_sheet(df: pd.DataFrame):
+    parsed = []
+    last_valid_group = None
+    for _, row in df.iterrows():
+        try:
+            question = str(row[2]).strip()
+            answer = str(row[4]).strip()
+            raw_group = str(row[1]).strip()
+
+            # If the raw_group is empty or 'nan', treat as None
+            if raw_group.lower() in ["", "nan"]:
+                group = None
+            else:
+                group = raw_group
+                last_valid_group = group
+
+            # If no valid group found yet, fallback to None (no "기타" fallback here)
+            if group is None:
+                group = last_valid_group
+
+            # Skip header rows or invalid questions/answers
+            if question.lower() == "key questions":
+                continue
+            if not question or not answer or question == "nan":
+                continue
+
+            # Append with proper group value, no forced "기타" fallback
+            parsed.append({
+                "question": question,
+                "answer": answer,
+                "group": group
+            })
+        except Exception:
+            continue
+    return parsed
+
+def compute_category_scores_from_excel_data(results_by_category):
+    """Takes dict from upload-based evaluation and computes average score per category, group, and overall."""
+    category_scores = {}
+    group_scores = {}
+    total_score = 0
+    total_questions = 0
+
+    for category, items in results_by_category.items():
+        if category == "summary":
+            continue
         if not isinstance(items, list):
-            raise HTTPException(status_code=400, detail="Missing or invalid items list")
+            print(f"[WARNING] Skipping category '{category}' — expected list but got {type(items)}")
+            continue
 
-        summary = data.get("summary")
-        if summary is None:
-            raise HTTPException(status_code=400, detail="Missing summary")
+        filtered_items = [item for item in items if isinstance(item, dict) and "score" in item and isinstance(item["score"], int)]
+        if not filtered_items:
+            continue
+        question_count = len(filtered_items)
+        score_sum = sum(item["score"] for item in filtered_items)
+        percentage = round(score_sum / (question_count * 5), 4)
+        category_scores[category] = {
+            "average": percentage,
+            "count": question_count,
+            "total": score_sum
+        }
+        total_score += score_sum
+        total_questions += question_count
 
-        run_from_direct_input(msp_name, items, summary)
-        return {"message": f"Successfully added {len(items)} items to vector DB for {msp_name}"}
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Vector DB update failed: {str(e)}")
+        # Track group scores within this category, nested by category
+        for item in filtered_items:
+            group = item.get("group", "").strip()
+            if not group or group.lower() == "nan":
+                continue
+            if category not in group_scores:
+                group_scores[category] = {}
+            if group not in group_scores[category]:
+                group_scores[category][group] = {"score_sum": 0, "count": 0}
+            group_scores[category][group]["score_sum"] += item["score"]
+            group_scores[category][group]["count"] += 1
+
+    total_max = total_questions * 5
+    overall = round((total_score / total_max) * 100, 2) if total_max > 0 else 0.0
+
+    summary = [{"Category": "총점", "Score": round(overall, 2), "Questions": total_questions}]
+    for category, data in category_scores.items():
+        summary.append({
+            "Category": category,
+            "Score": round(data['average'] * 100, 2),
+            "Questions": data['count']
+        })
+    # Append group scores under each category (nested)
+    for category, groups in group_scores.items():
+        for group_name, data in groups.items():
+            group_avg = data["score_sum"] / (data["count"] * 5)
+            summary.append({
+                "Category": group_name,
+                "Score": round(group_avg * 100, 2),
+                "Questions": data["count"]
+            })
+
+    return pd.DataFrame(summary)
+
+
+# New helper function for summarizing answers per group
+def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
+    from openai import OpenAI
+    import os
+
+    CLOVA_API_KEY = os.getenv("CLOVA_API_KEY_OPENAI")
+    API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
+    client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
+    model = "HCX-005"
+
+    summaries = {}
+
+    for category, items in results_by_category.items():
+        if not isinstance(items, list):
+            continue
+        # Group answers by 'group', reusing last_valid_group logic as in parse_excel_category_sheet
+        group_to_answers = {}
+        last_valid_group = None
+        for item in items:
+            raw_group = item.get("group")
+            if isinstance(raw_group, str) and raw_group.strip().lower() not in ["", "nan"]:
+                group = raw_group.strip()
+                last_valid_group = group
+            else:
+                group = last_valid_group if 'last_valid_group' in locals() and last_valid_group else None
+
+            if not group:
+                continue  # skip if still no valid group
+
+            answer = item.get("answer", "").strip()
+            if not answer:
+                continue
+            group_to_answers.setdefault(group, []).append(answer)
+
+        summaries[category] = {}
+        for group, answers in group_to_answers.items():
+            if not answers:
+                continue  # skip empty answer groups
+            combined_text = "\n".join(answers[:5])  # limit to first 5 answers
+            prompt = (
+                f"다음은 {category}의 하위 그룹 '{group}'에 대한 답변들임.\n"
+                f"이 답변들을 요약하여 정확하고 명확한 한 문장으로 작성할 것.\n"
+                f"중복된 내용 없이, 핵심만 간결하게 포함하며, 문장은 '~함' 형태로 작성할 것.\n"
+                f"요약은 반드시 한 문장이어야 하며, 군더더기 없이 명확하게 표현되어야 함.\n"
+                f"답변들:\n{combined_text}\n"
+                f"요약:"
+            )
+            try:
+                print(f"[DEBUG] Prompt for category '{category}', group '{group}':\n{prompt}")
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": "답변을 명확하고 간결하게 한 문장으로 요약해 주세요."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.3,
+                    max_tokens=60,
+                )
+                summary = response.choices[0].message.content.strip()
+                print(f"[DEBUG] Summary for category '{category}', group '{group}': {summary}")
+            except Exception as e:
+                error_message = str(e)
+                if "429" in error_message or "rate limit" in error_message.lower():
+                    summary = "요약 실패: API 요청 제한 초과 또는 기타 오류 발생"
+                else:
+                    summary = f"요약 실패: {error_message}"
+                print(f"[ERROR] Summarization failed for category '{category}', group '{group}': {error_message}")
+
+            summaries[category][group] = summary
+
+    return summaries
