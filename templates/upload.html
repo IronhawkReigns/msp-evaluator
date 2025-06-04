@@ -505,18 +505,22 @@
 
         // Group subcategories under main categories and gather summaries
         const groupedSubCats = {};
+        // Define main categories for matching
+        const subcatMainCategories = ['인적역량', 'AI기술역량', '솔루션 역량'];
         result.summary.forEach(row => {
           if (!row || !row.Category) return;
-          if (mainCategories.includes(row.Category)) return;
+          if (subcatMainCategories.includes(row.Category)) return;
 
-          // Assign subcategory to main category by checking group names from backend results
+          // Instead of searching evaluated_questions, assign main category by checking keys in subcategory_summaries
           let assignedMainCat = null;
-          if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
-            for (const q of result.evaluated_questions) {
-              if (q.group && q.group.trim() === row.Category.trim()) {
-                assignedMainCat = q.category;
-                break;
-              }
+          for (const mainCat of subcatMainCategories) {
+            if (
+              result.subcategory_summaries &&
+              result.subcategory_summaries[mainCat] &&
+              result.subcategory_summaries[mainCat][row.Category]
+            ) {
+              assignedMainCat = mainCat;
+              break;
             }
           }
 
@@ -530,9 +534,6 @@
 
           // Attach summary from result.subcategory_summaries if available
           let summaryText = '요약 정보가 없습니다.';
-          // --- DEBUG LOGS for subcategory summaries ---
-          console.log("DEBUG mainCat:", assignedMainCat, "subCat:", row.Category);
-          console.log("DEBUG summary found:", result.subcategory_summaries?.[assignedMainCat]?.[row.Category]);
           if (
             result.subcategory_summaries &&
             result.subcategory_summaries[assignedMainCat] &&
