@@ -225,7 +225,7 @@ def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
                 f"다음은 {category}의 하위 그룹 '{group}'에 대한 답변들임.\n"
                 f"이 답변들을 요약하여 정확하고 명확한 한 문장으로 작성할 것.\n"
                 f"중복된 내용 없이, 핵심만 간결하게 포함하며, 문장은 '~함' 형태로 작성할 것.\n"
-                f"요약은 반드시 한 문장이어야 하며, 군더더기 없이 명확하게 표현되어야 함.\n"
+                f"요약은 반드시 과하게 길지 않은 한 문장이어야 하며, 군더더기 없이 명확하게 표현되어야 함.\n"
                 f"답변들:\n{combined_text}\n"
                 f"요약:"
             )
