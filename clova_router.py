@@ -20,7 +20,7 @@ class Executor:
         }
 
         conn = http.client.HTTPSConnection(self._host)
-        conn.request('POST', '/testapp/v1/routers/haxvawqc/versions/1/route', json.dumps(request), headers)
+        conn.request('POST', '/serviceapp/v1/routers/haxvawqc/versions/1/route', json.dumps(request), headers)
         response = conn.getresponse()
         status = response.status
         result = json.loads(response.read().decode(encoding='utf-8'))
