@@ -496,11 +496,12 @@
             subCatContainer.innerHTML = '';
           }
 
+          // Main categories to exclude from showing summaries here
           const mainCategories = ['총점', '인적역량', 'AI기술역량', '솔루션 역량'];
 
           Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, subcats]) => {
             Object.entries(subcats).forEach(([subcatName, summaryText]) => {
-              // Skip main categories to only show smaller subcategories
+              // Skip main categories
               if (mainCategories.includes(subcatName)) return;
 
               const details = document.createElement('details');
