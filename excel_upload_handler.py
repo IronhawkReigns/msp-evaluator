@@ -170,7 +170,7 @@ def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
     import os
 
     CLOVA_API_KEY = os.getenv("CLOVA_API_KEY")
-    API_URL = "https://clovastudio.stream.ntruss.com/v1/openai"
+    API_URL = "https://clovastudio.stream.ntruss.com/serviceapp/v1/api-tools/segmentation"
     client = OpenAI(api_key=CLOVA_API_KEY, base_url=API_URL)
     model = "HCX-005"
 
