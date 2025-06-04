@@ -235,7 +235,8 @@ async def upload_excel(file: UploadFile = File(...)):
                     "category": category_name,
                     "question": item["question"],
                     "answer": item["answer"],
-                    "score": item["score"]
+                    "score": item["score"],
+                    "group": item.get("group")  # Preserve group info for summary
                 })
 
         from collections import defaultdict
