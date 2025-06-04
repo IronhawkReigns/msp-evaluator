@@ -57,13 +57,16 @@ def parse_excel_category_sheets(excel_bytes: bytes):
             results[sheet_name] = sheet_results
 
     summary_df = compute_category_scores_from_excel_data(results)
-    # New: generate answer summaries for subcategories
-    answer_summaries = summarize_answers_for_subcategories(results)
+    # Removed call to summarize_answers_for_subcategories
     return {
         "evaluated": results,
         "summary": summary_df.to_dict(orient="records"),
-        "answer_summaries": answer_summaries
+        # "answer_summaries": answer_summaries
     }
+
+
+def generate_summary_for_evaluation(results_by_category: dict) -> dict:
+    return summarize_answers_for_subcategories(results_by_category)
 
 
 def evaluate_uploaded_excel(uploaded_file: UploadFile):
@@ -72,7 +75,8 @@ def evaluate_uploaded_excel(uploaded_file: UploadFile):
     return {
         **result["evaluated"],
         "summary": result["summary"],
-        "answer_summaries": result["answer_summaries"]
+        # Removed answer_summaries from return
+        # "answer_summaries": result["answer_summaries"]
     }
 
 
