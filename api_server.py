@@ -18,6 +18,9 @@ load_dotenv()
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 import io
+
+group_to_category_cache = {}
+
 class RouterQuery(BaseModel):
     query: str
     chat_history: list = []
@@ -270,6 +273,9 @@ async def upload_excel(file: UploadFile = File(...)):
             if group and category:
                 group_to_category[group] = category
 
+        global group_to_category_cache
+        group_to_category_cache = group_to_category
+
         return JSONResponse(content={
             "evaluated_questions": flat_results,
             "summary": summary_df.to_dict(orient="records"),
@@ -351,24 +357,12 @@ async def get_radar_data():
 @app.get("/api/get_group_to_category_map")
 async def get_group_to_category_map():
     try:
+        # Directly return the cached mapping built during upload
         from fastapi.responses import JSONResponse
-        global latest_group_summary
-        # Use group_to_category from the last successful upload response
-        # Temporarily re-parse flat_results from cached data
-        from collections import defaultdict
-
-        # Use latest_group_summary to reconstruct mapping (assumes one-to-one mapping)
-        group_to_category = {}
-        for item in latest_group_summary:
-            group_name = item.get("name")
-            # Infer category name from cached data — adjust here if needed
-            # In actual use, you'd want to cache this separately during upload
-            if group_name:
-                for cat in ["인적역량", "AI기술역량", "솔루션 역량"]:
-                    if group_name in [g.get("group") for g in latest_group_summary if g.get("name") == group_name]:
-                        group_to_category[group_name] = cat
-
-        return JSONResponse(content=group_to_category)
+        global group_to_category_cache
+        if not group_to_category_cache:
+            raise HTTPException(status_code=404, detail="Group-to-category map not available yet. Upload data first.")
+        return JSONResponse(content=group_to_category_cache)
     except Exception as e:
         import traceback
         traceback.print_exc()
