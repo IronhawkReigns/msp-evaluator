@@ -686,28 +686,30 @@ async function renderRadarCharts() {
     return;
   }
 
-  // Prepare subCategorySummaries using backend format
-  const subCategorySummaries = result.summary.map((item) => ({
-    Category: item.Category,
-    Score: item.Score,
-    Questions: item.Questions,
+// Standardize and filter summary entries before chart rendering
+const formattedSummary = result.summary
+  .filter(item => typeof item.Score === 'number')
+  .map(item => ({
+    name: item.Category,
+    score: item.Score,
+    questions: item.Questions
   }));
 
-  // Build chartData by grouping by group_to_category
-  const chartData = {};
-  subCategorySummaries.forEach((item) => {
-    const group = group_to_category[item.Category];
-    if (!group) return;
-    if (!chartData[group]) chartData[group] = [];
-    chartData[group].push({
-      Category: item.Category,
-      Score: item.Score,
-      Questions: item.Questions,
-    });
+// Build chartData by grouping by group_to_category (only valid numeric scores)
+const chartData = {};
+formattedSummary.forEach((item) => {
+  const group = group_to_category[item.name];
+  if (!group) return;
+  if (!chartData[group]) chartData[group] = [];
+  chartData[group].push({
+    name: item.name,
+    score: item.score,
+    questions: item.questions,
   });
+});
 
-  console.debug("DEBUG: Final radar chartData", chartData);
-  createRadarChart(chartData);
+console.debug("DEBUG: Final radar chartData", chartData);
+createRadarChart(chartData);
 }
 
 // Call renderRadarCharts after upload success
@@ -722,8 +724,8 @@ function createRadarChart(chartData) {
 
   Object.entries(chartData).forEach(([category, subcats]) => {
     if (!subcats.length) return;
-    const labels = subcats.map(sc => sc.Category);
-    const data = subcats.map(sc => sc.Score);
+    const labels = subcats.map(sc => sc.name);
+    const data = subcats.map(sc => sc.score);
     const radarChartInput = {
       labels: labels,
       datasets: [{
