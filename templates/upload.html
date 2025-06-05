@@ -720,14 +720,18 @@ function createRadarChart(chartData) {
   radarContainer.innerHTML = ""; // Clear existing charts
 
   Object.entries(chartData).forEach(([category, subcats]) => {
-    if (!subcats.length) return;
-    const labels = subcats.map(sc => sc.name);
-    const data = subcats.map(sc => sc.score);
+    // Exclude items with questions: 0
+    const filteredGroups = subcats.filter(g => g.questions > 0);
+    if (!filteredGroups.length) return;
+    const radarLabels = filteredGroups.map(g => g.name);
+    const radarScores = filteredGroups.map(g => g.score);
+    // Debug log before chart rendering
+    console.debug('Rendering Radar Chart with:', radarLabels, radarScores);
     const radarChartInput = {
-      labels: labels,
+      labels: radarLabels,
       datasets: [{
         label: category,
-        data: data,
+        data: radarScores,
         fill: true,
         borderWidth: 2,
         pointRadius: 3
