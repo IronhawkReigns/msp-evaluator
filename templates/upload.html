@@ -688,10 +688,8 @@ async function renderRadarCharts() {
 
   // Prepare subcategory radar chart data
   const summary = result.summary;
-  const subcategoryScores = summary.filter(item =>
-    item.Category !== '총점' &&
-    item.Category !== '인적역량' &&
-    item.Category !== 'AI기술역량'
+  const subcategoryScores = summary.filter(
+    item => group_to_category.hasOwnProperty(item.Category)
   );
 
   const chartData = {};
