@@ -319,6 +319,25 @@
   <div id="evaluatedQuestionsTable"></div>
   
   <div id="summaryTable"></div>
+  <div style="margin-top: 32px; text-align: center;">
+    <h3 style="font-size: 1.2rem; color: #03c75a;">역량 그룹별 방사형 차트</h3>
+
+    <div>
+      <canvas id="radarChartHuman" width="500" height="400" style="margin: 20px auto;"></canvas>
+      <br />
+      <button id="downloadRadarChartHumanBtn" class="copy-btn" style="background: #03c75a; color: white; margin-top: 12px;">인적역량 그래프 다운로드</button>
+    </div>
+    <div>
+      <canvas id="radarChartTech" width="500" height="400" style="margin: 20px auto;"></canvas>
+      <br />
+      <button id="downloadRadarChartTechBtn" class="copy-btn" style="background: #03c75a; color: white; margin-top: 12px;">AI기술역량 그래프 다운로드</button>
+    </div>
+    <div>
+      <canvas id="radarChartSolution" width="500" height="400" style="margin: 20px auto;"></canvas>
+      <br />
+      <button id="downloadRadarChartSolutionBtn" class="copy-btn" style="background: #03c75a; color: white; margin-top: 12px;">솔루션 역량 그래프 다운로드</button>
+    </div>
+  </div>
   <div style="text-align:center; margin-top: 24px;">
     <button id="uploadToVectorDbBtn" class="copy-btn" style="background: linear-gradient(90deg, #028a0f, #07bc2f); display:none;">
       벡터 DB에 업로드
@@ -671,6 +690,71 @@
   form.addEventListener('submit', async (e) => {
   if (requestSummaryBtn) requestSummaryBtn.style.display = 'none';
 });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  async function loadRadarCharts() {
+    try {
+      const res = await fetch('/api/get_radar_data');
+      if (!res.ok) throw new Error('데이터 요청 실패');
+      const data = await res.json();
+
+      const ctxHuman = document.getElementById('radarChartHuman').getContext('2d');
+      const ctxTech = document.getElementById('radarChartTech').getContext('2d');
+      const ctxSolution = document.getElementById('radarChartSolution').getContext('2d');
+
+      const makeRadar = (ctx, label, dataObj) => {
+        return new Chart(ctx, {
+          type: 'radar',
+          data: {
+            labels: Object.keys(dataObj),
+            datasets: [{
+              label: label,
+              data: Object.values(dataObj),
+              backgroundColor: 'rgba(3, 199, 90, 0.2)',
+              borderColor: '#03c75a',
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            scale: {
+              ticks: {
+                beginAtZero: true,
+                min: 0,
+                max: 100
+              }
+            }
+          }
+        });
+      };
+
+      const chartHuman = makeRadar(ctxHuman, '인적역량', data['인적역량'] || {});
+      const chartTech = makeRadar(ctxTech, 'AI기술역량', data['AI기술역량'] || {});
+      const chartSolution = makeRadar(ctxSolution, '솔루션 역량', data['솔루션 역량'] || {});
+
+      const addDownload = (btnId, chart, filename) => {
+        document.getElementById(btnId).addEventListener("click", () => {
+          const url = chart.toBase64Image();
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = filename;
+          a.click();
+        });
+      };
+
+      addDownload("downloadRadarChartHumanBtn", chartHuman, "human_radar_chart.png");
+      addDownload("downloadRadarChartTechBtn", chartTech, "tech_radar_chart.png");
+      addDownload("downloadRadarChartSolutionBtn", chartSolution, "solution_radar_chart.png");
+
+    } catch (err) {
+      console.error("Radar chart error:", err);
+    }
+  }
+
+  form.addEventListener('submit', () => {
+    setTimeout(loadRadarCharts, 500);
+  });
 </script>
 </body>
 </html>
