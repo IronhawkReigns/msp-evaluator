@@ -415,6 +415,14 @@
 
       result = await res.json();
       console.log("DEBUG: API result", result);
+      // Normalize summary structure from backend to frontend format
+      if (Array.isArray(result.summary)) {
+        result.summary = result.summary.map((item) => ({
+          name: item.Category,
+          score: item.Score,
+          questions: item.Questions,
+        }));
+      }
       // ========== DEBUG LOGS for subcategory_summaries ==========
       console.log("DEBUG: Subcategory summaries keys:", Object.keys(result.subcategory_summaries || {}));
       Object.entries(result.subcategory_summaries || {}).forEach(([group, subcats]) => {
@@ -503,14 +511,8 @@
         const tbody = document.createElement('tbody');
         result.summary.forEach(row => {
           const tr = document.createElement('tr');
-          let cells = [];
-
-          if (Array.isArray(row)) {
-            cells = row;
-          } else if (typeof row === 'object') {
-            cells = [row.Category || '', row.Score || '', row.Questions || ''];
-          }
-
+          // Use normalized keys: name, score, questions
+          const cells = [row.name || '', row.score || '', row.questions || ''];
           cells.forEach(cell => {
             const td = document.createElement('td');
             td.textContent = cell;
@@ -688,12 +690,7 @@ async function renderRadarCharts() {
 
 // Standardize and filter summary entries before chart rendering
 const formattedSummary = result.summary
-  .filter(item => typeof item.Score === 'number')
-  .map(item => ({
-    name: item.Category,
-    score: item.Score,
-    questions: item.Questions
-  }));
+  .filter(item => typeof item.score === 'number');
 
 // Build chartData by grouping by group_to_category (only valid numeric scores)
 const chartData = {};
