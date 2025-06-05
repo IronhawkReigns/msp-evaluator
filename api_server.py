@@ -286,15 +286,7 @@ async def upload_excel(file: UploadFile = File(...)):
 
         return JSONResponse(content={
             "evaluated_questions": flat_results,
-            "summary": [
-                {
-                    "name": row["Category"],
-                    "score": row["Score"],
-                    "questions": row.get("Questions")
-                }
-                for row in summary_df.to_dict(orient="records")
-                if isinstance(row.get("Category"), str)
-            ],
+            "summary": summary_df.to_dict(orient="records"),
             "skipped_items": skipped_items,
             "groups": group_summary,
             "group_to_category": group_to_category
