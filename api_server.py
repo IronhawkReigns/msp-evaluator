@@ -251,6 +251,7 @@ async def upload_excel(file: UploadFile = File(...)):
         # Filter from summary_df instead of recomputing
         group_summary = []
         for record in summary_df.to_dict(orient="records"):
+            print(f"[DEBUG] Summary Record: {record}")
             name = record.get("Category")
             if not isinstance(name, str):
                 continue
@@ -268,6 +269,7 @@ async def upload_excel(file: UploadFile = File(...)):
                 "score": score,
                 "questions": None
             })
+            print(f"[DEBUG] Added group summary item: name={name}, score={score}")
 
         global latest_group_summary
         latest_group_summary = group_summary
