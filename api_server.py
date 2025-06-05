@@ -347,3 +347,29 @@ async def get_radar_data():
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Radar data failed: {str(e)}")
+
+@app.get("/api/get_group_to_category_map")
+async def get_group_to_category_map():
+    try:
+        from fastapi.responses import JSONResponse
+        global latest_group_summary
+        # Use group_to_category from the last successful upload response
+        # Temporarily re-parse flat_results from cached data
+        from collections import defaultdict
+
+        # Use latest_group_summary to reconstruct mapping (assumes one-to-one mapping)
+        group_to_category = {}
+        for item in latest_group_summary:
+            group_name = item.get("name")
+            # Infer category name from cached data — adjust here if needed
+            # In actual use, you'd want to cache this separately during upload
+            if group_name:
+                for cat in ["인적역량", "AI기술역량", "솔루션 역량"]:
+                    if group_name in [g.get("group") for g in latest_group_summary if g.get("name") == group_name]:
+                        group_to_category[group_name] = cat
+
+        return JSONResponse(content=group_to_category)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Group-to-category map failed: {str(e)}")
