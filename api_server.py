@@ -253,12 +253,13 @@ async def upload_excel(file: UploadFile = File(...)):
         for record in summary_df.to_dict(orient="records"):
             print(f"[DEBUG] Summary Record: {record}")
             name = record.get("Category")
+            score = record.get("Score")
+            print(f"[DEBUG] ➕ Group Summary Item Candidate - name: {name}, score: {score}")
             if not isinstance(name, str):
                 continue
             if "총점" in name:
                 continue
 
-            score = record.get("Score")
             try:
                 score = float(score)
             except (ValueError, TypeError):
@@ -273,6 +274,7 @@ async def upload_excel(file: UploadFile = File(...)):
 
         global latest_group_summary
         latest_group_summary = group_summary
+        print(f"[DEBUG] Final Group Summary Payload: {latest_group_summary}")
 
         group_to_category = {}
         for item in flat_results:
