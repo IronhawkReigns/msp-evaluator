@@ -719,11 +719,22 @@
 
       const options = {
         responsive: true,
-        scale: {
-          ticks: {
+        scales: {
+          r: {
             beginAtZero: true,
             min: 0,
-            max: 100
+            max: 100,
+            ticks: {
+              stepSize: 20,
+              color: '#666',
+              backdropColor: 'transparent'
+            },
+            pointLabels: {
+              font: {
+                size: 14
+              },
+              color: '#333'
+            }
           }
         }
       };
