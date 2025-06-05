@@ -681,6 +681,7 @@ async function renderRadarCharts() {
   // Fetch group to category mapping
   const response = await fetch("/api/get_group_to_category_map");
   const group_to_category = await response.json();
+  console.debug("DEBUG: group_to_category keys:", Object.keys(group_to_category || {}));
 
   // Use result.summary (from backend response) for radar chart, fallback if not present
   if (!result.summary || !Array.isArray(result.summary)) {
@@ -695,9 +696,12 @@ async function renderRadarCharts() {
   // Build chartData by grouping by group_to_category (only valid numeric scores)
   const chartData = {};
   formattedSummary.forEach((item) => {
+    console.debug("DEBUG: evaluating summary item name:", item.name);
     const group = group_to_category?.[item.name];
     if (!group) {
-      console.warn("Radar chart: unknown category name", item.name);
+      console.warn("⚠️ Radar chart skipped item due to unknown group mapping:", item.name);
+    }
+    if (!group) {
       return;
     }
     if (!chartData[group]) chartData[group] = [];
