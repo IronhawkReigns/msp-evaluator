@@ -1,369 +1,800 @@
-from msp_core import (
-    run_msp_recommendation,
-    run_msp_information_summary,
-    run_msp_information_summary_claude,
-    extract_msp_name,
-    query_embed,
-    collection,
-    run_msp_news_summary_clova
-)
-from fastapi import File, UploadFile
-from excel_upload_handler import evaluate_uploaded_excel, compute_category_scores_from_excel_data, summarize_answers_for_subcategories
-from clova_router import Executor
-from pydantic import BaseModel
-from difflib import get_close_matches
-import os
-from dotenv import load_dotenv
-load_dotenv()
-from fastapi import FastAPI, HTTPException, Depends, Request
-from fastapi.responses import StreamingResponse, JSONResponse
-import io
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>평가 도구</title>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: calc(100% - 56px);
+    position: absolute;
+    top: 20px;
+    left: 28px;
+    right: 28px;
+    background: none;
+    box-shadow: none;
+    padding: 0;
+  }
 
-group_to_category_cache = {}
+  .header-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #03c75a;
+    font-family: 'Noto Sans KR', sans-serif !important;
+    text-decoration: none;
+  }
 
-class RouterQuery(BaseModel):
-    query: str
-    chat_history: list = []
-    advanced: bool = False  # NEW
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
-import requests
-from vector_writer import run_from_msp_name
-from admin_protected import router as admin_router, manager
+  .header-title:hover {
+    text-decoration: none;
+    cursor: pointer;
+  }
 
-# Register user_loader at import time to avoid "Missing user_loader callback" error
-@manager.user_loader()
-def load_user(username: str):
-    from admin_protected import User
-    env_username = os.getenv("ADMIN_USERNAME")
-    if username == env_username:
-        return User(name=username)
+  .admin-link {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    font-family: 'Noto Sans KR', sans-serif;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
 
-import chromadb
-from chromadb import PersistentClient
+  .admin-link:hover {
+    color: #03c75a;
+  }
+  /* Your existing styles unchanged */
+  :root {
+    --primary-color: #03c75a;
+    --background-color: #f5f7fa;
+    --card-bg: #fff;
+    --card-shadow: rgba(0, 0, 0, 0.1);
+    --text-color: #333;
+    --muted-color: #666;
+    --border-color: #d0d7de;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--background-color);
+    font-family: 'NanumSquareNeo', sans-serif !important;
+    color: var(--text-color);
+  }
+  main.container {
+    max-width: 960px;
+    margin: 3em auto 5em;
+    padding: 2em 2.5em;
+    background: var(--card-bg);
+    box-shadow: 0 8px 24px var(--card-shadow);
+    border-radius: 12px;
+  }
+  h2 {
+    color: var(--primary-color);
+    margin-bottom: 1em;
+    font-weight: 900;
+    font-size: 2rem;
+    text-align: center;
+  }
+  form#uploadForm {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    justify-content: flex-start;
+    margin-bottom: 1.5em;
+  }
+  label[for="excelFile"] {
+    flex: 0 0 140px;
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    user-select: none;
+  }
+  input[type="file"] {
+    flex: 1 1 auto;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.7em 1em;
+    font-size: 1rem;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    vertical-align: middle;
+    height: 44px;
+    box-sizing: border-box;
+  }
+  input[type="file"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(3,199,90,0.3);
+  }
+  button[type="submit"] {
+    flex: 0 0 160px;
+    background: linear-gradient(90deg, var(--primary-color), #1ecb8f);
+    border: none;
+    color: white;
+    padding: 0.7em 1.2em;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: filter 0.25s ease;
+    user-select: none;
+    height: 44px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  button[type="submit"]:hover {
+    filter: brightness(1.1);
+  }
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9rem;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    border: 1px solid var(--border-color);
+  }
+  thead tr {
+    background-color: #04a14b;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  th, td {
+    padding: 0.75em 1em;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.85rem;
+    white-space: normal;
+    word-break: keep-all;
+  }
 
-app = FastAPI()
-
-# Global radar group summary cache
-latest_group_summary = []
-
-app.include_router(admin_router)
-print("📦 admin router included")
-
-
-
-@app.post("/run/{msp_name}")
-def run_msp_vector_pipeline(msp_name: str):
-    try:
-        run_from_msp_name(msp_name)
-        return {"message": f"Vector DB update completed for {msp_name}"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Serve static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-
-@app.get("/ui")
-def serve_ui(request: Request):
-    try:
-        user = manager(request)
-        return FileResponse("static/index.html")
-    except:
-        return RedirectResponse(url="/login?next=/ui")
-
-
-# Serve query UI
-@app.get("/query")
-def serve_query_ui():
-    return FileResponse("static/query.html")
-
-# Load ChromaDB
-CHROMA_PATH = os.path.abspath("chroma_store")
-client = PersistentClient(path=CHROMA_PATH)
-collection = client.get_or_create_collection("msp_chunks")
-
-@app.get("/ui/data")
-def get_filtered_chunks(question: str = None, min_score: int = 0):
-    # Return flat format for public UI compatibility
-    results = collection.get(include=["metadatas"])
-    data = []
-    for meta in results["metadatas"]:
-        if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
-            continue
-        if question and question != meta["question"]:
-            continue
-        if meta["score"] is not None and int(meta["score"]) >= min_score:
-            data.append({
-                "msp_name": meta["msp_name"],
-                "question": meta["question"],
-                "score": meta["score"],
-                "answer": meta["answer"]
-            })
-    return JSONResponse(content=data)
-
-# Flat data endpoint for public UI
-@app.get("/ui/data_flat")
-def get_flat_chunks(question: str = None, min_score: int = 0):
-    results = collection.get(include=["metadatas"])
-    data = []
-    for meta in results["metadatas"]:
-        if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
-            continue
-        if question and question != meta["question"]:
-            continue
-        if meta["score"] is not None and int(meta["score"]) >= min_score:
-            data.append({
-                "msp_name": meta["msp_name"],
-                "question": meta["question"],
-                "score": meta["score"],
-                "answer": meta["answer"]
-            })
-    return JSONResponse(content=data)
-
-# Query/Ask endpoint
-@app.post("/query/ask")
-async def ask_question(request: Request):
-    body = await request.json()
-    question = body.get("question")
-    min_score = int(body.get("min_score", 0))
-    if not question:
-        raise HTTPException(status_code=400, detail="Missing question")
-
-    return run_msp_recommendation(question, min_score)
-
-# Router endpoint
-@app.post("/query/router")
-async def query_router(data: RouterQuery):
-    print(f"🟢 Advanced toggle received: {data.advanced}")
-    executor = Executor()
-    request_data = {
-        "query": data.query,
-        "chatHistory": data.chat_history
+  thead th:first-child,
+  tbody td:first-child {
+    white-space: nowrap;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  th:last-child, td:last-child {
+    border-right: none;
+  }
+  thead th {
+    text-align: center;
+  }
+  tbody td {
+    text-align: left;
+  }
+  thead th:first-child,
+  tbody td:first-child {
+    text-align: center;
+    font-weight: 700;
+  }
+  tbody tr:hover {
+    background-color: #e6f4ea;
+  }
+  tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  input.score-input {
+    width: 3.2em;
+    font-size: 1rem;
+    padding: 0.3em 0.4em;
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    text-align: center;
+    transition: border-color 0.3s ease;
+  }
+  input.score-input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 8px rgba(3,199,90,0.3);
+  }
+  @media (max-width: 600px) {
+    form#uploadForm {
+      flex-direction: column;
+      align-items: stretch;
     }
-    raw_result = executor.execute(request_data)
+    input[type="file"], button[type="submit"] {
+      width: 100%;
+      flex: none;
+    }
+    label[for="excelFile"] {
+      flex: none;
+      margin-bottom: 0.3em;
+    }
+  }
+  .summary-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9rem;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    border: 1px solid var(--border-color);
+  }
+  .summary-table thead tr {
+    background-color: #04a14b;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .summary-table th, .summary-table td {
+    padding: 0.75em 1em;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.85rem;
+    white-space: normal;
+    word-break: keep-all;
+  }
 
-    import json
-    import traceback
+  .summary-table thead th:first-child,
+  .summary-table tbody td:first-child {
+    white-space: nowrap;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .summary-table th:last-child, .summary-table td:last-child {
+    border-right: none;
+  }
+  .summary-table thead th {
+    text-align: center;
+  }
+  .summary-table tbody td {
+    text-align: left;
+  }
+  .summary-table thead th:first-child,
+  .summary-table tbody td:first-child {
+    text-align: center;
+    font-weight: 700;
+  }
+  .summary-table tbody tr:hover {
+    background-color: #e6f4ea;
+  }
+  .summary-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  .spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 30px auto;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .copy-btn-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 16px;
+    margin-bottom: 20px;
+  }
+  .copy-btn {
+    border: none;
+    color: white;
+    border-radius: 24px;
+    padding: 12px 32px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: 'NanumSquareNeo', sans-serif !important;
+    transition: background 0.3s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 10px rgba(3, 199, 90, 0.3);
+    user-select: none;
+  }
+  .copy-btn:hover {
+    box-shadow: 0 6px 14px rgba(3, 199, 90, 0.5);
+  }
+</style>
+</head>
+<body>
+<header class="header">
+  <a class="header-title" href="https://mspevaluator.duckdns.org" target="_blank" rel="noopener noreferrer">NAVER Cloud</a>
+  <a class="admin-link" href="/login?next=/admin">관리자</a>
+</header>
+<main class="container">
+  <h2>파트너사 평가 도구</h2>
+  <form id="uploadForm" autocomplete="off" novalidate>
+    <label for="excelFile">엑셀 파일 (.xlsx):</label>
+    <input type="file" id="excelFile" name="file" accept=".xlsx" required />
+    <button type="submit">업로드 및 평가</button>
+  </form>
 
-    try:
-        if isinstance(raw_result, str):
-            result = json.loads(raw_result)
-        else:
-            result = raw_result
+  <div id="evaluatedQuestionsTable"></div>
+  
+  <div id="summaryTable"></div>
+<div style="margin-top: 32px; text-align: center;">
+  <h3 style="font-size: 1.2rem; color: #03c75a;">역량 그룹별 방사형 차트</h3>
+  <div id="radarChartsContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 2em; margin-top: 1.5em;"></div>
+</div>
+  <div style="text-align:center; margin-top: 24px;">
+    <button id="uploadToVectorDbBtn" class="copy-btn" style="background: linear-gradient(90deg, #028a0f, #07bc2f); display:none;">
+      벡터 DB에 업로드
+    </button>
+  </div>
+</main>
 
-        domain_result = result.get("domain", {}).get("result")
-        blocked = result.get("blockedContent", {}).get("result", [])
+<script>
+  const form = document.getElementById('uploadForm');
+  const evaluatedQuestionsTable = document.getElementById('evaluatedQuestionsTable');
+  const summaryTable = document.getElementById('summaryTable');
+  const vectorUploadBtn = document.getElementById('uploadToVectorDbBtn');
+  let result = {};
 
-        if domain_result == "mspevaluator":
-            extracted_name = extract_msp_name(data.query)
-            print(f"🧠 CLOVA 추출 회사명: {extracted_name}")
-            print(f"🟢 Advanced toggle received: {data.advanced}")
-            if "Information" in blocked:
-                if data.advanced:
-                    return run_msp_information_summary_claude(data.query)
-                else:
-                    return run_msp_information_summary(data.query)
-            elif "Recommend" in blocked:
-                return run_msp_recommendation(data.query, min_score=0)
-            elif "Unrelated" in blocked:
-                return {"answer": "본 시스템은 MSP 평가 도구입니다. 해당 질문은 지원하지 않습니다. 다른 질문을 입력해 주세요."}
-            else:
-                return {"answer": "질문 의도를 정확히 분류하지 못했습니다. 다시 시도해 주세요."}
-        else:
-            return {"answer": "도메인 분류에 실패했습니다. 다시 시도해 주세요."}
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Router 처리 중 오류 발생: {str(e)}")
+  function createTable(headers, rows, editableScore = false) {
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    headers.forEach(h => {
+      const th = document.createElement('th');
+      th.textContent = h;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
 
+    const tbody = document.createElement('tbody');
+    rows.forEach(row => {
+      const tr = document.createElement('tr');
+      headers.forEach(header => {
+        const td = document.createElement('td');
+        const key = header.toLowerCase();
+        // Use camelCase keys for row objects
+        const camelCaseKey = key.replace(/\s+(.)/g, (match, group1) => group1.toUpperCase());
 
-# Advanced Naver route
-@app.post("/query/advanced_naver")
-async def query_advanced_naver(data: RouterQuery):
-    return run_msp_news_summary_clova(data.query)
+        if (editableScore && camelCaseKey === 'score') {
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.className = 'score-input';
+          input.min = 1;
+          input.max = 5;
+          input.value = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
+          input.addEventListener('change', () => {
+            row[camelCaseKey] = Number(input.value);
+          });
+          td.appendChild(input);
+        } else {
+          td.textContent = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    return table;
+  }
 
-# Add protected /admin route using same login logic as /ui
-@app.get("/admin")
-def serve_admin_ui(request: Request):
-    try:
-        user = manager(request)
-        return FileResponse("static/admin.html")
-    except Exception as e:
-        return RedirectResponse(url="/login?next=/admin")
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    console.log("DEBUG: Upload started");
 
+    evaluatedQuestionsTable.innerHTML = '<div class="spinner"></div>';
+    summaryTable.innerHTML = '';
 
-# Serve main page at root
-@app.get("/")
-def serve_main_page():
-    return FileResponse("static/main.html")
+    // Remove previous subcategory summary container if any
+    const oldSubCatContainer = document.getElementById('subCategorySummaries');
+    if (oldSubCatContainer) oldSubCatContainer.innerHTML = '';
 
+    const fileInput = document.getElementById('excelFile');
+    if (!fileInput.files.length) {
+      alert('엑셀 파일을 선택해주세요.');
+      evaluatedQuestionsTable.innerHTML = '';
+      return;
+    }
 
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
 
-# Serve upload page
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
-templates = Jinja2Templates(directory="templates")
+    try {
+      console.log("DEBUG: Sending upload request...");
+      const res = await fetch('/api/upload_excel', {
+        method: 'POST',
+        body: formData
+      });
 
-@app.get("/upload", response_class=HTMLResponse)
-async def serve_upload_page(request: Request):
-    return templates.TemplateResponse("upload.html", {"request": request})
+      if (!res.ok) {
+        console.error(`DEBUG: Server responded with error: ${res.status}`);
+        throw new Error(`서버 오류: ${res.status}`);
+      }
 
-# Excel upload endpoint
-from fastapi import UploadFile, File
+      result = await res.json();
+      console.log("DEBUG: API result", result);
+      // ========== DEBUG LOGS for subcategory_summaries ==========
+      console.log("DEBUG: Subcategory summaries keys:", Object.keys(result.subcategory_summaries || {}));
+      Object.entries(result.subcategory_summaries || {}).forEach(([group, subcats]) => {
+        console.log(`DEBUG: Group '${group}' subcategories:`, Object.keys(subcats));
+      });
 
-@app.post("/api/upload_excel")
-async def upload_excel(file: UploadFile = File(...)):
-    try:
-        from excel_upload_handler import evaluate_uploaded_excel, compute_category_scores_from_excel_data
+      if (vectorUploadBtn) {
+        vectorUploadBtn.style.display = (result.evaluated_questions && result.evaluated_questions.length) ? 'inline-block' : 'none';
+      }
 
-        evaluated = evaluate_uploaded_excel(file)
-        summary_df = compute_category_scores_from_excel_data(evaluated)
+      if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+        const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
+        evaluatedQuestionsTable.innerHTML = '';
 
-        flat_results = []
-        skipped_items = []
-        for category_name, qa_list in evaluated.items():
-            if not isinstance(qa_list, list):
-                skipped_items.append({
-                    "category": category_name,
-                    "item": qa_list,
-                    "reason": f"Expected a list but got: {type(qa_list)}"
-                })
-                continue
-            for item in qa_list:
-                if not isinstance(item, dict) or "question" not in item or "answer" not in item or "score" not in item:
-                    skipped_items.append({
-                        "category": category_name,
-                        "item": item,
-                        "reason": "Missing required keys or invalid format"
-                    })
-                    continue
-                flat_results.append({
-                    "category": category_name,
-                    "question": item["question"],
-                    "answer": item["answer"],
-                    "score": item["score"],
-                    "group": item.get("group")  # Preserve group info for summary
-                })
+        // Copy buttons container
+        const copyBtnWrapper = document.createElement('div');
+        copyBtnWrapper.className = 'copy-btn-wrapper';
 
-        from collections import defaultdict
-        group_scores = defaultdict(list)
+        // Categories for which to add copy buttons
+        const categoriesToCopy = ['인적역량', 'AI기술역량', '솔루션 역량'];
 
-        for item in flat_results:
-            group = item.get("group", item.get("category"))
-            score = item.get("score")
-            if isinstance(score, (int, float)):
-                group_scores[group].append(score)
+        categoriesToCopy.forEach(category => {
+          const btn = document.createElement('button');
+          btn.textContent = `${category} 점수 복사`;
+          btn.className = 'copy-btn';
 
-        group_summary = []
-        for group, scores in group_scores.items():
-            avg_score = round(sum(scores) / len(scores), 2) if scores else 0
-            group_summary.append({
-                "name": group,
-                "score": avg_score,
-                "questions": len(scores)
-            })
+          // Set distinct gradient backgrounds
+          switch(category) {
+            case '인적역량':
+              btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)';
+              btn.addEventListener('mouseover', () => { btn.style.background = 'linear-gradient(90deg, #07bc2f, #028a0f)'; });
+              btn.addEventListener('mouseout', () => { btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)'; });
+              break;
+            case 'AI기술역량':
+              btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)';
+              btn.addEventListener('mouseover', () => { btn.style.background = 'linear-gradient(90deg, #07a0bc, #04668c)'; });
+              btn.addEventListener('mouseout', () => { btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)'; });
+              break;
+            case '솔루션 역량':
+              btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)';
+              btn.addEventListener('mouseover', () => { btn.style.background = 'linear-gradient(90deg, #bc8707, #8c4604)'; });
+              btn.addEventListener('mouseout', () => { btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)'; });
+              break;
+          }
 
-        global latest_group_summary
-        latest_group_summary = group_summary  # Cache for radar chart usage
+          btn.addEventListener('click', () => {
+            const scoresToCopy = result.evaluated_questions
+              .filter(q => q.category === category)
+              .map(q => (q.score !== undefined ? q.score : ''))
+              .join('\n');
+            navigator.clipboard.writeText(scoresToCopy).then(() => {
+              alert(`✅ ${category} 점수가 클립보드에 복사되었습니다.`);
+            }).catch(() => {
+              alert(`❌ ${category} 점수 복사에 실패했습니다.`);
+            });
+          });
 
-        group_to_category = {}
-        for item in flat_results:
-            group = item.get("group", item.get("category"))
-            category = item.get("category", "Unknown")
-            if group and category:
-                group_to_category[group] = category
+          copyBtnWrapper.appendChild(btn);
+        });
 
-        global group_to_category_cache
-        group_to_category_cache = group_to_category
+        evaluatedQuestionsTable.appendChild(evalTable);
+        evaluatedQuestionsTable.appendChild(copyBtnWrapper);
+        createOrShowRequestSummaryBtn();
+        if (requestSummaryBtn) requestSummaryBtn.style.display = 'inline-block';
 
-        return JSONResponse(content={
-            "evaluated_questions": flat_results,
-            "summary": summary_df.to_dict(orient="records"),
-            "skipped_items": skipped_items,
-            "groups": group_summary,
-            "group_to_category": group_to_category
-        })
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Excel 평가 처리 중 오류 발생: {str(e)}")
+      } else {
+        evaluatedQuestionsTable.innerHTML = '';
+        if (vectorUploadBtn) vectorUploadBtn.style.display = 'none';
+      }
 
+      if (result.summary && Array.isArray(result.summary)) {
+        const table = document.createElement('table');
+        table.classList.add('summary-table');
 
-# New endpoint: /api/get_summary
-from fastapi import Request
-@app.post("/api/get_summary")
-async def get_summary(request: Request):
-    try:
-        data = await request.json()
-        evaluated = data.get("evaluated")
-        if evaluated is None:
-            raise HTTPException(status_code=400, detail="Missing 'evaluated' data")
+        const headers = ['Category', 'Score', 'Questions'];
+        const thead = document.createElement('thead');
+        const headRow = document.createElement('tr');
+        headers.forEach(h => {
+          const th = document.createElement('th');
+          th.textContent = h;
+          headRow.appendChild(th);
+        });
+        thead.appendChild(headRow);
+        table.appendChild(thead);
 
-        # Debug: print evaluated
-        print(f"[DEBUG] Received evaluated (len={len(evaluated)}): {evaluated}")
+        const tbody = document.createElement('tbody');
+        result.summary.forEach(row => {
+          const tr = document.createElement('tr');
+          let cells = [];
 
-        # Group by group field (fallback to category if missing)
-        grouped = {}
-        for item in evaluated:
-            group = item.get("group") or item.get("category") or "Unknown"
-            grouped.setdefault(group, []).append(item)
+          if (Array.isArray(row)) {
+            cells = row;
+          } else if (typeof row === 'object') {
+            cells = [row.Category || '', row.Score || '', row.Questions || ''];
+          }
 
-        # Debug: print grouped keys
-        print(f"[DEBUG] Grouped keys: {list(grouped.keys())}")
+          cells.forEach(cell => {
+            const td = document.createElement('td');
+            td.textContent = cell;
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        summaryTable.innerHTML = '';
+        summaryTable.appendChild(table);
+      } else {
+        summaryTable.innerHTML = '';
+      }
 
-        from excel_upload_handler import summarize_answers_for_subcategories
-        # Debug: entering summarize
-        print("[DEBUG] Entering summarize_answers_for_subcategories")
-        summary = summarize_answers_for_subcategories(grouped)
-        return JSONResponse(content={"subcategory_summaries": summary})
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Summary processing failed: {str(e)}")
+      // Remove subcategory summaries container after upload (if exists)
+      const subCatSummariesDiv = document.getElementById('subCategorySummaries');
+      if (subCatSummariesDiv) subCatSummariesDiv.innerHTML = '';
 
-@app.post("/api/add_to_vector_db")
-async def add_to_vector_db(data: dict):
-    try:
-        from vector_writer import run_from_direct_input
-        msp_name = data.get("msp_name")
-        if not msp_name:
-            raise HTTPException(status_code=400, detail="Missing msp_name")
+      // --- Remove/comment out subcategory summaries rendering here ---
+      // (No subcategory summary rendering after upload)
+      // (All subcategory summary rendering is now handled by the 요약 요청하기 button)
+    } catch (error) {
+      console.error("DEBUG: Upload error:", error);
+      evaluatedQuestionsTable.innerHTML = '';
+      summaryTable.innerHTML = '';
+      alert('업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+      console.error(error);
+    }
+  });
 
-        items = data.get("items", [])
-        if not isinstance(items, list):
-            raise HTTPException(status_code=400, detail="Missing or invalid items list")
+  // --- Separate 요약 요청하기 button logic ---
+  let requestSummaryBtn = null;
+  function createOrShowRequestSummaryBtn() {
+    if (!requestSummaryBtn) {
+      requestSummaryBtn = document.createElement('button');
+      requestSummaryBtn.id = 'requestSummaryBtn';
+      requestSummaryBtn.textContent = '요약 요청하기';
+      requestSummaryBtn.className = 'copy-btn';
+      requestSummaryBtn.style.marginTop = '16px';
+      requestSummaryBtn.style.display = 'none'; // initially hidden
 
-        summary = data.get("summary")
-        if summary is None:
-            raise HTTPException(status_code=400, detail="Missing summary")
+      // Wrap in centered div
+      const btnWrapper = document.createElement('div');
+      btnWrapper.id = 'summaryRequestWrapper';
+      btnWrapper.style.textAlign = 'center';
+      btnWrapper.style.marginTop = '24px';
+      btnWrapper.appendChild(requestSummaryBtn);
 
-        run_from_direct_input(msp_name, items, summary)
-        return {"message": f"Successfully added {len(items)} items to vector DB for {msp_name}"}
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Vector DB update failed: {str(e)}")
+      summaryTable.parentNode.insertBefore(btnWrapper, summaryTable.nextSibling);
 
-@app.get("/api/get_radar_data")
-async def get_radar_data():
-    try:
-        output = {item["name"]: item["score"] for item in latest_group_summary if "총점" not in item["name"]}
-        return JSONResponse(content=output)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Radar data failed: {str(e)}")
+      requestSummaryBtn.addEventListener('click', async () => {
+        try {
+          requestSummaryBtn.disabled = true;
+          requestSummaryBtn.textContent = '요약 생성 중...';
 
-@app.get("/api/get_group_to_category_map")
-async def get_group_to_category_map():
-    try:
-        # Directly return the cached mapping built during upload
-        from fastapi.responses import JSONResponse
-        global group_to_category_cache
-        if not group_to_category_cache:
-            raise HTTPException(status_code=404, detail="Group-to-category map not available yet. Upload data first.")
-        return JSONResponse(content=group_to_category_cache)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Group-to-category map failed: {str(e)}")
+          const response = await fetch('/api/get_summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ evaluated: result.evaluated_questions })
+          });
+
+          if (!response.ok) throw new Error('요약 요청 실패');
+
+          const summaryResult = await response.json();
+          // ========== DEBUG LOGS for 요약 요청 subcategory_summaries ==========
+          console.log("DEBUG: 요약 요청 결과 subcategory_summaries:", summaryResult.subcategory_summaries);
+          Object.entries(summaryResult.subcategory_summaries || {}).forEach(([group, subcats]) => {
+            console.log(`DEBUG: 요약 요청 그룹 '${group}' 하위 카테고리:`, Object.keys(subcats));
+          });
+
+          // Remove or clear previous subcategory summaries container
+          const subCategoryContainerId = 'subCategorySummaries';
+          let subCatContainer = document.getElementById(subCategoryContainerId);
+          if (!subCatContainer) {
+            subCatContainer = document.createElement('div');
+            subCatContainer.id = subCategoryContainerId;
+            summaryTable.parentNode.insertBefore(subCatContainer, btnWrapper.nextSibling);
+          } else {
+            subCatContainer.innerHTML = '';
+          }
+
+          // Render subcategory summaries as flat readable text under group headers
+          Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, summaryData]) => {
+            const title = document.createElement('h3');
+            title.textContent = groupName;
+            title.style.marginTop = '1.8em';
+            title.style.fontSize = '1.1rem';
+            title.style.color = '#03c75a';
+            title.style.borderBottom = '1px solid #ccc';
+            title.style.paddingBottom = '0.2em';
+            subCatContainer.appendChild(title);
+
+            if (typeof summaryData === 'string') {
+              const p = document.createElement('p');
+              p.textContent = summaryData;
+              p.style.marginTop = '0.5em';
+              subCatContainer.appendChild(p);
+            } else if (typeof summaryData === 'object') {
+              Object.entries(summaryData).forEach(([subkey, summaryText]) => {
+                const p = document.createElement('p');
+                p.textContent = summaryText;
+                subCatContainer.appendChild(p);
+              });
+            }
+          });
+
+          requestSummaryBtn.textContent = '요약 요청하기';
+          requestSummaryBtn.disabled = false;
+        } catch (error) {
+          alert('요약 요청 중 오류 발생');
+          requestSummaryBtn.textContent = '요약 요청하기';
+          requestSummaryBtn.disabled = false;
+          console.error(error);
+        }
+      });
+    }
+  }
+
+  // --- 벡터 DB 업로드 버튼 핸들러 ---
+  const vectorUploadBtnScript = (() => {
+    if (vectorUploadBtn) {
+      vectorUploadBtn.addEventListener('click', async () => {
+        const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
+        if (!mspName) {
+          alert("MSP 이름이 입력되지 않았습니다.");
+          return;
+        }
+
+        const items = [];
+        if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+          result.evaluated_questions.forEach(q => {
+            items.push({
+              question: q.question,
+              answer: q.answer,
+              score: q.score
+            });
+          });
+        }
+
+        const response = await fetch('/api/add_to_vector_db', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            msp_name: mspName,
+            items: items,
+            summary: result.summary
+          })
+        });
+
+        if (response.ok) {
+          alert("✅ 벡터 DB에 업로드되었습니다.");
+        } else {
+          alert("❌ 업로드 실패");
+        }
+      });
+    }
+  })();
+
+</script>
+
+<script>
+// === Radar chart rendering using /api/get_group_to_category_map ===
+async function renderRadarCharts() {
+    // Fetch group to category mapping
+    const response = await fetch("/api/get_group_to_category_map");
+    const groupToCategory = await response.json();
+
+    // Build radar data: { category: { group: score, ... }, ... }
+    // Use result.summary or result.evaluated_questions to get group scores
+    // We'll try to use result.evaluated_questions to get group scores
+    // (Assume each evaluated_question has group and score)
+    if (!result.evaluated_questions || !Array.isArray(result.evaluated_questions)) return;
+
+    // Aggregate scores by group (average if multiple questions per group)
+    const groupScoresRaw = {};
+    result.evaluated_questions.forEach(q => {
+      if (!q.group || q.score === undefined) return;
+      if (!groupScoresRaw[q.group]) {
+        groupScoresRaw[q.group] = [];
+      }
+      groupScoresRaw[q.group].push(Number(q.score));
+    });
+    // Average scores per group
+    const groupScores = {};
+    Object.entries(groupScoresRaw).forEach(([group, scores]) => {
+      groupScores[group] = scores.reduce((a, b) => a + b, 0) / scores.length;
+    });
+
+    // Organize groups under their categories using groupToCategory
+    const radarData = {};
+    Object.entries(groupScores).forEach(([group, score]) => {
+      let category = groupToCategory[group];
+      if (!category || category === "") {
+        category = "기타";
+      }
+      if (!radarData[category]) {
+        radarData[category] = {};
+      }
+      radarData[category][group] = score;
+    });
+
+    const radarContainer = document.getElementById("radarChartsContainer");
+    radarContainer.innerHTML = ""; // Clear existing charts
+
+    Object.entries(radarData).forEach(([category, groupScores]) => {
+        const labels = Object.keys(groupScores);
+        const values = Object.values(groupScores);
+
+        // Create a container for each chart and download button
+        const chartDiv = document.createElement("div");
+        chartDiv.style.display = "flex";
+        chartDiv.style.flexDirection = "column";
+        chartDiv.style.alignItems = "center";
+        chartDiv.style.marginBottom = "24px";
+        chartDiv.style.minWidth = "300px";
+
+        const canvas = document.createElement("canvas");
+        canvas.style.margin = "20px auto";
+        canvas.style.display = "block";
+        canvas.style.maxWidth = "600px";
+        chartDiv.appendChild(canvas);
+
+        // Create download button
+        const downloadBtn = document.createElement("button");
+        downloadBtn.className = "copy-btn";
+        downloadBtn.style.background = "#03c75a";
+        downloadBtn.style.color = "white";
+        downloadBtn.style.marginTop = "12px";
+        downloadBtn.textContent = `${category} 그래프 다운로드`;
+        chartDiv.appendChild(downloadBtn);
+
+        radarContainer.appendChild(chartDiv);
+
+        // Draw chart
+        const chart = new Chart(canvas, {
+            type: "radar",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: category,
+                    data: values,
+                    fill: true,
+                    borderWidth: 2,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                scales: {
+                    r: {
+                        suggestedMin: 1,
+                        suggestedMax: 5,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: "top"
+                    }
+                }
+            }
+        });
+
+        // Download functionality
+        downloadBtn.addEventListener("click", () => {
+            const url = canvas.toDataURL("image/png");
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${category}_radar_chart.png`;
+            a.click();
+        });
+    });
+}
+
+// Call renderRadarCharts after upload success
+form.addEventListener('submit', () => {
+  setTimeout(renderRadarCharts, 500);
+});
+</script>
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>
