@@ -232,11 +232,16 @@ async def upload_excel(file: UploadFile = File(...)):
                 })
                 continue
             for item in qa_list:
-                if not isinstance(item, dict) or "question" not in item or "answer" not in item or "score" not in item:
+                if (
+                    not isinstance(item, dict)
+                    or not item.get("question")
+                    or not item.get("answer")
+                    or item.get("score") is None
+                ):
                     skipped_items.append({
                         "category": category_name,
                         "item": item,
-                        "reason": "Missing required keys or invalid format"
+                        "reason": "Missing required keys, empty fields, or invalid format"
                     })
                     continue
                 flat_results.append({
@@ -248,10 +253,13 @@ async def upload_excel(file: UploadFile = File(...)):
                 })
 
         from collections import defaultdict
-        # Build group to question count mapping
+        # Build group to question count mapping, with group key stripped
         group_to_questions = defaultdict(list)
         for q in flat_results:
-            group_to_questions[q["group"]].append(q)
+            group_key = q["group"]
+            if isinstance(group_key, str):
+                group_key = group_key.strip()
+            group_to_questions[group_key].append(q)
 
         group_question_counts = {group: len(questions) for group, questions in group_to_questions.items()}
 
@@ -261,9 +269,12 @@ async def upload_excel(file: UploadFile = File(...)):
             print(f"[DEBUG] Summary Record: {record}")
             name = record.get("Category")
             score = record.get("Score")
-            print(f"[DEBUG] ➕ Group Summary Item Candidate - name: {name}, score: {score}")
-            if not isinstance(name, str):
+            # Strip whitespace from name if string
+            if isinstance(name, str):
+                name = name.strip()
+            else:
                 continue
+            print(f"[DEBUG] ➕ Group Summary Item Candidate - name: {name}, score: {score}")
             if "총점" in name:
                 continue
 
