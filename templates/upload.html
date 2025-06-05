@@ -319,6 +319,7 @@
   <div id="evaluatedQuestionsTable"></div>
   
   <div id="summaryTable"></div>
+  <!--
   <div style="margin-top: 32px; text-align: center;">
     <h3 style="font-size: 1.2rem; color: #03c75a;">역량 그룹별 방사형 차트</h3>
 
@@ -338,6 +339,7 @@
       <button id="downloadRadarChartSolutionBtn" class="copy-btn" style="background: #03c75a; color: white; margin-top: 12px;">솔루션 역량 그래프 다운로드</button>
     </div>
   </div>
+  -->
   <div style="text-align:center; margin-top: 24px;">
     <button id="uploadToVectorDbBtn" class="copy-btn" style="background: linear-gradient(90deg, #028a0f, #07bc2f); display:none;">
       벡터 DB에 업로드
@@ -688,6 +690,7 @@
 
 </script>
 
+<!--
 <script>
 // === Load radar chart after upload ===
 form.addEventListener('submit', () => {
@@ -696,17 +699,98 @@ form.addEventListener('submit', () => {
 
 // --- Radar chart data fetch function ---
 async function loadRadarCharts() {
-  try {
-    const res = await fetch('/api/get_radar_data');
-    if (!res.ok) throw new Error('데이터 요청 실패');
-    const data = await res.json();
-    console.log("Radar data received –", data);
-    // You can insert actual radar chart logic here
-  } catch (err) {
-    console.error("Radar chart error:", err);
+  const res = await fetch("/api/get_radar_data");
+  const data = await res.json();
+
+  const humanLabels = [];
+  const humanData = [];
+  const techLabels = [];
+  const techData = [];
+  const solutionLabels = [];
+  const solutionData = [];
+
+  for (const [group, score] of Object.entries(data)) {
+    if (group.includes("인력") || group.includes("교육") || group.includes("협업") || group.includes("윤리")) {
+      humanLabels.push(group);
+      humanData.push(score);
+    } else if (group.includes("기술") || group.includes("데이터") || group.includes("플랫폼")) {
+      techLabels.push(group);
+      techData.push(score);
+    } else {
+      solutionLabels.push(group);
+      solutionData.push(score);
+    }
   }
+
+  const options = {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      r: {
+        beginAtZero: true,
+        suggestedMax: 5,
+        ticks: { display: false },
+        pointLabels: { font: { size: 13 }, color: '#333' },
+        grid: { color: '#ccc' }
+      }
+    }
+  };
+
+  const ctxHuman = document.getElementById('radarChartHuman').getContext('2d');
+  const ctxTech = document.getElementById('radarChartTech').getContext('2d');
+  const ctxSolution = document.getElementById('radarChartSolution').getContext('2d');
+
+  if (window.chartHuman) window.chartHuman.destroy();
+  if (window.chartTech) window.chartTech.destroy();
+  if (window.chartSolution) window.chartSolution.destroy();
+
+  window.chartHuman = new Chart(ctxHuman, {
+    type: 'radar',
+    data: {
+      labels: humanLabels,
+      datasets: [{
+        data: humanData,
+        borderColor: '#03c75a',
+        borderWidth: 2,
+        fill: false,
+        pointRadius: 0
+      }]
+    },
+    options: options
+  });
+
+  window.chartTech = new Chart(ctxTech, {
+    type: 'radar',
+    data: {
+      labels: techLabels,
+      datasets: [{
+        data: techData,
+        borderColor: '#03c75a',
+        borderWidth: 2,
+        fill: false,
+        pointRadius: 0
+      }]
+    },
+    options: options
+  });
+
+  window.chartSolution = new Chart(ctxSolution, {
+    type: 'radar',
+    data: {
+      labels: solutionLabels,
+      datasets: [{
+        data: solutionData,
+        borderColor: '#03c75a',
+        borderWidth: 2,
+        fill: false,
+        pointRadius: 0
+      }]
+    },
+    options: options
+  });
 }
 </script>
+-->
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
