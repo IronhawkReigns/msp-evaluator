@@ -246,25 +246,22 @@ async def upload_excel(file: UploadFile = File(...)):
                 })
 
         from collections import defaultdict
-        group_scores = defaultdict(list)
-
-        for item in flat_results:
-            group = item.get("group", item.get("category"))
-            score = item.get("score")
-            if isinstance(score, (int, float)):
-                group_scores[group].append(score)
-
+        # Filter from summary_df instead of recomputing
         group_summary = []
-        for group, scores in group_scores.items():
-            avg_score = round(sum(scores) / len(scores), 2) if scores else 0
-            group_summary.append({
-                "name": group,
-                "score": avg_score,
-                "questions": len(scores)
-            })
+        for record in summary_df.to_dict(orient="records"):
+            name = record.get("Category")
+            if "총점" in name:
+                continue
+            score = record.get("Score")
+            if isinstance(score, (int, float)):
+                group_summary.append({
+                    "name": name,
+                    "score": score,
+                    "questions": None  # Optional: can be left out or computed later if needed
+                })
 
         global latest_group_summary
-        latest_group_summary = group_summary  # Cache for radar chart usage
+        latest_group_summary = group_summary
 
         group_to_category = {}
         for item in flat_results:
