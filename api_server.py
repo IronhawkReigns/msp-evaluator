@@ -263,11 +263,19 @@ async def upload_excel(file: UploadFile = File(...)):
         global latest_group_summary
         latest_group_summary = group_summary  # Cache for radar chart usage
 
+        group_to_category = {}
+        for item in flat_results:
+            group = item.get("group", item.get("category"))
+            category = item.get("category", "Unknown")
+            if group and category:
+                group_to_category[group] = category
+
         return JSONResponse(content={
             "evaluated_questions": flat_results,
             "summary": summary_df.to_dict(orient="records"),
             "skipped_items": skipped_items,
-            "groups": group_summary
+            "groups": group_summary,
+            "group_to_category": group_to_category
         })
     except Exception as e:
         import traceback
