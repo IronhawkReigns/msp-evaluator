@@ -686,66 +686,28 @@
     }
   })();
 
-  // Show the 요약 요청하기 button only after successful upload
-  form.addEventListener('submit', async (e) => {
-  if (requestSummaryBtn) requestSummaryBtn.style.display = 'none';
+</script>
+
+<script>
+// === Load radar chart after upload ===
+form.addEventListener('submit', () => {
+  setTimeout(loadRadarCharts, 500);
 });
+
+// --- Radar chart data fetch function ---
+async function loadRadarCharts() {
+  try {
+    const res = await fetch('/api/get_radar_data');
+    if (!res.ok) throw new Error('데이터 요청 실패');
+    const data = await res.json();
+    console.log("Radar data received –", data);
+    // You can insert actual radar chart logic here
+  } catch (err) {
+    console.error("Radar chart error:", err);
+  }
+}
+</script>
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    fetch("/api/get_radar_data")
-      .then(response => {
-        if (!response.ok) throw new Error("Network response was not ok");
-        return response.json();
-      })
-      .then(data => {
-        console.log("✅ Radar data received:", data);
-        if (!data || Object.keys(data).length === 0) {
-          console.error("❗ No radar data available");
-          return;
-        }
-
-        const labels = Object.keys(data);
-        const scores = Object.values(data);
-
-        const ctx = document.getElementById("radarChart").getContext("2d");
-        new Chart(ctx, {
-          type: "radar",
-          data: {
-            labels: labels,
-            datasets: [{
-              label: "역량 점수",
-              data: scores,
-              fill: true,
-              borderColor: "rgb(75, 192, 192)",
-              backgroundColor: "rgba(75, 192, 192, 0.2)",
-              pointBackgroundColor: "rgb(75, 192, 192)"
-            }]
-          },
-          options: {
-            responsive: true,
-            elements: {
-              line: {
-                borderWidth: 3
-              }
-            },
-            scales: {
-              r: {
-                min: 0,
-                max: 5,
-                ticks: {
-                  stepSize: 1
-                }
-              }
-            }
-          }
-        });
-      })
-      .catch(error => {
-        console.error("🚨 Error fetching radar data:", error);
-      });
-  });
-</script>
 </body>
 </html>
