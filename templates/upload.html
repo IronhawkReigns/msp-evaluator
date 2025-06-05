@@ -686,19 +686,23 @@ async function renderRadarCharts() {
     return;
   }
 
-  // Prepare subcategory radar chart data
-  const summary = result.summary;
-  // Use correct key access for group_to_category lookup
-  const subKeys = summary.filter(k => group_to_category[k.Category]);
+  // Prepare subCategorySummaries using backend format
+  const subCategorySummaries = result.summary.map((item) => ({
+    name: item.Category,
+    score: item.Score,
+    questions: item.Questions,
+  }));
 
+  // Build chartData by grouping by group_to_category
   const chartData = {};
-  subKeys.forEach(k => {
-    const category = group_to_category[k.Category];
-    if (!category) return;
-    if (!chartData[category]) chartData[category] = [];
-    chartData[category].push({
-      name: k.Category,
-      score: k.Score,
+  subCategorySummaries.forEach((item) => {
+    const group = group_to_category[item.name];
+    if (!group) return;
+    if (!chartData[group]) chartData[group] = [];
+    chartData[group].push({
+      name: item.name,
+      score: item.score,
+      questions: item.questions,
     });
   });
 
