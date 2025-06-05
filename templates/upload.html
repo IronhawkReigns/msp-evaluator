@@ -674,15 +674,50 @@
 </script>
 
 <script>
-// === Radar chart rendering using /api/get_radar_data ===
+// === Radar chart rendering using /api/get_group_to_category_map ===
 async function renderRadarCharts() {
-    const response = await fetch("/api/get_radar_data");
-    const data = await response.json();
+    // Fetch group to category mapping
+    const response = await fetch("/api/get_group_to_category_map");
+    const groupToCategory = await response.json();
+
+    // Build radar data: { category: { group: score, ... }, ... }
+    // Use result.summary or result.evaluated_questions to get group scores
+    // We'll try to use result.evaluated_questions to get group scores
+    // (Assume each evaluated_question has group and score)
+    if (!result.evaluated_questions || !Array.isArray(result.evaluated_questions)) return;
+
+    // Aggregate scores by group (average if multiple questions per group)
+    const groupScoresRaw = {};
+    result.evaluated_questions.forEach(q => {
+      if (!q.group || q.score === undefined) return;
+      if (!groupScoresRaw[q.group]) {
+        groupScoresRaw[q.group] = [];
+      }
+      groupScoresRaw[q.group].push(Number(q.score));
+    });
+    // Average scores per group
+    const groupScores = {};
+    Object.entries(groupScoresRaw).forEach(([group, scores]) => {
+      groupScores[group] = scores.reduce((a, b) => a + b, 0) / scores.length;
+    });
+
+    // Organize groups under their categories using groupToCategory
+    const radarData = {};
+    Object.entries(groupScores).forEach(([group, score]) => {
+      let category = groupToCategory[group];
+      if (!category || category === "") {
+        category = "기타";
+      }
+      if (!radarData[category]) {
+        radarData[category] = {};
+      }
+      radarData[category][group] = score;
+    });
 
     const radarContainer = document.getElementById("radarChartsContainer");
     radarContainer.innerHTML = ""; // Clear existing charts
 
-    Object.entries(data).forEach(([category, groupScores]) => {
+    Object.entries(radarData).forEach(([category, groupScores]) => {
         const labels = Object.keys(groupScores);
         const values = Object.values(groupScores);
 
