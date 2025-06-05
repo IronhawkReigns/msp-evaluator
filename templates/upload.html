@@ -674,120 +674,123 @@
 </script>
 
 <script>
-// === Radar chart rendering using /api/get_group_to_category_map and backend 'groups' array ===
+// === Radar chart rendering using /api/get_group_to_category_map and backend 'summary' array ===
 async function renderRadarCharts() {
-    // Fetch group to category mapping
-    const response = await fetch("/api/get_group_to_category_map");
-    const groupToCategory = await response.json();
+  // Fetch group to category mapping
+  const response = await fetch("/api/get_group_to_category_map");
+  const group_to_category = await response.json();
 
-    // Use result.groups (from backend response) for radar chart, fallback if not present
-    if (!result.groups || !Array.isArray(result.groups)) {
-      console.warn("No 'groups' array found in result; radar chart not rendered.");
-      return;
-    }
+  // Use result.summary (from backend response) for radar chart, fallback if not present
+  if (!result.summary || !Array.isArray(result.summary)) {
+    console.warn("No 'summary' array found in result; radar chart not rendered.");
+    return;
+  }
 
-    // Group group scores by mapped category using groupToCategory
-    const categoryToGroups = {};
-    result.groups.forEach(group => {
-      const category = groupToCategory[group.name] || "기타";
-      if (!categoryToGroups[category]) categoryToGroups[category] = [];
-      categoryToGroups[category].push(group.score);
+  // Prepare subcategory radar chart data
+  const summary = result.summary;
+  const subcategoryScores = summary.filter(item =>
+    item.Category !== '총점' &&
+    item.Category !== '인적역량' &&
+    item.Category !== 'AI기술역량'
+  );
+
+  const chartData = {};
+  subcategoryScores.forEach(item => {
+    const category = group_to_category[item.Category];
+    if (!category) return;
+    if (!chartData[category]) chartData[category] = [];
+    chartData[category].push({
+      name: item.Category,
+      score: item.Score,
     });
+  });
 
-    // Each entry: { name: categoryName, score: averageScore }
-    const groupedSummaryForRadar = Object.entries(categoryToGroups).map(
-      ([category, scores]) => ({
-        name: category,
-        score: Math.round(
-          scores.reduce((sum, s) => sum + s, 0) / scores.length
-        ),
-        groupNames: result.groups.filter(g => (groupToCategory[g.name] || "기타") === category).map(g => g.name),
-        groupScores: result.groups.filter(g => (groupToCategory[g.name] || "기타") === category).map(g => g.score)
-      })
-    );
-    console.log("📊 groupedSummaryForRadar (by category):", groupedSummaryForRadar);
-
-    // For each category, render a radar chart of its groups
-    const radarContainer = document.getElementById("radarChartsContainer");
-    radarContainer.innerHTML = ""; // Clear existing charts
-
-    groupedSummaryForRadar.forEach(({ name: category, groupNames, groupScores }) => {
-      // Only render if groupNames exist
-      if (groupNames.length > 0) {
-        const radarChartInput = {
-          labels: groupNames,
-          datasets: [{
-            label: category,
-            data: groupScores,
-            fill: true,
-            borderWidth: 2,
-            pointRadius: 3
-          }]
-        };
-        // Create a container for each chart and download button
-        const chartDiv = document.createElement("div");
-        chartDiv.style.display = "flex";
-        chartDiv.style.flexDirection = "column";
-        chartDiv.style.alignItems = "center";
-        chartDiv.style.marginBottom = "24px";
-        chartDiv.style.minWidth = "300px";
-
-        const canvas = document.createElement("canvas");
-        canvas.style.margin = "20px auto";
-        canvas.style.display = "block";
-        canvas.style.maxWidth = "600px";
-        chartDiv.appendChild(canvas);
-
-        // Create download button
-        const downloadBtn = document.createElement("button");
-        downloadBtn.className = "copy-btn";
-        downloadBtn.style.background = "#03c75a";
-        downloadBtn.style.color = "white";
-        downloadBtn.style.marginTop = "12px";
-        downloadBtn.textContent = `${category} 그래프 다운로드`;
-        chartDiv.appendChild(downloadBtn);
-
-        radarContainer.appendChild(chartDiv);
-
-        // Draw chart
-        const chart = new Chart(canvas, {
-          type: "radar",
-          data: radarChartInput,
-          options: {
-            scales: {
-              r: {
-                suggestedMin: 1,
-                suggestedMax: 5,
-                ticks: {
-                  stepSize: 1
-                }
-              }
-            },
-            plugins: {
-              legend: {
-                display: true,
-                position: "top"
-              }
-            }
-          }
-        });
-
-        // Download functionality
-        downloadBtn.addEventListener("click", () => {
-          const url = canvas.toDataURL("image/png");
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `${category}_radar_chart.png`;
-          a.click();
-        });
-      }
-    });
+  console.debug("DEBUG: Final radar chartData", chartData);
+  createRadarChart(chartData);
 }
 
 // Call renderRadarCharts after upload success
 form.addEventListener('submit', () => {
   setTimeout(renderRadarCharts, 500);
 });
+
+// Draw radar charts for subcategories
+function createRadarChart(chartData) {
+  const radarContainer = document.getElementById("radarChartsContainer");
+  radarContainer.innerHTML = ""; // Clear existing charts
+
+  Object.entries(chartData).forEach(([category, subcats]) => {
+    if (!subcats.length) return;
+    const labels = subcats.map(sc => sc.name);
+    const data = subcats.map(sc => sc.score);
+    const radarChartInput = {
+      labels: labels,
+      datasets: [{
+        label: category,
+        data: data,
+        fill: true,
+        borderWidth: 2,
+        pointRadius: 3
+      }]
+    };
+    // Create a container for each chart and download button
+    const chartDiv = document.createElement("div");
+    chartDiv.style.display = "flex";
+    chartDiv.style.flexDirection = "column";
+    chartDiv.style.alignItems = "center";
+    chartDiv.style.marginBottom = "24px";
+    chartDiv.style.minWidth = "300px";
+
+    const canvas = document.createElement("canvas");
+    canvas.style.margin = "20px auto";
+    canvas.style.display = "block";
+    canvas.style.maxWidth = "600px";
+    chartDiv.appendChild(canvas);
+
+    // Create download button
+    const downloadBtn = document.createElement("button");
+    downloadBtn.className = "copy-btn";
+    downloadBtn.style.background = "#03c75a";
+    downloadBtn.style.color = "white";
+    downloadBtn.style.marginTop = "12px";
+    downloadBtn.textContent = `${category} 그래프 다운로드`;
+    chartDiv.appendChild(downloadBtn);
+
+    radarContainer.appendChild(chartDiv);
+
+    // Draw chart
+    const chart = new Chart(canvas, {
+      type: "radar",
+      data: radarChartInput,
+      options: {
+        scales: {
+          r: {
+            suggestedMin: 1,
+            suggestedMax: 5,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: "top"
+          }
+        }
+      }
+    });
+
+    // Download functionality
+    downloadBtn.addEventListener("click", () => {
+      const url = canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${category}_radar_chart.png`;
+      a.click();
+    });
+  });
+}
 </script>
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
