@@ -41,6 +41,9 @@ from chromadb import PersistentClient
 
 app = FastAPI()
 
+# Global radar group summary cache
+latest_group_summary = []
+
 app.include_router(admin_router)
 print("📦 admin router included")
 
@@ -257,6 +260,9 @@ async def upload_excel(file: UploadFile = File(...)):
                 "questions": len(scores)
             })
 
+        global latest_group_summary
+        latest_group_summary = group_summary  # Cache for radar chart usage
+
         return JSONResponse(content={
             "evaluated_questions": flat_results,
             "summary": summary_df.to_dict(orient="records"),
@@ -327,26 +333,11 @@ async def add_to_vector_db(data: dict):
 @app.get("/api/get_radar_data")
 async def get_radar_data():
     try:
-        from collections import defaultdict
-        from statistics import mean
-
-        radar_data = defaultdict(list)
-        results = collection.get(include=["metadatas"])  # Load from ChromaDB
-
-        for meta in results["metadatas"]:
-            if not isinstance(meta, dict):
-                continue
-            group = meta.get("group")
-            score = meta.get("score")
-
-            if group and isinstance(score, (int, float)):
-                radar_data[group].append(score)
-
         output = {
-            group: round(mean(scores), 2)
-            for group, scores in radar_data.items() if scores
+            item["name"]: item["score"]
+            for item in latest_group_summary
+            if "name" in item and "score" in item
         }
-
         return JSONResponse(content=output)
     except Exception as e:
         import traceback
