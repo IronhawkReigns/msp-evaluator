@@ -231,6 +231,8 @@ async def upload_excel(file: UploadFile = File(...)):
                     "reason": f"Expected a list but got: {type(qa_list)}"
                 })
                 continue
+            if category_name == "summary":
+                continue
             for item in qa_list:
                 if (
                     not isinstance(item, dict)
@@ -269,20 +271,17 @@ async def upload_excel(file: UploadFile = File(...)):
             print(f"[DEBUG] Summary Record: {record}")
             name = record.get("Category")
             score = record.get("Score")
-            # Strip whitespace from name if string
-            if isinstance(name, str):
-                name = name.strip()
-            else:
+            # Ensure name is a string and strip whitespace
+            if not isinstance(name, str):
                 continue
+            name = name.strip()
             print(f"[DEBUG] ➕ Group Summary Item Candidate - name: {name}, score: {score}")
             if "총점" in name:
                 continue
-
             try:
                 score = float(score)
             except (ValueError, TypeError):
                 continue
-
             group_summary.append({
                 "name": name,
                 "score": score,
