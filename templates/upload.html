@@ -700,22 +700,14 @@
       if (!res.ok) throw new Error('데이터 요청 실패');
       const data = await res.json();
 
-      // Expecting: data is a flat dictionary, e.g. { label1: value1, label2: value2, ... }
-      const labels = Object.keys(data);
-      const values = Object.values(data);
+      // Prepare group-specific labels and data
+      const humanLabels = Object.keys(data).filter(key => key.includes('인적역량'));
+      const techLabels = Object.keys(data).filter(key => key.includes('AI기술역량'));
+      const solutionLabels = Object.keys(data).filter(key => key.includes('솔루션 역량'));
 
-      // Prepare chartData once for all charts (same group-level averages)
-      const chartData = {
-        labels: labels,
-        datasets: [{
-          label: 'Group 평균 점수',
-          data: values,
-          fill: true,
-          borderColor: 'rgb(75, 192, 192)',
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
-          pointBackgroundColor: 'rgb(75, 192, 192)'
-        }]
-      };
+      const humanData = humanLabels.map(key => data[key]);
+      const techData = techLabels.map(key => data[key]);
+      const solutionData = solutionLabels.map(key => data[key]);
 
       const options = {
         responsive: true,
@@ -745,17 +737,47 @@
 
       const chartHuman = new Chart(ctxHuman, {
         type: 'radar',
-        data: chartData,
+        data: {
+          labels: humanLabels,
+          datasets: [{
+            label: 'Group 평균 점수',
+            data: humanData,
+            fill: true,
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            pointBackgroundColor: 'rgb(75, 192, 192)'
+          }]
+        },
         options: options
       });
       const chartTech = new Chart(ctxTech, {
         type: 'radar',
-        data: chartData,
+        data: {
+          labels: techLabels,
+          datasets: [{
+            label: 'Group 평균 점수',
+            data: techData,
+            fill: true,
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            pointBackgroundColor: 'rgb(75, 192, 192)'
+          }]
+        },
         options: options
       });
       const chartSolution = new Chart(ctxSolution, {
         type: 'radar',
-        data: chartData,
+        data: {
+          labels: solutionLabels,
+          datasets: [{
+            label: 'Group 평균 점수',
+            data: solutionData,
+            fill: true,
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            pointBackgroundColor: 'rgb(75, 192, 192)'
+          }]
+        },
         options: options
       });
 
