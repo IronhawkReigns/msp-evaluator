@@ -693,133 +693,58 @@
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  async function loadRadarCharts() {
-    try {
-      // Destroy previous charts if they exist to avoid rendering failures
-      if (window.chartHuman) window.chartHuman.destroy();
-      if (window.chartTech) window.chartTech.destroy();
-      if (window.chartSolution) window.chartSolution.destroy();
+  document.addEventListener("DOMContentLoaded", () => {
+    fetch("/api/get_radar_data")
+      .then(response => {
+        if (!response.ok) throw new Error("Network response was not ok");
+        return response.json();
+      })
+      .then(data => {
+        console.log("✅ Radar data received:", data);
+        if (!data || Object.keys(data).length === 0) {
+          console.error("❗ No radar data available");
+          return;
+        }
 
-      // Fetch structured radar data
-      const res = await fetch('/api/get_radar_data');
-      if (!res.ok) throw new Error('데이터 요청 실패');
-      const data = await res.json();
+        const labels = Object.keys(data);
+        const scores = Object.values(data);
 
-      // Debug log before rendering
-      console.log("Rendering radar chart with data:", data);
-
-      // Prepare group-specific labels and data according to new response format
-      const humanLabels = Object.keys(data['인적역량'] || {});
-      const techLabels = Object.keys(data['AI기술역량'] || {});
-      const solutionLabels = Object.keys(data['솔루션 역량'] || {});
-
-      const humanData = humanLabels.map(key => data['인적역량'][key]);
-      const techData = techLabels.map(key => data['AI기술역량'][key]);
-      const solutionData = solutionLabels.map(key => data['솔루션 역량'][key]);
-
-      const options = {
-        responsive: true,
-        plugins: {
-          legend: { display: false }
-        },
-        scales: {
-          r: {
-            beginAtZero: true,
-            suggestedMax: 5,
-            ticks: {
-              display: false
+        const ctx = document.getElementById("radarChart").getContext("2d");
+        new Chart(ctx, {
+          type: "radar",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: "역량 점수",
+              data: scores,
+              fill: true,
+              borderColor: "rgb(75, 192, 192)",
+              backgroundColor: "rgba(75, 192, 192, 0.2)",
+              pointBackgroundColor: "rgb(75, 192, 192)"
+            }]
+          },
+          options: {
+            responsive: true,
+            elements: {
+              line: {
+                borderWidth: 3
+              }
             },
-            grid: {
-              color: '#ccc',
-              circular: false
-            },
-            pointLabels: {
-              font: {
-                size: 13
-              },
-              color: '#333'
+            scales: {
+              r: {
+                min: 0,
+                max: 5,
+                ticks: {
+                  stepSize: 1
+                }
+              }
             }
           }
-        }
-      };
-
-      const ctxHuman = document.getElementById('radarChartHuman').getContext('2d');
-      const ctxTech = document.getElementById('radarChartTech').getContext('2d');
-      const ctxSolution = document.getElementById('radarChartSolution').getContext('2d');
-
-      window.chartHuman = new Chart(ctxHuman, {
-        type: 'radar',
-        data: {
-          labels: humanLabels,
-          datasets: [{
-            label: '',
-            data: humanData,
-            fill: false,
-            borderColor: '#03c75a',
-            borderWidth: 2,
-            pointRadius: 0
-            // backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            // pointBackgroundColor: 'rgb(75, 192, 192)'
-          }]
-        },
-        options: options
-      });
-      window.chartTech = new Chart(ctxTech, {
-        type: 'radar',
-        data: {
-          labels: techLabels,
-          datasets: [{
-            label: '',
-            data: techData,
-            fill: false,
-            borderColor: '#03c75a',
-            borderWidth: 2,
-            pointRadius: 0
-            // backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            // pointBackgroundColor: 'rgb(75, 192, 192)'
-          }]
-        },
-        options: options
-      });
-      window.chartSolution = new Chart(ctxSolution, {
-        type: 'radar',
-        data: {
-          labels: solutionLabels,
-          datasets: [{
-            label: '',
-            data: solutionData,
-            fill: false,
-            borderColor: '#03c75a',
-            borderWidth: 2,
-            pointRadius: 0
-            // backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            // pointBackgroundColor: 'rgb(75, 192, 192)'
-          }]
-        },
-        options: options
-      });
-
-      const addDownload = (btnId, chart, filename) => {
-        document.getElementById(btnId).addEventListener("click", () => {
-          const url = chart.toBase64Image();
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = filename;
-          a.click();
         });
-      };
-
-      addDownload("downloadRadarChartHumanBtn", window.chartHuman, "human_radar_chart.png");
-      addDownload("downloadRadarChartTechBtn", window.chartTech, "tech_radar_chart.png");
-      addDownload("downloadRadarChartSolutionBtn", window.chartSolution, "solution_radar_chart.png");
-
-    } catch (err) {
-      console.error("Radar chart error:", err);
-    }
-  }
-
-  form.addEventListener('submit', () => {
-    setTimeout(loadRadarCharts, 500);
+      })
+      .catch(error => {
+        console.error("🚨 Error fetching radar data:", error);
+      });
   });
 </script>
 </body>
