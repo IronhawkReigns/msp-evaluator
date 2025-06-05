@@ -333,23 +333,25 @@ async def add_to_vector_db(data: dict):
 @app.get("/api/get_radar_data")
 async def get_radar_data():
     try:
+        from collections import defaultdict
+        results = collection.get(include=["metadatas"])
+
+        group_scores = defaultdict(list)
+
+        for meta in results["metadatas"]:
+            if not isinstance(meta, dict):
+                continue
+            group = meta.get("group") or meta.get("category")
+            score = meta.get("score")
+            if group and isinstance(score, (int, float)):
+                group_scores[group].append(score)
+
         output = {
-            item["name"]: item["score"]
-            for item in latest_group_summary
-            if "name" in item and "score" in item
+            group: round(sum(scores) / len(scores), 2)
+            for group, scores in group_scores.items() if scores
         }
         return JSONResponse(content=output)
     except Exception as e:
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Radar data failed: {str(e)}")
-@app.get("/debug/vector_groups")
-def check_groups():
-    from collections import defaultdict
-    results = collection.get(include=["metadatas"])
-    group_keys = defaultdict(int)
-    for meta in results["metadatas"]:
-        g = meta.get("group")
-        if g:
-            group_keys[g] += 1
-    return dict(group_keys)
