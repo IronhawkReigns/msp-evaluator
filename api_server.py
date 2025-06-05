@@ -352,3 +352,13 @@ async def get_radar_data():
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Radar data failed: {str(e)}")
+@app.get("/debug/vector_groups")
+def check_groups():
+    from collections import defaultdict
+    results = collection.get(include=["metadatas"])
+    group_keys = defaultdict(int)
+    for meta in results["metadatas"]:
+        g = meta.get("group")
+        if g:
+            group_keys[g] += 1
+    return dict(group_keys)
