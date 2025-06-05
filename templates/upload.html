@@ -690,7 +690,7 @@ async function renderRadarCharts() {
 
 // Standardize and filter summary entries before chart rendering
 const formattedSummary = result.summary
-  .filter(item => typeof item.score === 'number');
+  .filter(item => typeof item.score === 'number' && item.questions > 0);
 
 // Build chartData by grouping by group_to_category (only valid numeric scores)
 const chartData = {};
@@ -720,11 +720,9 @@ function createRadarChart(chartData) {
   radarContainer.innerHTML = ""; // Clear existing charts
 
   Object.entries(chartData).forEach(([category, subcats]) => {
-    // Exclude items with questions: 0
-    const filteredGroups = subcats.filter(g => g.questions > 0);
-    if (!filteredGroups.length) return;
-    const radarLabels = filteredGroups.map(g => g.name);
-    const radarScores = filteredGroups.map(g => g.score);
+    if (!subcats.length) return;
+    const radarLabels = subcats.map(g => g.name);
+    const radarScores = subcats.map(g => g.score);
     // Debug log before chart rendering
     console.debug('Rendering Radar Chart with:', radarLabels, radarScores);
     const radarChartInput = {
