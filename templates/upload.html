@@ -701,7 +701,7 @@
       if (window.chartSolution) window.chartSolution.destroy();
 
       // Fetch structured radar data
-      const res = await fetch('/api/get_radar_data_by_category');
+      const res = await fetch('/api/get_radar_data');
       if (!res.ok) throw new Error('데이터 요청 실패');
       const data = await res.json();
 
