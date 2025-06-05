@@ -219,6 +219,8 @@ async def upload_excel(file: UploadFile = File(...)):
         evaluated = evaluate_uploaded_excel(file)
         summary_df = compute_category_scores_from_excel_data(evaluated)
 
+        print(f"[DEBUG] summary_df.columns: {summary_df.columns.tolist()}")
+
         flat_results = []
         skipped_items = []
         for category_name, qa_list in evaluated.items():
@@ -250,6 +252,7 @@ async def upload_excel(file: UploadFile = File(...)):
         group_summary = []
         for record in summary_df.to_dict(orient="records"):
             name = record.get("Category")
+            print(f"[DEBUG] Record: {record}, Extracted name: {name}")
             if "총점" in name:
                 continue
             score = record.get("Score")
@@ -257,7 +260,7 @@ async def upload_excel(file: UploadFile = File(...)):
                 group_summary.append({
                     "name": name,
                     "score": score,
-                    "questions": None  # Optional: can be left out or computed later if needed
+                    "questions": None
                 })
 
         global latest_group_summary
