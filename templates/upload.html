@@ -688,25 +688,33 @@ async function renderRadarCharts() {
     return;
   }
 
-// Standardize and filter summary entries before chart rendering
-const formattedSummary = result.summary
-  .filter(item => typeof item.score === 'number' && item.questions > 0);
+  // Standardize and filter summary entries before chart rendering
+  const formattedSummary = result.summary
+    .filter(item => typeof item.score === 'number' && item.questions > 0);
 
-// Build chartData by grouping by group_to_category (only valid numeric scores)
-const chartData = {};
-formattedSummary.forEach((item) => {
-  const group = group_to_category[item.name];
-  if (!group) return;
-  if (!chartData[group]) chartData[group] = [];
-  chartData[group].push({
-    name: item.name,
-    score: item.score,
-    questions: item.questions,
+  // Build chartData by grouping by group_to_category (only valid numeric scores)
+  const chartData = {};
+  formattedSummary.forEach((item) => {
+    const group = group_to_category?.[item.name];
+    if (!group) {
+      console.warn("Radar chart: unknown category name", item.name);
+      return;
+    }
+    if (!chartData[group]) chartData[group] = [];
+    chartData[group].push({
+      name: item.name,
+      score: item.score,
+      questions: item.questions,
+    });
   });
-});
 
-console.debug("DEBUG: Final radar chartData", chartData);
-createRadarChart(chartData);
+  if (Object.keys(chartData).length === 0) {
+    console.warn("No valid radar chart data to render.");
+    return;
+  }
+
+  console.debug("DEBUG: Final radar chartData", chartData);
+  createRadarChart(chartData);
 }
 
 // Call renderRadarCharts after upload success
@@ -793,6 +801,7 @@ function createRadarChart(chartData) {
     });
   });
 }
+</script>
 </script>
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
