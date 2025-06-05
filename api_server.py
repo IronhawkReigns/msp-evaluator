@@ -333,23 +333,7 @@ async def add_to_vector_db(data: dict):
 @app.get("/api/get_radar_data")
 async def get_radar_data():
     try:
-        from collections import defaultdict
-        results = collection.get(include=["metadatas"])
-
-        group_scores = defaultdict(list)
-
-        for meta in results["metadatas"]:
-            if not isinstance(meta, dict):
-                continue
-            group = meta.get("group") or meta.get("category")
-            score = meta.get("score")
-            if group and isinstance(score, (int, float)):
-                group_scores[group].append(score)
-
-        output = {
-            group: round(sum(scores) / len(scores), 2)
-            for group, scores in group_scores.items() if scores
-        }
+        output = {item["name"]: item["score"] for item in latest_group_summary if "총점" not in item["name"]}
         return JSONResponse(content=output)
     except Exception as e:
         import traceback
