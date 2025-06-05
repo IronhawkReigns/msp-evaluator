@@ -248,6 +248,13 @@ async def upload_excel(file: UploadFile = File(...)):
                 })
 
         from collections import defaultdict
+        # Build group to question count mapping
+        group_to_questions = defaultdict(list)
+        for q in flat_results:
+            group_to_questions[q["group"]].append(q)
+
+        group_question_counts = {group: len(questions) for group, questions in group_to_questions.items()}
+
         # Filter from summary_df instead of recomputing
         group_summary = []
         for record in summary_df.to_dict(orient="records"):
@@ -268,7 +275,7 @@ async def upload_excel(file: UploadFile = File(...)):
             group_summary.append({
                 "name": name,
                 "score": score,
-                "questions": None
+                "questions": group_question_counts.get(name, 0)
             })
             print(f"[DEBUG] Added group summary item: name={name}, score={score}")
 
