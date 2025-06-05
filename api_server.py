@@ -324,35 +324,31 @@ async def add_to_vector_db(data: dict):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Vector DB update failed: {str(e)}")
 
-# Radar chart data grouped by category
-@app.get("/api/get_radar_data_by_category")
-async def get_radar_data_by_category():
+@app.get("/api/get_radar_data")
+async def get_radar_data():
     try:
         from collections import defaultdict
         from statistics import mean
 
-        radar_data = defaultdict(lambda: defaultdict(list))
+        radar_data = defaultdict(list)
         results = collection.get(include=["metadatas"])  # Load from ChromaDB
 
         for meta in results["metadatas"]:
             if not isinstance(meta, dict):
                 continue
-            category = meta.get("category")
-            group = meta.get("group") or meta.get("category")
+            group = meta.get("group")
             score = meta.get("score")
 
-            if category and group and isinstance(score, (int, float)):
-                radar_data[category][group].append(score)
+            if group and isinstance(score, (int, float)):
+                radar_data[group].append(score)
 
-        output = {}
-        for category, groups in radar_data.items():
-            output[category] = {
-                group: round(mean(scores), 2)
-                for group, scores in groups.items() if scores
-            }
+        output = {
+            group: round(mean(scores), 2)
+            for group, scores in radar_data.items() if scores
+        }
 
         return JSONResponse(content=output)
     except Exception as e:
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Radar data by category failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Radar data failed: {str(e)}")
