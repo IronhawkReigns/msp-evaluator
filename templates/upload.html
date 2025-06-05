@@ -694,58 +694,67 @@ form.addEventListener('submit', () => {
   setTimeout(loadRadarCharts, 500);
 });
 
-// --- Radar chart data fetch function ---
-async function loadRadarCharts() {
-  const res = await fetch("/api/get_radar_data");
-  const data = await res.json();
+// --- Radar chart rendering from result.groups ---
+function loadRadarCharts() {
+  // Hide or clear all radar charts first
+  const canvasHuman = document.getElementById('radarChartHuman');
+  const canvasTech = document.getElementById('radarChartTech');
+  const canvasSolution = document.getElementById('radarChartSolution');
+  if (!result || !Array.isArray(result.groups) || result.groups.length === 0) {
+    if (window.chartHuman) { window.chartHuman.destroy(); window.chartHuman = null; }
+    if (window.chartTech) { window.chartTech.destroy(); window.chartTech = null; }
+    if (window.chartSolution) { window.chartSolution.destroy(); window.chartSolution = null; }
+    if (canvasHuman) canvasHuman.style.display = "none";
+    if (canvasTech) canvasTech.style.display = "none";
+    if (canvasSolution) canvasSolution.style.display = "none";
+    return;
+  }
+  if (canvasHuman) canvasHuman.style.display = "";
+  if (canvasTech) canvasTech.style.display = "";
+  if (canvasSolution) canvasSolution.style.display = "";
 
+  // Prepare groupings for each chart
   const humanLabels = [];
   const humanData = [];
   const techLabels = [];
   const techData = [];
   const solutionLabels = [];
   const solutionData = [];
-
-  for (const [group, score] of Object.entries(data)) {
-    if (group.includes("인력") || group.includes("교육") || group.includes("협업") || group.includes("윤리")) {
-      humanLabels.push(group);
-      humanData.push(score);
-    } else if (group.includes("기술") || group.includes("데이터") || group.includes("플랫폼")) {
-      techLabels.push(group);
-      techData.push(score);
+  result.groups.forEach(g => {
+    if (!g || !g.name) return;
+    if (g.name.includes("인력") || g.name.includes("교육") || g.name.includes("협업") || g.name.includes("윤리")) {
+      humanLabels.push(g.name);
+      humanData.push(g.score);
+    } else if (g.name.includes("기술") || g.name.includes("데이터") || g.name.includes("플랫폼")) {
+      techLabels.push(g.name);
+      techData.push(g.score);
     } else {
-      solutionLabels.push(group);
-      solutionData.push(score);
+      solutionLabels.push(g.name);
+      solutionData.push(g.score);
     }
-  }
-
+  });
   const options = {
     responsive: true,
     plugins: { legend: { display: false } },
     scales: {
       r: {
-        beginAtZero: true,
-        suggestedMax: 5,
-        ticks: { display: false },
+        min: 0,
+        max: 5,
+        ticks: { stepSize: 1, display: false },
         pointLabels: { font: { size: 13 }, color: '#333' },
         grid: { color: '#ccc' }
       }
     }
   };
-
-  const ctxHuman = document.getElementById('radarChartHuman').getContext('2d');
-  const ctxTech = document.getElementById('radarChartTech').getContext('2d');
-  const ctxSolution = document.getElementById('radarChartSolution').getContext('2d');
-
+  // Radar chart for Human
+  const ctxHuman = canvasHuman.getContext('2d');
   if (window.chartHuman) window.chartHuman.destroy();
-  if (window.chartTech) window.chartTech.destroy();
-  if (window.chartSolution) window.chartSolution.destroy();
-
   window.chartHuman = new Chart(ctxHuman, {
     type: 'radar',
     data: {
       labels: humanLabels,
       datasets: [{
+        label: "Group Scores",
         data: humanData,
         borderColor: '#03c75a',
         borderWidth: 2,
@@ -755,12 +764,15 @@ async function loadRadarCharts() {
     },
     options: options
   });
-
+  // Radar chart for Tech
+  const ctxTech = canvasTech.getContext('2d');
+  if (window.chartTech) window.chartTech.destroy();
   window.chartTech = new Chart(ctxTech, {
     type: 'radar',
     data: {
       labels: techLabels,
       datasets: [{
+        label: "Group Scores",
         data: techData,
         borderColor: '#03c75a',
         borderWidth: 2,
@@ -770,12 +782,15 @@ async function loadRadarCharts() {
     },
     options: options
   });
-
+  // Radar chart for Solution
+  const ctxSolution = canvasSolution.getContext('2d');
+  if (window.chartSolution) window.chartSolution.destroy();
   window.chartSolution = new Chart(ctxSolution, {
     type: 'radar',
     data: {
       labels: solutionLabels,
       datasets: [{
+        label: "Group Scores",
         data: solutionData,
         borderColor: '#03c75a',
         borderWidth: 2,
