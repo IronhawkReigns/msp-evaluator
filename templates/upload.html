@@ -558,23 +558,29 @@ canvas {
 
       // === Prepare radar chart labels and scores using groupSummary from API ===
       if (result.groups && Array.isArray(result.groups)) {
-        const groupSummary = result.groups;
-        console.log("🔍 Group data from API:", groupSummary);
+  const groupSummary = result.groups;
+  console.log("🔍 Group data from API:", groupSummary);
 
-        const radarLabels = groupSummary.map((item) => item.name);
-        const radarScores = groupSummary.map((item) => item.score);
-        console.log("✅ Radar Labels:", radarLabels);
-        console.log("✅ Radar Scores:", radarScores);
+  const radarLabels = groupSummary.map((item) => item.name);
+  const radarScores = groupSummary.map((item) => item.score);
+  console.log("✅ Radar Labels:", radarLabels);
+  console.log("✅ Radar Scores:", radarScores);
 
-        // Safety check for group_to_category_map before drawing radar charts
-        if (!result.group_to_category_map) {
-          console.warn("group_to_category_map is missing from API result.");
-          result.group_to_category_map = {};  // fallback to empty object
-        }
-        console.log("✅ drawMultipleRadarCharts called with groups:", result.groups);
-        drawMultipleRadarCharts(result.groups, result.group_to_category_map);
-        console.log("✅ group_to_category_map:", result.group_to_category_map);
-      }
+  // Safety check for group_to_category_map before drawing radar charts
+  if (!result.group_to_category_map) {
+    console.warn("group_to_category_map is missing from API result.");
+    result.group_to_category_map = {};  // fallback to empty object
+  }
+  
+  // Add try-catch to prevent errors from breaking the upload
+  try {
+    console.log("✅ group_to_category_map:", result.group_to_category_map);
+    drawMultipleRadarCharts(result.groups, result.group_to_category_map);
+  } catch (chartError) {
+    console.error("Error drawing radar charts:", chartError);
+    // Continue with the rest of the upload process even if charts fail
+  }
+}
       
       const subCatSummariesDiv = document.getElementById('subCategorySummaries');
       if (subCatSummariesDiv) subCatSummariesDiv.innerHTML = '';
