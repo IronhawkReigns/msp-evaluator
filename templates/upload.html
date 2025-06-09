@@ -709,54 +709,81 @@ function renderRadarChartsByGroup(groups) {
   const container = document.getElementById("radarChartsContainer");
   container.innerHTML = ""; // Clear existing charts
 
-  // Ensure groupToCategory is available globally
-  if (typeof groupToCategory === 'undefined' && typeof window.groupToCategory === 'undefined') {
-    console.warn('groupToCategory is not defined');
+  console.log("📦 Starting renderRadarChartsByGroup...");
+  console.log("📊 groups parameter:", groups);
+
+  if (!Array.isArray(groups)) {
+    console.warn("❌ groups is not an array:", groups);
     return;
   }
+
+  // Ensure groupToCategory is available globally
+  if (typeof groupToCategory === 'undefined' && typeof window.groupToCategory === 'undefined') {
+    console.warn('❌ groupToCategory is not defined');
+    return;
+  }
+
   // Use global or window-scoped groupToCategory
   const groupToCategoryMap = typeof groupToCategory !== 'undefined' ? groupToCategory : window.groupToCategory;
 
-  // Extract top-level group names (e.g., "인적역량", "AI기술역량", ...)
-  const topGroups = [...new Set(groups.map(item => item.name).filter(name =>
-    name === "인적역량" || name === "AI기술역량" || name === "솔루션 역량"
-  ))];
+  console.log("📍 groupToCategoryMap:", groupToCategoryMap);
+
+  if (!groupToCategoryMap || typeof groupToCategoryMap !== 'object') {
+    console.warn("❌ groupToCategoryMap is missing or invalid");
+    return;
+  }
+
+  const topGroups = [...new Set(Object.values(groupToCategoryMap))];
+  console.log("📌 Extracted topGroups:", topGroups);
 
   topGroups.forEach(topGroup => {
-    // 하위 그룹 필터링
     const subGroups = groups.filter(item => {
       const parent = groupToCategoryMap[item.name];
-      return parent === topGroup && item.name !== topGroup;
+      const result = parent === topGroup && item.name !== topGroup;
+      console.log(`🔍 Checking group '${item.name}' → parent: '${parent}', match: ${result}`);
+      return result;
     });
 
-    if (subGroups.length === 0) return; // skip if no subgroups
+    console.log(`📐 For topGroup '${topGroup}', subGroups:`, subGroups);
+
+    if (subGroups.length === 0) {
+      console.warn(`⚠️ No subGroups found for topGroup: ${topGroup}`);
+      return;
+    }
 
     const labels = subGroups.map(g => g.name);
     const scores = subGroups.map(g => g.score);
+    console.log("➡️ Labels:", labels);
+    console.log("➡️ Scores:", scores);
 
     const canvas = document.createElement("canvas");
     container.appendChild(canvas);
 
-    new Chart(canvas, {
-      type: "radar",
-      data: {
-        labels: labels,
-        datasets: [{
-          label: topGroup,
-          data: scores,
-          fill: true,
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          r: {
-            suggestedMin: 0,
-            suggestedMax: 100
+    try {
+      new Chart(canvas, {
+        type: "radar",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: topGroup,
+            data: scores,
+            fill: true,
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            r: {
+              suggestedMin: 0,
+              suggestedMax: 100
+            }
           }
         }
-      }
-    });
+      });
+      console.log(`✅ Radar chart rendered for topGroup: ${topGroup}`);
+    } catch (e) {
+      console.error(`❌ Error rendering radar chart for topGroup: ${topGroup}`, e);
+    }
   });
 }
 
