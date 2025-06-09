@@ -319,10 +319,14 @@
   <div id="evaluatedQuestionsTable"></div>
   
   <div id="summaryTable"></div>
+<!--
 <div style="margin-top: 32px; text-align: center;">
   <h3 style="font-size: 1.2rem; color: #03c75a;">역량 그룹별 방사형 차트</h3>
   <div id="radarChartsContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 2em; margin-top: 1.5em;"></div>
 </div>
+-->
+
+<!-- Radar chart feature is disabled for now. -->
 <style>
 canvas {
   width: 400px !important;
@@ -718,137 +722,28 @@ const vectorUploadBtnScript = (() => {
 
 </script>
 
+<!--
 <script>
-
 // --- New radar chart rendering logic as per requirements ---
 function renderRadarChartsByGroup(groups) {
   const container = document.getElementById("radarChartsContainer");
   container.innerHTML = ""; // Clear existing charts
-
-  console.log("📦 Starting renderRadarChartsByGroup...");
-  console.log("📊 groups parameter:", groups);
-
-  if (!Array.isArray(groups)) {
-    console.warn("❌ groups is not an array:", groups);
-    return;
-  }
-
-  // Ensure groupToCategory is available globally
-  if (typeof groupToCategory === 'undefined' && typeof window.groupToCategory === 'undefined') {
-    console.warn('❌ groupToCategory is not defined');
-    return;
-  }
-
-  // Use global or window-scoped groupToCategory
-  const groupToCategoryMap = typeof groupToCategory !== 'undefined' ? groupToCategory : window.groupToCategory;
-
-  console.log("📍 groupToCategoryMap:", groupToCategoryMap);
-
-  if (!groupToCategoryMap || typeof groupToCategoryMap !== 'object') {
-    console.warn("❌ groupToCategoryMap is missing or invalid");
-    return;
-  }
-
-  const topGroups = [...new Set(Object.values(groupToCategoryMap))];
-  console.log("📌 Extracted topGroups:", topGroups);
-
-  topGroups.forEach(topGroup => {
-    const subGroups = groups.filter(item => {
-      const parent = groupToCategoryMap[item.name];
-      const result = parent === topGroup && item.name !== topGroup;
-      console.log(`🔍 Checking group '${item.name}' → parent: '${parent}', match: ${result}`);
-      return result;
-    });
-
-    console.log(`📐 For topGroup '${topGroup}', subGroups:`, subGroups);
-
-    if (subGroups.length === 0) {
-      console.warn(`⚠️ No subGroups found for topGroup: ${topGroup}`);
-      return;
-    }
-
-    const labels = subGroups.map(g => g.name);
-    const scores = subGroups.map(g => g.score);
-    console.log("➡️ Labels:", labels);
-    console.log("➡️ Scores:", scores);
-
-    // Ensure unique canvas id and correct creation
-    const canvas = document.createElement("canvas");
-    canvas.id = `radar-chart-${topGroup}`;
-    canvas.width = 400;
-    canvas.height = 400;
-    canvas.style.display = "block";
-    canvas.style.margin = "0 auto";
-    // === Debug logs immediately before appendChild ===
-    console.log("🛠️ Attempting to create canvas for:", topGroup);
-    console.log("🖼️ Creating canvas:", canvas.id);
-    console.log("🛠️ Canvas styles – display:", canvas.style.display, "margin:", canvas.style.margin);
-    container.appendChild(canvas);
-
-    // === Insert debugging CSS checks here ===
-    const computed = window.getComputedStyle(canvas);
-    console.log(`📏 Canvas #${canvas.id} dimensions:`, canvas.offsetWidth, canvas.offsetHeight);
-    console.log(`🎨 Canvas #${canvas.id} computed display:`, computed.display);
-    console.log(`🎨 Canvas #${canvas.id} visibility:`, computed.visibility);
-    console.log(`🎨 Canvas #${canvas.id} position:`, computed.position);
-    console.log(`🎨 Canvas #${canvas.id} z-index:`, computed.zIndex);
-    console.log(`🎨 Canvas #${canvas.id} parent node:`, canvas.parentNode);
-
-    // Destroy previous Chart.js instance if it exists for this canvas id
-    if (Chart.getChart(canvas.id)) {
-      Chart.getChart(canvas.id).destroy();
-    }
-
-    try {
-      new Chart(canvas, {
-        type: "radar",
-        data: {
-          labels: labels,
-          datasets: [{
-            label: topGroup,
-            data: scores,
-            fill: true,
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            r: {
-              suggestedMin: 0,
-              suggestedMax: 100
-            }
-          }
-        }
-      });
-      console.log(`✅ Radar chart rendered for topGroup: ${topGroup}`);
-    } catch (e) {
-      console.error(`❌ Error rendering radar chart for topGroup: ${topGroup}`, e);
-    }
-  });
-
-  // Fallback warning if container is empty after rendering
-  if (container.children.length === 0) {
-    console.warn("🚫 No radar charts were rendered. Check group names and mapping.");
-  }
-
-  // Final render completion log
-  console.log("✅ Completed rendering all radar charts");
+  // ... (radar chart logic is disabled)
 }
-
-// Remove or comment out the previous drawMultipleRadarCharts and renderRadarChartsByCategory functions, and use the new one:
 </script>
 <script>
 function drawMultipleRadarCharts(groups, groupToCategoryMap) {
-  // Expose groupToCategory globally for use in renderRadarChartsByGroup
   window.groupToCategory = groupToCategoryMap;
   renderRadarChartsByGroup(groups);
 }
-
-// Ensure radar charts are rendered on load if data exists
-if (typeof result !== 'undefined' && result.groups && result.group_to_category_map) {
-  drawMultipleRadarCharts(result.groups, result.group_to_category_map);
-}
 </script>
+-->
+<!--
+// Radar chart feature is disabled for now.
+// if (typeof result !== 'undefined' && result.groups && result.group_to_category_map) {
+//   drawMultipleRadarCharts(result.groups, result.group_to_category_map);
+// }
+-->
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
