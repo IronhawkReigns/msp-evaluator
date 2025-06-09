@@ -415,6 +415,9 @@
 
       result = await res.json();
       console.log("DEBUG: API result", result);
+      // === Insert debug logs for summary and groups ===
+      console.log("🔍 Summary data from API:", result.summary);
+      console.log("🔍 Group data from API:", result.groups);
       // Normalize summary structure from backend to frontend format
       if (Array.isArray(result.summary)) {
         result.summary = result.summary.map((item) => ({
@@ -528,6 +531,16 @@
       }
 
       // Remove subcategory summaries container after upload (if exists)
+
+      // === Prepare radar chart labels and scores, insert debug logs ===
+      if (result.groups && Array.isArray(result.groups)) {
+        const radarLabels = result.groups.map(item => item.name);
+        const radarScores = result.groups.map(item => item.score);
+        console.log("✅ Radar Labels:", radarLabels);
+        console.log("✅ Radar Scores:", radarScores);
+        // Optionally, call radar chart render function here if needed:
+        // renderRadarChart(radarLabels, radarScores);
+      }
       const subCatSummariesDiv = document.getElementById('subCategorySummaries');
       if (subCatSummariesDiv) subCatSummariesDiv.innerHTML = '';
 
@@ -677,41 +690,12 @@
 
 <script>
 // === Radar chart rendering using backend 'groups' array ===
-async function renderRadarCharts() {
-  // Use result.groups (from backend response) for radar chart, fallback if not present
-  if (!result.groups || !Array.isArray(result.groups)) {
-    console.warn("No 'groups' array found in result; radar chart not rendered.");
-    return;
-  }
-
-  // Debug: print received groups
-  console.debug("📊 Received groupSummary for chart:", result.groups);
-
-  // Build chart data. If groups have a 'name' and 'score', use them directly.
-  // No filtering out of questions:0 for 인적역량, AI기술역량
-  const labels = result.groups.map(item => item.name);
-  const scores = result.groups.map(item => item.score);
-
-  // Final debug before chart rendering
-  console.debug("📈 Chart labels:", labels);
-  console.debug("📈 Chart scores:", scores);
-
+function renderRadarChart(labels, scores) {
   // Only render if there is at least one group
-  if (!labels.length) {
+  if (!labels || !labels.length) {
     console.warn("No group labels to render radar chart.");
     return;
   }
-
-  createRadarChart(labels, scores);
-}
-
-// Call renderRadarCharts after upload success
-form.addEventListener('submit', () => {
-  setTimeout(renderRadarCharts, 500);
-});
-
-// Draw radar chart for group summary
-function createRadarChart(labels, scores) {
   const radarContainer = document.getElementById("radarChartsContainer");
   radarContainer.innerHTML = ""; // Clear existing charts
 
@@ -783,6 +767,18 @@ function createRadarChart(labels, scores) {
     a.click();
   });
 }
+
+// Call renderRadarChart after upload success, using debugged/verified data
+form.addEventListener('submit', () => {
+  setTimeout(() => {
+    if (result.groups && Array.isArray(result.groups)) {
+      const radarLabels = result.groups.map(item => item.name);
+      const radarScores = result.groups.map(item => item.score);
+      // Data already logged above.
+      renderRadarChart(radarLabels, radarScores);
+    }
+  }, 500);
+});
 </script>
 </script>
 </script>
