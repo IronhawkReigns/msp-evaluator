@@ -768,12 +768,19 @@ function renderRadarChartsByGroup(groups) {
     console.log("➡️ Labels:", labels);
     console.log("➡️ Scores:", scores);
 
+    // Ensure unique canvas id and correct creation
     const canvas = document.createElement("canvas");
-    canvas.style.width = "400px";
-    canvas.style.height = "400px";
+    canvas.id = `radar-chart-${topGroup}`;
+    canvas.width = 400;
+    canvas.height = 400;
     canvas.style.display = "block";
     canvas.style.margin = "0 auto";
     container.appendChild(canvas);
+
+    // Destroy previous Chart.js instance if it exists for this canvas id
+    if (Chart.getChart(canvas.id)) {
+      Chart.getChart(canvas.id).destroy();
+    }
 
     try {
       new Chart(canvas, {
@@ -801,6 +808,14 @@ function renderRadarChartsByGroup(groups) {
       console.error(`❌ Error rendering radar chart for topGroup: ${topGroup}`, e);
     }
   });
+
+  // Fallback warning if container is empty after rendering
+  if (container.children.length === 0) {
+    console.warn("🚫 No radar charts were rendered. Check group names and mapping.");
+  }
+
+  // Final render completion log
+  console.log("✅ Completed rendering all radar charts");
 }
 
 // Remove or comment out the previous drawMultipleRadarCharts and renderRadarChartsByCategory functions, and use the new one:
