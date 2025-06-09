@@ -541,7 +541,7 @@
       console.log("✅ Radar Labels:", radarLabels);
       console.log("✅ Radar Scores:", radarScores);
 
-      drawRadarChart(radarLabels, radarScores);
+      drawMultipleRadarCharts(result.groups, result.group_to_category_map);
       const subCatSummariesDiv = document.getElementById('subCategorySummaries');
       if (subCatSummariesDiv) subCatSummariesDiv.innerHTML = '';
 
@@ -690,170 +690,90 @@
 </script>
 
 <script>
-// === Radar chart rendering using backend 'groups' array ===
-function renderRadarChart(labels, scores) {
-  let currentRadarChart = null;
-  // Only render if there is at least one group
-  if (!labels || !labels.length) {
-    console.warn("No group labels to render radar chart.");
-    return;
-  }
+
+function drawMultipleRadarCharts(groups, groupToCategoryMap) {
   const radarContainer = document.getElementById("radarChartsContainer");
-  radarContainer.innerHTML = ""; // Clear existing charts
+  radarContainer.innerHTML = "";
 
-  // Only one radar chart for all groups
-  // Create a container for the chart and download button
-  const chartDiv = document.createElement("div");
-  chartDiv.style.display = "flex";
-  chartDiv.style.flexDirection = "column";
-  chartDiv.style.alignItems = "center";
-  chartDiv.style.marginBottom = "24px";
-  chartDiv.style.minWidth = "300px";
+  if (!groups || !groups.length || !groupToCategoryMap) return;
 
-  const canvas = document.createElement("canvas");
-  canvas.style.margin = "20px auto";
-  canvas.style.display = "block";
-  canvas.style.maxWidth = "600px";
-  canvas.style.height = "400px";
-  chartDiv.appendChild(canvas);
+  const categoryMap = {};
+  groups.forEach((item) => {
+    const category = groupToCategoryMap[item.name];
+    if (!category) return;
+    if (!categoryMap[category]) categoryMap[category] = [];
+    categoryMap[category].push({ label: item.name, score: item.score });
+  });
 
-  // Create download button
-  const downloadBtn = document.createElement("button");
-  downloadBtn.className = "copy-btn";
-  downloadBtn.style.background = "#03c75a";
-  downloadBtn.style.color = "white";
-  downloadBtn.style.marginTop = "12px";
-  downloadBtn.textContent = `역량 그룹별 그래프 다운로드`;
-  chartDiv.appendChild(downloadBtn);
+  Object.entries(categoryMap).forEach(([categoryName, items]) => {
+    const chartDiv = document.createElement("div");
+    chartDiv.style.display = "flex";
+    chartDiv.style.flexDirection = "column";
+    chartDiv.style.alignItems = "center";
+    chartDiv.style.marginBottom = "36px";
+    chartDiv.style.minWidth = "300px";
 
-  radarContainer.appendChild(chartDiv);
+    const title = document.createElement("h3");
+    title.textContent = `역량 그룹: ${categoryName}`;
+    title.style.color = "#03c75a";
+    title.style.marginBottom = "12px";
+    chartDiv.appendChild(title);
 
-  // Draw chart
-  if (currentRadarChart) {
-    currentRadarChart.destroy();
-  }
+    const canvas = document.createElement("canvas");
+    canvas.style.margin = "20px auto";
+    canvas.style.display = "block";
+    canvas.style.maxWidth = "600px";
+    canvas.style.height = "400px";
+    chartDiv.appendChild(canvas);
 
-  currentRadarChart = new Chart(canvas, {
-    type: "radar",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: "역량 그룹별 점수",
-        data: scores,
-        fill: true,
-        borderWidth: 2,
-        pointRadius: 3
-      }]
-    },
-    options: {
-      scales: {
-        r: {
-          suggestedMin: 1,
-          suggestedMax: 5,
-          ticks: {
-            stepSize: 1
+    const downloadBtn = document.createElement("button");
+    downloadBtn.className = "copy-btn";
+    downloadBtn.style.background = "#03c75a";
+    downloadBtn.style.color = "white";
+    downloadBtn.style.marginTop = "12px";
+    downloadBtn.textContent = `${categoryName} 그래프 다운로드`;
+    chartDiv.appendChild(downloadBtn);
+
+    radarContainer.appendChild(chartDiv);
+
+    const chart = new Chart(canvas, {
+      type: "radar",
+      data: {
+        labels: items.map((x) => x.label),
+        datasets: [{
+          label: `${categoryName} 점수`,
+          data: items.map((x) => x.score),
+          fill: true,
+          borderWidth: 2,
+          pointRadius: 3
+        }]
+      },
+      options: {
+        scales: {
+          r: {
+            suggestedMin: 1,
+            suggestedMax: 5,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: "top"
           }
         }
-      },
-      plugins: {
-        legend: {
-          display: true,
-          position: "top"
-        }
       }
-    }
-  });
+    });
 
-  // Download functionality
-  downloadBtn.addEventListener("click", () => {
-    const url = canvas.toDataURL("image/png");
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `group_radar_chart.png`;
-    a.click();
-  });
-}
-
-// Draw radar chart function (uses same implementation as renderRadarChart for compatibility)
-function drawRadarChart(labels, scores) {
-  let currentRadarChart = null;
-  if (!labels || !labels.length) {
-    console.warn("No group labels to render radar chart.");
-    return;
-  }
-  const radarContainer = document.getElementById("radarChartsContainer");
-  radarContainer.innerHTML = ""; // Clear existing charts
-
-  // Only one radar chart for all groups
-  // Create a container for the chart and download button
-  const chartDiv = document.createElement("div");
-  chartDiv.style.display = "flex";
-  chartDiv.style.flexDirection = "column";
-  chartDiv.style.alignItems = "center";
-  chartDiv.style.marginBottom = "24px";
-  chartDiv.style.minWidth = "300px";
-
-  const canvas = document.createElement("canvas");
-  canvas.style.margin = "20px auto";
-  canvas.style.display = "block";
-  canvas.style.maxWidth = "600px";
-  canvas.style.height = "400px";
-  chartDiv.appendChild(canvas);
-
-  // Create download button
-  const downloadBtn = document.createElement("button");
-  downloadBtn.className = "copy-btn";
-  downloadBtn.style.background = "#03c75a";
-  downloadBtn.style.color = "white";
-  downloadBtn.style.marginTop = "12px";
-  downloadBtn.textContent = `역량 그룹별 그래프 다운로드`;
-  chartDiv.appendChild(downloadBtn);
-
-  radarContainer.appendChild(chartDiv);
-
-  // Draw chart
-  if (currentRadarChart) {
-    currentRadarChart.destroy();
-  }
-
-  currentRadarChart = new Chart(canvas, {
-    type: "radar",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: "역량 그룹별 점수",
-        data: scores,
-        fill: true,
-        borderWidth: 2,
-        pointRadius: 3
-      }]
-    },
-    options: {
-      scales: {
-        r: {
-          suggestedMin: 1,
-          suggestedMax: 5,
-          ticks: {
-            stepSize: 1
-          }
-        }
-      },
-      plugins: {
-        legend: {
-          display: true,
-          position: "top"
-        }
-      }
-    }
-  });
-
-  // Download functionality
-  downloadBtn.addEventListener("click", () => {
-    const url = canvas.toDataURL("image/png");
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `group_radar_chart.png`;
-    a.click();
+    downloadBtn.addEventListener("click", () => {
+      const url = canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${categoryName}_radar_chart.png`;
+      a.click();
+    });
   });
 }
 </script>
