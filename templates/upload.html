@@ -567,15 +567,15 @@ canvas {
   console.log("✅ Radar Scores:", radarScores);
 
   // Safety check for group_to_category_map before drawing radar charts
-  if (!result.group_to_category_map) {
-    console.warn("group_to_category_map is missing from API result.");
-    result.group_to_category_map = {};  // fallback to empty object
+  if (!result.group_to_category) {
+    console.warn("group_to_category is missing from API result.");
+    result.group_to_category = {};  // fallback to empty object
   }
   
   // Add try-catch to prevent errors from breaking the upload
   try {
-    console.log("✅ group_to_category_map:", result.group_to_category_map);
-    drawMultipleRadarCharts(result.groups, result.group_to_category_map);
+    console.log("✅ group_to_category_map:", result.group_to_category);
+    drawMultipleRadarCharts(result.groups, result.group_to_category);
   } catch (chartError) {
     console.error("Error drawing radar charts:", chartError);
     // Continue with the rest of the upload process even if charts fail
