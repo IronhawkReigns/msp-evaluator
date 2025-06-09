@@ -319,14 +319,12 @@
   <div id="evaluatedQuestionsTable"></div>
   
   <div id="summaryTable"></div>
-<!--
+
 <div style="margin-top: 32px; text-align: center;">
   <h3 style="font-size: 1.2rem; color: #03c75a;">역량 그룹별 방사형 차트</h3>
   <div id="radarChartsContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 2em; margin-top: 1.5em;"></div>
 </div>
--->
 
-<!-- Radar chart feature is disabled for now. -->
 <style>
 canvas {
   width: 400px !important;
@@ -557,24 +555,26 @@ canvas {
       // Remove subcategory summaries container after upload (if exists)
 
       // TODO: Re-enable radar chart rendering when stable or needed
-      /*
+
       // === Prepare radar chart labels and scores using groupSummary from API ===
-      const groupSummary = result.groups;
-      console.log("🔍 Group data from API:", groupSummary);
+      if (result.groups && Array.isArray(result.groups)) {
+        const groupSummary = result.groups;
+        console.log("🔍 Group data from API:", groupSummary);
 
-      const radarLabels = groupSummary.map((item) => item.name);
-      const radarScores = groupSummary.map((item) => item.score);
-      console.log("✅ Radar Labels:", radarLabels);
-      console.log("✅ Radar Scores:", radarScores);
+        const radarLabels = groupSummary.map((item) => item.name);
+        const radarScores = groupSummary.map((item) => item.score);
+        console.log("✅ Radar Labels:", radarLabels);
+        console.log("✅ Radar Scores:", radarScores);
 
-      // Safety check for group_to_category_map before drawing radar charts
-      if (!result.group_to_category_map) {
-        console.warn("group_to_category_map is missing from API result.");
-        result.group_to_category_map = {};  // fallback to empty object
+        // Safety check for group_to_category_map before drawing radar charts
+        if (!result.group_to_category_map) {
+          console.warn("group_to_category_map is missing from API result.");
+          result.group_to_category_map = {};  // fallback to empty object
+        }
+        console.log("✅ drawMultipleRadarCharts called with groups:", result.groups);
+        drawMultipleRadarCharts(result.groups, result.group_to_category_map);
       }
-      console.log("✅ drawMultipleRadarCharts called with groups:", result.groups);
-      drawMultipleRadarCharts(result.groups, result.group_to_category_map);
-      */
+      
       const subCatSummariesDiv = document.getElementById('subCategorySummaries');
       if (subCatSummariesDiv) subCatSummariesDiv.innerHTML = '';
 
@@ -720,30 +720,124 @@ const vectorUploadBtnScript = (() => {
   }
 })();
 
-</script>
-
-<!--
-<script>
-// --- New radar chart rendering logic as per requirements ---
-function renderRadarChartsByGroup(groups) {
-  const container = document.getElementById("radarChartsContainer");
-  container.innerHTML = ""; // Clear existing charts
-  // ... (radar chart logic is disabled)
-}
-</script>
-<script>
 function drawMultipleRadarCharts(groups, groupToCategoryMap) {
-  window.groupToCategory = groupToCategoryMap;
-  renderRadarChartsByGroup(groups);
+  const container = document.getElementById("radarChartsContainer");
+  if (!container) {
+    console.error("Radar charts container not found");
+    return;
+  }
+  container.innerHTML = ""; // Clear existing charts
+  
+  // Safety check
+  if (!groups || !Array.isArray(groups) || groups.length === 0) {
+    console.warn("No groups data for radar charts");
+    return;
+  }
+  
+  // Group by parent category
+  const categorizedGroups = {
+    "인적역량": [],
+    "AI기술역량": [],
+    "솔루션 역량": []
+  };
+  
+  groups.forEach(group => {
+    const category = groupToCategoryMap[group.name] || "기타";
+    if (categorizedGroups[category]) {
+      categorizedGroups[category].push(group);
+    }
+  });
+  
+  // Create a radar chart for each category
+  Object.entries(categorizedGroups).forEach(([category, categoryGroups]) => {
+    if (categoryGroups.length === 0) return;
+    
+    // Create canvas for this category
+    const canvasWrapper = document.createElement('div');
+    canvasWrapper.style.width = '400px';
+    canvasWrapper.style.textAlign = 'center';
+    
+    const canvas = document.createElement('canvas');
+    canvas.id = `radar-${category.replace(/\s/g, '-')}`;
+    canvas.width = 400;
+    canvas.height = 400;
+    
+    const title = document.createElement('h4');
+    title.textContent = category;
+    title.style.marginBottom = '10px';
+    title.style.color = '#03c75a';
+    
+    canvasWrapper.appendChild(title);
+    canvasWrapper.appendChild(canvas);
+    container.appendChild(canvasWrapper);
+    
+    // Prepare data for Chart.js
+    const labels = categoryGroups.map(g => g.name);
+    const data = categoryGroups.map(g => g.score);
+    
+    // Create radar chart
+    new Chart(canvas.getContext('2d'), {
+      type: 'radar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: category,
+          data: data,
+          backgroundColor: getColorForCategory(category, 0.2),
+          borderColor: getColorForCategory(category, 1),
+          pointBackgroundColor: getColorForCategory(category, 1),
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: getColorForCategory(category, 1),
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          r: {
+            min: 0,
+            max: 100,
+            ticks: {
+              stepSize: 20,
+              callback: function(value) {
+                return value + '%';
+              }
+            },
+            pointLabels: {
+              font: {
+                size: 11,
+                family: 'NanumSquareNeo'
+              }
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': ' + context.parsed.r.toFixed(1) + '%';
+              }
+            }
+          }
+        }
+      }
+    });
+  });
 }
-</script>
--->
-<!--
-// Radar chart feature is disabled for now.
-// if (typeof result !== 'undefined' && result.groups && result.group_to_category_map) {
-//   drawMultipleRadarCharts(result.groups, result.group_to_category_map);
-// }
--->
+
+function getColorForCategory(category, alpha) {
+  const colors = {
+    "인적역량": `rgba(3, 199, 90, ${alpha})`,     // Green
+    "AI기술역량": `rgba(7, 160, 188, ${alpha})`,  // Blue
+    "솔루션 역량": `rgba(188, 135, 7, ${alpha})`   // Orange
+  };
+  return colors[category] || `rgba(128, 128, 128, ${alpha})`;
+}
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
