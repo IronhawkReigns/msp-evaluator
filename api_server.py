@@ -289,14 +289,31 @@ async def upload_excel(file: UploadFile = File(...)):
         print(f"[DEBUG] Final Group Summary Payload: {group_summary}")
 
         group_to_category = {}
-        for item in flat_results:
-            group = item.get("group", item.get("category"))
-            category = item.get("category", "Unknown")
-            if group and category:
-                group_to_category[group] = category
 
-        global group_to_category_cache
-        group_to_category_cache = group_to_category
+        # The category_name in evaluated dict comes from sheet names
+        for category_name, qa_list in evaluated.items():
+            if not isinstance(qa_list, list):
+                continue
+            if category_name == "summary":
+                continue
+            
+            # The category_name here is the parent category (sheet name)
+            parent_category = category_name
+            
+            # Map all groups found in this sheet to the parent category
+            seen_groups = set()
+            for item in qa_list:
+                group = item.get("group")
+                if group and isinstance(group, str):
+                    group = group.strip()
+                    if group not in seen_groups:
+                        group_to_category[group] = parent_category
+                        seen_groups.add(group)
+            
+            # Also map the parent category to itself
+            group_to_category[parent_category] = parent_category
+
+        print(f"[DEBUG] Dynamic group_to_category mapping: {json.dumps(group_to_category, ensure_ascii=False, indent=2)}")
 
         return JSONResponse(content={
             "evaluated_questions": flat_results,
