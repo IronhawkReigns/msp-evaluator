@@ -532,15 +532,16 @@
 
       // Remove subcategory summaries container after upload (if exists)
 
-      // === Prepare radar chart labels and scores, insert debug logs ===
-      if (result.groups && Array.isArray(result.groups)) {
-        const radarLabels = result.groups.map(item => item.name);
-        const radarScores = result.groups.map(item => item.score);
-        console.log("✅ Radar Labels:", radarLabels);
-        console.log("✅ Radar Scores:", radarScores);
-        // Optionally, call radar chart render function here if needed:
-        // renderRadarChart(radarLabels, radarScores);
-      }
+      // === Prepare radar chart labels and scores using groupSummary from API ===
+      const groupSummary = result.groups;
+      console.log("🔍 Group data from API:", groupSummary);
+
+      const radarLabels = groupSummary.map((item) => item.name);
+      const radarScores = groupSummary.map((item) => item.score);
+      console.log("✅ Radar Labels:", radarLabels);
+      console.log("✅ Radar Scores:", radarScores);
+
+      drawRadarChart(radarLabels, radarScores);
       const subCatSummariesDiv = document.getElementById('subCategorySummaries');
       if (subCatSummariesDiv) subCatSummariesDiv.innerHTML = '';
 
@@ -773,17 +774,88 @@ function renderRadarChart(labels, scores) {
   });
 }
 
-// Call renderRadarChart after upload success, using debugged/verified data
-form.addEventListener('submit', () => {
-  setTimeout(() => {
-    if (result.groups && Array.isArray(result.groups)) {
-      const radarLabels = result.groups.map(item => item.name);
-      const radarScores = result.groups.map(item => item.score);
-      // Data already logged above.
-      renderRadarChart(radarLabels, radarScores);
+// Draw radar chart function (uses same implementation as renderRadarChart for compatibility)
+function drawRadarChart(labels, scores) {
+  let currentRadarChart = null;
+  if (!labels || !labels.length) {
+    console.warn("No group labels to render radar chart.");
+    return;
+  }
+  const radarContainer = document.getElementById("radarChartsContainer");
+  radarContainer.innerHTML = ""; // Clear existing charts
+
+  // Only one radar chart for all groups
+  // Create a container for the chart and download button
+  const chartDiv = document.createElement("div");
+  chartDiv.style.display = "flex";
+  chartDiv.style.flexDirection = "column";
+  chartDiv.style.alignItems = "center";
+  chartDiv.style.marginBottom = "24px";
+  chartDiv.style.minWidth = "300px";
+
+  const canvas = document.createElement("canvas");
+  canvas.style.margin = "20px auto";
+  canvas.style.display = "block";
+  canvas.style.maxWidth = "600px";
+  canvas.style.height = "400px";
+  chartDiv.appendChild(canvas);
+
+  // Create download button
+  const downloadBtn = document.createElement("button");
+  downloadBtn.className = "copy-btn";
+  downloadBtn.style.background = "#03c75a";
+  downloadBtn.style.color = "white";
+  downloadBtn.style.marginTop = "12px";
+  downloadBtn.textContent = `역량 그룹별 그래프 다운로드`;
+  chartDiv.appendChild(downloadBtn);
+
+  radarContainer.appendChild(chartDiv);
+
+  // Draw chart
+  if (currentRadarChart) {
+    currentRadarChart.destroy();
+  }
+
+  currentRadarChart = new Chart(canvas, {
+    type: "radar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "역량 그룹별 점수",
+        data: scores,
+        fill: true,
+        borderWidth: 2,
+        pointRadius: 3
+      }]
+    },
+    options: {
+      scales: {
+        r: {
+          suggestedMin: 1,
+          suggestedMax: 5,
+          ticks: {
+            stepSize: 1
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: "top"
+        }
+      }
     }
-  }, 500);
-});
+  });
+
+  // Download functionality
+  downloadBtn.addEventListener("click", () => {
+    const url = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `group_radar_chart.png`;
+    a.click();
+  });
+}
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
