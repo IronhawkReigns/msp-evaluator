@@ -18,6 +18,7 @@ load_dotenv()
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 import io
+import json
 
 group_to_category_cache = {}
 
