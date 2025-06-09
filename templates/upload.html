@@ -704,131 +704,67 @@ const vectorUploadBtnScript = (() => {
 
 <script>
 
-// Refactored radar chart rendering with enhanced logging and empty chart fallback
-function renderRadarChartsByCategory(summaryData, groupData) {
-  // --- Log incoming data for debugging ---
-  console.log("📦 Received summaryData from API:", summaryData);
-  console.log("📦 Received groupData from API:", groupData);
+// --- New radar chart rendering logic as per requirements ---
+function renderRadarChartsByGroup(groups) {
+  const container = document.getElementById("radarChartsContainer");
+  container.innerHTML = ""; // Clear existing charts
 
-  const radarContainer = document.getElementById("radarChartsContainer");
-  radarContainer.innerHTML = "";
-  if (!Array.isArray(summaryData) || !Array.isArray(groupData)) return;
+  // Ensure groupToCategory is available globally
+  if (typeof groupToCategory === 'undefined' && typeof window.groupToCategory === 'undefined') {
+    console.warn('groupToCategory is not defined');
+    return;
+  }
+  // Use global or window-scoped groupToCategory
+  const groupToCategoryMap = typeof groupToCategory !== 'undefined' ? groupToCategory : window.groupToCategory;
 
-  // Group groupData by category (groupData: [{name, score, ...}], summaryData: [{name, score, ...}])
-  // We'll use summaryData as categories, and for each, find groupData items belonging to that category
-  // Assume groupData items have a .category or .name that matches summaryData .name
-  // But since mapping may be needed, let's build a map from groupData
-  const categoryGroups = {};
-  groupData.forEach((group) => {
-    // Try to find the category from summaryData for this group
-    // If group has .category use it, else try to match .name
-    let category = group.category || group.Category;
-    if (!category) {
-      // Try to infer by matching group name to summaryData names
-      // This is a fallback and may not be accurate
-      category = summaryData.find(cat => cat.name === group.name)?.name;
-    }
-    if (!category) return;
-    if (!categoryGroups[category]) categoryGroups[category] = [];
-    categoryGroups[category].push(group);
-  });
+  // Extract top-level group names (e.g., "인적역량", "AI기술역량", ...)
+  const topGroups = [...new Set(groups.map(item => item.name).filter(name =>
+    name === "인적역량" || name === "AI기술역량" || name === "솔루션 역량"
+  ))];
 
-  // For each category in summaryData, render a radar chart
-  summaryData.forEach((cat) => {
-    const groupName = cat.name;
-    // Enhanced fallback and logging
-    if (!categoryGroups[groupName]) {
-      console.warn(`🚨 카테고리 ${groupName}에 해당하는 그룹이 없습니다. 빈 차트를 생성합니다.`);
-      categoryGroups[groupName] = []; // Create an empty group to force render
-    } else {
-      console.log(`✅ 카테고리 ${groupName} → 세부 그룹 수:`, categoryGroups[groupName].length);
-    }
-    const items = categoryGroups[groupName];
-    const chartDiv = document.createElement("div");
-    chartDiv.style.display = "flex";
-    chartDiv.style.flexDirection = "column";
-    chartDiv.style.alignItems = "center";
-    chartDiv.style.marginBottom = "36px";
-    chartDiv.style.minWidth = "300px";
+  topGroups.forEach(topGroup => {
+    // 하위 그룹 필터링
+    const subGroups = groups.filter(item => {
+      const parent = groupToCategoryMap[item.name];
+      return parent === topGroup && item.name !== topGroup;
+    });
 
-    const title = document.createElement("h3");
-    title.textContent = `역량 그룹: ${groupName}`;
-    title.style.color = "#03c75a";
-    title.style.marginBottom = "12px";
-    chartDiv.appendChild(title);
+    if (subGroups.length === 0) return; // skip if no subgroups
+
+    const labels = subGroups.map(g => g.name);
+    const scores = subGroups.map(g => g.score);
 
     const canvas = document.createElement("canvas");
-    canvas.style.margin = "20px auto";
-    canvas.style.display = "block";
-    canvas.style.maxWidth = "600px";
-    canvas.style.height = "400px";
-    chartDiv.appendChild(canvas);
+    container.appendChild(canvas);
 
-    const downloadBtn = document.createElement("button");
-    downloadBtn.className = "copy-btn";
-    downloadBtn.style.background = "#03c75a";
-    downloadBtn.style.color = "white";
-    downloadBtn.style.marginTop = "12px";
-    downloadBtn.textContent = `${groupName} 그래프 다운로드`;
-    chartDiv.appendChild(downloadBtn);
-
-    radarContainer.appendChild(chartDiv);
-
-    const chart = new Chart(canvas, {
+    new Chart(canvas, {
       type: "radar",
       data: {
-        labels: items.map((x) => x.label || x.name) || [],
+        labels: labels,
         datasets: [{
-          label: `${groupName} 점수`,
-          data: items.map((x) => x.score) || [],
+          label: topGroup,
+          data: scores,
           fill: true,
-          borderWidth: 2,
-          pointRadius: 3
         }]
       },
       options: {
+        responsive: true,
         scales: {
           r: {
-            suggestedMin: 1,
-            suggestedMax: 5,
-            ticks: {
-              stepSize: 1
-            }
-          }
-        },
-        plugins: {
-          legend: {
-            display: true,
-            position: "top"
+            suggestedMin: 0,
+            suggestedMax: 100
           }
         }
       }
     });
-
-    downloadBtn.addEventListener("click", () => {
-      const url = canvas.toDataURL("image/png");
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${groupName}_radar_chart.png`;
-      a.click();
-    });
   });
 }
 
-// For backward compatibility, keep the previous function but redirect to new one
+// Remove or comment out the previous drawMultipleRadarCharts and renderRadarChartsByCategory functions, and use the new one:
 function drawMultipleRadarCharts(groups, groupToCategoryMap) {
-  // Convert groupToCategoryMap to a list of categories (unique values)
-  // and group group objects by category
-  if (!groups || !Array.isArray(groups) || !groupToCategoryMap) return;
-  // Build summaryData: list of categories
-  const categories = Array.from(new Set(Object.values(groupToCategoryMap)));
-  const summaryData = categories.map(cat => ({ name: cat }));
-  // Add .category to each group for easier mapping
-  const groupData = groups.map(g => {
-    const category = groupToCategoryMap[g.name];
-    return { ...g, category };
-  });
-  renderRadarChartsByCategory(summaryData, groupData);
+  // Expose groupToCategory globally for use in renderRadarChartsByGroup
+  window.groupToCategory = groupToCategoryMap;
+  renderRadarChartsByGroup(groups);
 }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
