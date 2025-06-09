@@ -44,9 +44,6 @@ from chromadb import PersistentClient
 
 app = FastAPI()
 
-# Global radar group summary cache
-latest_group_summary = []
-
 app.include_router(admin_router)
 print("📦 admin router included")
 
@@ -289,9 +286,7 @@ async def upload_excel(file: UploadFile = File(...)):
             })
             print(f"[DEBUG] Added group summary item: name={name}, score={score}")
 
-        global latest_group_summary
-        latest_group_summary = group_summary
-        print(f"[DEBUG] Final Group Summary Payload: {latest_group_summary}")
+        print(f"[DEBUG] Final Group Summary Payload: {group_summary}")
 
         group_to_category = {}
         for item in flat_results:
@@ -307,7 +302,7 @@ async def upload_excel(file: UploadFile = File(...)):
             "evaluated_questions": flat_results,
             "summary": summary_df.to_dict(orient="records"),
             "skipped_items": skipped_items,
-            "groups": group_summary,
+            "groups": group_summary,  # THIS IS ALREADY HERE - just make sure it's used
             "group_to_category": group_to_category
         })
     except Exception as e:
@@ -374,8 +369,9 @@ async def add_to_vector_db(data: dict):
 @app.get("/api/get_radar_data")
 async def get_radar_data():
     try:
-        output = {item["name"]: item["score"] for item in latest_group_summary if "총점" not in item["name"]}
-        return JSONResponse(content=output)
+        # Return empty data since we're not using global variable anymore
+        # Frontend should use the data from upload response instead
+        return JSONResponse(content={})
     except Exception as e:
         import traceback
         traceback.print_exc()
