@@ -323,6 +323,18 @@
   <h3 style="font-size: 1.2rem; color: #03c75a;">역량 그룹별 방사형 차트</h3>
   <div id="radarChartsContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 2em; margin-top: 1.5em;"></div>
 </div>
+<style>
+canvas {
+  width: 400px !important;
+  height: 400px !important;
+  max-width: 100%;
+  background-color: #fff;
+}
+#radarChartsContainer canvas {
+  display: block;
+  margin: 0 auto;
+}
+</style>
   <div style="text-align:center; margin-top: 24px;">
     <button id="uploadToVectorDbBtn" class="copy-btn" style="background: linear-gradient(90deg, #028a0f, #07bc2f); display:none;">
       벡터 DB에 업로드
@@ -757,6 +769,10 @@ function renderRadarChartsByGroup(groups) {
     console.log("➡️ Scores:", scores);
 
     const canvas = document.createElement("canvas");
+    canvas.style.width = "400px";
+    canvas.style.height = "400px";
+    canvas.style.display = "block";
+    canvas.style.margin = "0 auto";
     container.appendChild(canvas);
 
     try {
