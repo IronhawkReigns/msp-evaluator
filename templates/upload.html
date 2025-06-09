@@ -775,6 +775,10 @@ function renderRadarChartsByGroup(groups) {
     canvas.height = 400;
     canvas.style.display = "block";
     canvas.style.margin = "0 auto";
+    // === Debug logs immediately before appendChild ===
+    console.log("🛠️ Attempting to create canvas for:", topGroup);
+    console.log("🖼️ Creating canvas:", canvas.id);
+    console.log("🛠️ Canvas styles – display:", canvas.style.display, "margin:", canvas.style.margin);
     container.appendChild(canvas);
 
     // === Insert debugging CSS checks here ===
