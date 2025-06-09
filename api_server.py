@@ -389,8 +389,7 @@ async def get_group_to_category_map():
         global group_to_category_cache
         if not group_to_category_cache:
             raise HTTPException(status_code=404, detail="Group-to-category map not available yet. Upload data first.")
-        import json
-        return JSONResponse(content=json.loads(json.dumps(group_to_category_cache, ensure_ascii=False)))
+        return JSONResponse(content=group_to_category_cache)
     except Exception as e:
         import traceback
         traceback.print_exc()
