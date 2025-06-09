@@ -414,6 +414,14 @@
       }
 
       result = await res.json();
+      // Parse group_to_category_map if needed
+      if (typeof result.group_to_category_map === 'string') {
+        try {
+          result.group_to_category_map = JSON.parse(result.group_to_category_map);
+        } catch (e) {
+          console.error("❌ Failed to parse group_to_category_map:", e);
+        }
+      }
       console.log("DEBUG: API result", result);
       // === Insert debug logs for summary and groups ===
       console.log("🔍 Summary data from API:", result.summary);
@@ -541,7 +549,12 @@
       console.log("✅ Radar Labels:", radarLabels);
       console.log("✅ Radar Scores:", radarScores);
 
-      drawMultipleRadarCharts(result.groups, result.group_to_category_map);
+      // Safety check for group_to_category_map before drawing radar charts
+      if (!result.group_to_category_map) {
+        console.warn("group_to_category_map is missing from API result.");
+        return;
+      }
+      drawMultipleRadarCharts(result.groups, result.group_to_category_map || {});
       const subCatSummariesDiv = document.getElementById('subCategorySummaries');
       if (subCatSummariesDiv) subCatSummariesDiv.innerHTML = '';
 
@@ -692,6 +705,7 @@
 <script>
 
 function drawMultipleRadarCharts(groups, groupToCategoryMap) {
+  console.log("📊 Rendering radar charts", groups, groupToCategoryMap);
   const radarContainer = document.getElementById("radarChartsContainer");
   radarContainer.innerHTML = "";
 
