@@ -658,75 +658,92 @@
     }
   }
 
-  // --- 벡터 DB 업로드 버튼 핸들러 ---
-  const vectorUploadBtnScript = (() => {
-    if (vectorUploadBtn) {
-      vectorUploadBtn.addEventListener('click', async () => {
-        const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
-        if (!mspName) {
-          alert("MSP 이름이 입력되지 않았습니다.");
-          return;
-        }
+// --- 벡터 DB 업로드 버튼 핸들러 ---
+const vectorUploadBtnScript = (() => {
+  if (vectorUploadBtn) {
+    vectorUploadBtn.addEventListener('click', async () => {
+      const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
+      if (!mspName) {
+        alert("MSP 이름이 입력되지 않았습니다.");
+        return;
+      }
 
-        const items = [];
-        if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
-          result.evaluated_questions.forEach(q => {
-            items.push({
-              question: q.question,
-              answer: q.answer,
-              score: q.score
-            });
+      const items = [];
+      if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+        result.evaluated_questions.forEach(q => {
+          items.push({
+            question: q.question,
+            answer: q.answer,
+            score: q.score
           });
-        }
-
-        const response = await fetch('/api/add_to_vector_db', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            msp_name: mspName,
-            items: items,
-            summary: result.summary
-          })
         });
+      }
 
-        if (response.ok) {
-          alert("✅ 벡터 DB에 업로드되었습니다.");
-        } else {
-          alert("❌ 업로드 실패");
-        }
+      const response = await fetch('/api/add_to_vector_db', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          msp_name: mspName,
+          items: items,
+          summary: result.summary
+        })
       });
-    }
-  })();
+
+      if (response.ok) {
+        alert("✅ 벡터 DB에 업로드되었습니다.");
+      } else {
+        alert("❌ 업로드 실패");
+      }
+    });
+  }
+})();
 
 </script>
 
 <script>
 
-function drawMultipleRadarCharts(groups, groupToCategoryMap) {
-  console.log("📊 Rendering radar charts", groups, groupToCategoryMap);
+// Refactored radar chart rendering with enhanced logging and empty chart fallback
+function renderRadarChartsByCategory(summaryData, groupData) {
+  // --- Log incoming data for debugging ---
+  console.log("📦 Received summaryData from API:", summaryData);
+  console.log("📦 Received groupData from API:", groupData);
+
   const radarContainer = document.getElementById("radarChartsContainer");
   radarContainer.innerHTML = "";
+  if (!Array.isArray(summaryData) || !Array.isArray(groupData)) return;
 
-  if (!groups || !groups.length || !groupToCategoryMap) return;
-
-  const categoryMap = groupToCategoryMap;
-  console.log("✅ groupToCategoryMap keys", Object.keys(categoryMap));
-  console.log("✅ incoming group names", groups.map(g => g.name));
-
-  const chartCategoryMap = {};
-  groups.forEach((group) => {
-    const category = categoryMap[group.name];
+  // Group groupData by category (groupData: [{name, score, ...}], summaryData: [{name, score, ...}])
+  // We'll use summaryData as categories, and for each, find groupData items belonging to that category
+  // Assume groupData items have a .category or .name that matches summaryData .name
+  // But since mapping may be needed, let's build a map from groupData
+  const categoryGroups = {};
+  groupData.forEach((group) => {
+    // Try to find the category from summaryData for this group
+    // If group has .category use it, else try to match .name
+    let category = group.category || group.Category;
     if (!category) {
-      console.warn(`🚨 그룹명 '${group.name}'이 카테고리 맵에 없습니다.`);
-      return;
+      // Try to infer by matching group name to summaryData names
+      // This is a fallback and may not be accurate
+      category = summaryData.find(cat => cat.name === group.name)?.name;
     }
-    if (!chartCategoryMap[category]) chartCategoryMap[category] = [];
-    chartCategoryMap[category].push({ label: group.name, score: group.score });
+    if (!category) return;
+    if (!categoryGroups[category]) categoryGroups[category] = [];
+    categoryGroups[category].push(group);
   });
 
-  Object.entries(chartCategoryMap).forEach(([categoryName, items]) => {
+  // For each category in summaryData, render a radar chart
+  summaryData.forEach((cat) => {
+    const groupName = cat.name;
+    // Enhanced fallback and logging
+    if (!categoryGroups[groupName]) {
+      console.warn(`🚨 카테고리 ${groupName}에 해당하는 그룹이 없습니다. 빈 차트를 생성합니다.`);
+      categoryGroups[groupName] = []; // Create an empty group to force render
+    } else {
+      console.log(`✅ 카테고리 ${groupName} → 세부 그룹 수:`, categoryGroups[groupName].length);
+    }
+    const items = categoryGroups[groupName];
     const chartDiv = document.createElement("div");
     chartDiv.style.display = "flex";
     chartDiv.style.flexDirection = "column";
@@ -735,7 +752,7 @@ function drawMultipleRadarCharts(groups, groupToCategoryMap) {
     chartDiv.style.minWidth = "300px";
 
     const title = document.createElement("h3");
-    title.textContent = `역량 그룹: ${categoryName}`;
+    title.textContent = `역량 그룹: ${groupName}`;
     title.style.color = "#03c75a";
     title.style.marginBottom = "12px";
     chartDiv.appendChild(title);
@@ -752,7 +769,7 @@ function drawMultipleRadarCharts(groups, groupToCategoryMap) {
     downloadBtn.style.background = "#03c75a";
     downloadBtn.style.color = "white";
     downloadBtn.style.marginTop = "12px";
-    downloadBtn.textContent = `${categoryName} 그래프 다운로드`;
+    downloadBtn.textContent = `${groupName} 그래프 다운로드`;
     chartDiv.appendChild(downloadBtn);
 
     radarContainer.appendChild(chartDiv);
@@ -760,10 +777,10 @@ function drawMultipleRadarCharts(groups, groupToCategoryMap) {
     const chart = new Chart(canvas, {
       type: "radar",
       data: {
-        labels: items.map((x) => x.label),
+        labels: items.map((x) => x.label || x.name) || [],
         datasets: [{
-          label: `${categoryName} 점수`,
-          data: items.map((x) => x.score),
+          label: `${groupName} 점수`,
+          data: items.map((x) => x.score) || [],
           fill: true,
           borderWidth: 2,
           pointRadius: 3
@@ -792,10 +809,26 @@ function drawMultipleRadarCharts(groups, groupToCategoryMap) {
       const url = canvas.toDataURL("image/png");
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${categoryName}_radar_chart.png`;
+      a.download = `${groupName}_radar_chart.png`;
       a.click();
     });
   });
+}
+
+// For backward compatibility, keep the previous function but redirect to new one
+function drawMultipleRadarCharts(groups, groupToCategoryMap) {
+  // Convert groupToCategoryMap to a list of categories (unique values)
+  // and group group objects by category
+  if (!groups || !Array.isArray(groups) || !groupToCategoryMap) return;
+  // Build summaryData: list of categories
+  const categories = Array.from(new Set(Object.values(groupToCategoryMap)));
+  const summaryData = categories.map(cat => ({ name: cat }));
+  // Add .category to each group for easier mapping
+  const groupData = groups.map(g => {
+    const category = groupToCategoryMap[g.name];
+    return { ...g, category };
+  });
+  renderRadarChartsByCategory(summaryData, groupData);
 }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
