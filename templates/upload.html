@@ -573,6 +573,7 @@ canvas {
         }
         console.log("✅ drawMultipleRadarCharts called with groups:", result.groups);
         drawMultipleRadarCharts(result.groups, result.group_to_category_map);
+        console.log("✅ group_to_category_map:", result.group_to_category_map);
       }
       
       const subCatSummariesDiv = document.getElementById('subCategorySummaries');
@@ -721,6 +722,10 @@ const vectorUploadBtnScript = (() => {
 })();
 
 function drawMultipleRadarCharts(groups, groupToCategoryMap) {
+  console.log("📊 drawMultipleRadarCharts called with:");
+  console.log("  - groups:", JSON.stringify(groups, null, 2));
+  console.log("  - groupToCategoryMap:", JSON.stringify(groupToCategoryMap, null, 2));
+
   const container = document.getElementById("radarChartsContainer");
   if (!container) {
     console.error("Radar charts container not found");
@@ -747,6 +752,8 @@ function drawMultipleRadarCharts(groups, groupToCategoryMap) {
       categorizedGroups[category].push(group);
     }
   });
+
+  console.log("📊 Categorized groups:", JSON.stringify(categorizedGroups, null, 2));
   
   // Create a radar chart for each category
   Object.entries(categorizedGroups).forEach(([category, categoryGroups]) => {
