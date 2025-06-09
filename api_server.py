@@ -45,6 +45,16 @@ from chromadb import PersistentClient
 
 app = FastAPI()
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # or restrict to your React app URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(admin_router)
 print("📦 admin router included")
 
@@ -408,3 +418,58 @@ async def get_group_to_category_map():
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Group-to-category map failed: {str(e)}")
+
+
+# Leaderboard endpoint
+@app.get("/api/leaderboard")
+async def get_leaderboard():
+    try:
+        # Fetch all metadata from ChromaDB
+        results = collection.get(include=["metadatas"])
+        score_aggregates = {}
+
+        for meta in results["metadatas"]:
+            msp_name = meta.get("msp_name")
+            category = meta.get("category") or meta.get("group") or "Unknown"
+            score = meta.get("score")
+
+            if not msp_name or score is None:
+                continue
+
+            if msp_name not in score_aggregates:
+                score_aggregates[msp_name] = {
+                    "name": msp_name,
+                    "total_score": 0,
+                    "category_scores": {},
+                    "count": 0
+                }
+
+            agg = score_aggregates[msp_name]
+            agg["total_score"] += score
+            agg["count"] += 1
+
+            if category not in agg["category_scores"]:
+                agg["category_scores"][category] = 0
+            agg["category_scores"][category] += score
+
+        # Finalize results
+        leaderboard = []
+        for msp in score_aggregates.values():
+            avg_total = round(msp["total_score"] / msp["count"], 2) if msp["count"] else 0
+            category_scores = {
+                k: round(v / msp["count"], 2) for k, v in msp["category_scores"].items()
+            }
+            leaderboard.append({
+                "name": msp["name"],
+                "total_score": avg_total,
+                "category_scores": category_scores
+            })
+
+        # Sort descending by total score
+        leaderboard.sort(key=lambda x: x["total_score"], reverse=True)
+        return JSONResponse(content=leaderboard)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Leaderboard generation failed: {str(e)}")
