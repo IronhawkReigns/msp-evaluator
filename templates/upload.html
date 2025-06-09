@@ -711,15 +711,22 @@ function drawMultipleRadarCharts(groups, groupToCategoryMap) {
 
   if (!groups || !groups.length || !groupToCategoryMap) return;
 
-  const categoryMap = {};
-  groups.forEach((item) => {
-    const category = groupToCategoryMap[item.name];
-    if (!category) return;
-    if (!categoryMap[category]) categoryMap[category] = [];
-    categoryMap[category].push({ label: item.name, score: item.score });
+  const categoryMap = groupToCategoryMap;
+  console.log("✅ groupToCategoryMap keys", Object.keys(categoryMap));
+  console.log("✅ incoming group names", groups.map(g => g.name));
+
+  const chartCategoryMap = {};
+  groups.forEach((group) => {
+    const category = categoryMap[group.name];
+    if (!category) {
+      console.warn(`🚨 그룹명 '${group.name}'이 카테고리 맵에 없습니다.`);
+      return;
+    }
+    if (!chartCategoryMap[category]) chartCategoryMap[category] = [];
+    chartCategoryMap[category].push({ label: group.name, score: group.score });
   });
 
-  Object.entries(categoryMap).forEach(([categoryName, items]) => {
+  Object.entries(chartCategoryMap).forEach(([categoryName, items]) => {
     const chartDiv = document.createElement("div");
     chartDiv.style.display = "flex";
     chartDiv.style.flexDirection = "column";
