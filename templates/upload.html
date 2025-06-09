@@ -564,9 +564,10 @@ canvas {
       // Safety check for group_to_category_map before drawing radar charts
       if (!result.group_to_category_map) {
         console.warn("group_to_category_map is missing from API result.");
-        return;
+        result.group_to_category_map = {};  // fallback to empty object
       }
-      drawMultipleRadarCharts(result.groups, result.group_to_category_map || {});
+      console.log("✅ drawMultipleRadarCharts called with groups:", result.groups);
+      drawMultipleRadarCharts(result.groups, result.group_to_category_map);
       const subCatSummariesDiv = document.getElementById('subCategorySummaries');
       if (subCatSummariesDiv) subCatSummariesDiv.innerHTML = '';
 
