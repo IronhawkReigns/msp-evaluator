@@ -320,7 +320,7 @@
   
   <div id="summaryTable"></div>
 
-<div style="margin-top: 32px; text-align: center;">
+<div id="radarChartSection" style="margin-top: 32px; text-align: center; display: none;">
   <h3 style="font-size: 1.2rem; color: #03c75a;">역량 그룹별 방사형 차트</h3>
   <div id="radarChartsContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 2em; margin-top: 1.5em;"></div>
 </div>
@@ -558,6 +558,10 @@ canvas {
 
       // === Prepare radar chart labels and scores using groupSummary from API ===
       if (result.groups && Array.isArray(result.groups)) {
+        const radarSection = document.getElementById('radarChartSection');
+      if (radarSection) {
+        radarSection.style.display = 'block';
+      }
   const groupSummary = result.groups;
   console.log("🔍 Group data from API:", groupSummary);
 
@@ -753,6 +757,10 @@ function drawMultipleRadarCharts(groups, groupToCategoryMap) {
   };
   
   groups.forEach(group => {
+    if (group.name === "인적역량" || group.name === "AI기술역량" || group.name === "솔루션 역량") {
+      return;
+    }
+
     const category = groupToCategoryMap[group.name] || "기타";
     if (categorizedGroups[category]) {
       categorizedGroups[category].push(group);
