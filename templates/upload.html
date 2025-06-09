@@ -1,4 +1,560 @@
-// === Prepare radar chart labels and scores using groupSummary from API ===
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>평가 도구</title>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: calc(100% - 56px);
+    position: absolute;
+    top: 20px;
+    left: 28px;
+    right: 28px;
+    background: none;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .header-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #03c75a;
+    font-family: 'Noto Sans KR', sans-serif !important;
+    text-decoration: none;
+  }
+
+  .header-title:hover {
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .admin-link {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    font-family: 'Noto Sans KR', sans-serif;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .admin-link:hover {
+    color: #03c75a;
+  }
+  /* Your existing styles unchanged */
+  :root {
+    --primary-color: #03c75a;
+    --background-color: #f5f7fa;
+    --card-bg: #fff;
+    --card-shadow: rgba(0, 0, 0, 0.1);
+    --text-color: #333;
+    --muted-color: #666;
+    --border-color: #d0d7de;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--background-color);
+    font-family: 'NanumSquareNeo', sans-serif !important;
+    color: var(--text-color);
+  }
+  main.container {
+    max-width: 960px;
+    margin: 3em auto 5em;
+    padding: 2em 2.5em;
+    background: var(--card-bg);
+    box-shadow: 0 8px 24px var(--card-shadow);
+    border-radius: 12px;
+  }
+  h2 {
+    color: var(--primary-color);
+    margin-bottom: 1em;
+    font-weight: 900;
+    font-size: 2rem;
+    text-align: center;
+  }
+  form#uploadForm {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    justify-content: flex-start;
+    margin-bottom: 1.5em;
+  }
+  label[for="excelFile"] {
+    flex: 0 0 140px;
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    user-select: none;
+  }
+  input[type="file"] {
+    flex: 1 1 auto;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.7em 1em;
+    font-size: 1rem;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    vertical-align: middle;
+    height: 44px;
+    box-sizing: border-box;
+  }
+  input[type="file"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(3,199,90,0.3);
+  }
+  button[type="submit"] {
+    flex: 0 0 160px;
+    background: linear-gradient(90deg, var(--primary-color), #1ecb8f);
+    border: none;
+    color: white;
+    padding: 0.7em 1.2em;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: filter 0.25s ease;
+    user-select: none;
+    height: 44px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  button[type="submit"]:hover {
+    filter: brightness(1.1);
+  }
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9rem;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    border: 1px solid var(--border-color);
+  }
+  thead tr {
+    background-color: #04a14b;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  th, td {
+    padding: 0.75em 1em;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.85rem;
+    white-space: normal;
+    word-break: keep-all;
+  }
+
+  thead th:first-child,
+  tbody td:first-child {
+    white-space: nowrap;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  th:last-child, td:last-child {
+    border-right: none;
+  }
+  thead th {
+    text-align: center;
+  }
+  tbody td {
+    text-align: left;
+  }
+  thead th:first-child,
+  tbody td:first-child {
+    text-align: center;
+    font-weight: 700;
+  }
+  tbody tr:hover {
+    background-color: #e6f4ea;
+  }
+  tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  input.score-input {
+    width: 3.2em;
+    font-size: 1rem;
+    padding: 0.3em 0.4em;
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    text-align: center;
+    transition: border-color 0.3s ease;
+  }
+  input.score-input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 8px rgba(3,199,90,0.3);
+  }
+  @media (max-width: 600px) {
+    form#uploadForm {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    input[type="file"], button[type="submit"] {
+      width: 100%;
+      flex: none;
+    }
+    label[for="excelFile"] {
+      flex: none;
+      margin-bottom: 0.3em;
+    }
+  }
+  .summary-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9rem;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    border: 1px solid var(--border-color);
+  }
+  .summary-table thead tr {
+    background-color: #04a14b;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .summary-table th, .summary-table td {
+    padding: 0.75em 1em;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.85rem;
+    white-space: normal;
+    word-break: keep-all;
+  }
+
+  .summary-table thead th:first-child,
+  .summary-table tbody td:first-child {
+    white-space: nowrap;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .summary-table th:last-child, .summary-table td:last-child {
+    border-right: none;
+  }
+  .summary-table thead th {
+    text-align: center;
+  }
+  .summary-table tbody td {
+    text-align: left;
+  }
+  .summary-table thead th:first-child,
+  .summary-table tbody td:first-child {
+    text-align: center;
+    font-weight: 700;
+  }
+  .summary-table tbody tr:hover {
+    background-color: #e6f4ea;
+  }
+  .summary-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  .spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 30px auto;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .copy-btn-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 16px;
+    margin-bottom: 20px;
+  }
+  .copy-btn {
+    border: none;
+    color: white;
+    border-radius: 24px;
+    padding: 12px 32px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: 'NanumSquareNeo', sans-serif !important;
+    transition: background 0.3s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 10px rgba(3, 199, 90, 0.3);
+    user-select: none;
+  }
+  .copy-btn:hover {
+    box-shadow: 0 6px 14px rgba(3, 199, 90, 0.5);
+  }
+</style>
+</head>
+<body>
+<header class="header">
+  <a class="header-title" href="https://mspevaluator.duckdns.org" target="_blank" rel="noopener noreferrer">NAVER Cloud</a>
+  <a class="admin-link" href="/login?next=/admin">관리자</a>
+</header>
+<main class="container">
+  <h2>파트너사 평가 도구</h2>
+  <form id="uploadForm" autocomplete="off" novalidate>
+    <label for="excelFile">엑셀 파일 (.xlsx):</label>
+    <input type="file" id="excelFile" name="file" accept=".xlsx" required />
+    <button type="submit">업로드 및 평가</button>
+  </form>
+
+  <div id="evaluatedQuestionsTable"></div>
+  
+  <div id="summaryTable"></div>
+<div style="margin-top: 32px; text-align: center;">
+  <h3 style="font-size: 1.2rem; color: #03c75a;">역량 그룹별 방사형 차트</h3>
+  <div id="radarChartsContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 2em; margin-top: 1.5em;"></div>
+</div>
+<style>
+canvas {
+  width: 400px !important;
+  height: 400px !important;
+  max-width: 100%;
+  background-color: #fff;
+}
+#radarChartsContainer canvas {
+  display: block;
+  margin: 0 auto;
+}
+</style>
+  <div style="text-align:center; margin-top: 24px;">
+    <button id="uploadToVectorDbBtn" class="copy-btn" style="background: linear-gradient(90deg, #028a0f, #07bc2f); display:none;">
+      벡터 DB에 업로드
+    </button>
+  </div>
+</main>
+
+<script>
+  const form = document.getElementById('uploadForm');
+  const evaluatedQuestionsTable = document.getElementById('evaluatedQuestionsTable');
+  const summaryTable = document.getElementById('summaryTable');
+  const vectorUploadBtn = document.getElementById('uploadToVectorDbBtn');
+  let result = {};
+
+  function createTable(headers, rows, editableScore = false) {
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    headers.forEach(h => {
+      const th = document.createElement('th');
+      th.textContent = h;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    rows.forEach(row => {
+      const tr = document.createElement('tr');
+      headers.forEach(header => {
+        const td = document.createElement('td');
+        const key = header.toLowerCase();
+        // Use camelCase keys for row objects
+        const camelCaseKey = key.replace(/\s+(.)/g, (match, group1) => group1.toUpperCase());
+
+        if (editableScore && camelCaseKey === 'score') {
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.className = 'score-input';
+          input.min = 1;
+          input.max = 5;
+          input.value = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
+          input.addEventListener('change', () => {
+            row[camelCaseKey] = Number(input.value);
+          });
+          td.appendChild(input);
+        } else {
+          td.textContent = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    return table;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    console.log("DEBUG: Upload started");
+
+    evaluatedQuestionsTable.innerHTML = '<div class="spinner"></div>';
+    summaryTable.innerHTML = '';
+
+    // Remove previous subcategory summary container if any
+    const oldSubCatContainer = document.getElementById('subCategorySummaries');
+    if (oldSubCatContainer) oldSubCatContainer.innerHTML = '';
+
+    const fileInput = document.getElementById('excelFile');
+    if (!fileInput.files.length) {
+      alert('엑셀 파일을 선택해주세요.');
+      evaluatedQuestionsTable.innerHTML = '';
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    try {
+      console.log("DEBUG: Sending upload request...");
+      const res = await fetch('/api/upload_excel', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!res.ok) {
+        console.error(`DEBUG: Server responded with error: ${res.status}`);
+        throw new Error(`서버 오류: ${res.status}`);
+      }
+
+      result = await res.json();
+      // Parse group_to_category_map if needed
+      if (typeof result.group_to_category_map === 'string') {
+        try {
+          result.group_to_category_map = JSON.parse(result.group_to_category_map);
+        } catch (e) {
+          console.error("❌ Failed to parse group_to_category_map:", e);
+        }
+      }
+      console.log("DEBUG: API result", result);
+      // === Insert debug logs for summary and groups ===
+      console.log("🔍 Summary data from API:", result.summary);
+      console.log("🔍 Group data from API:", result.groups);
+      // Normalize summary structure from backend to frontend format
+      if (Array.isArray(result.summary)) {
+        result.summary = result.summary.map((item) => ({
+          name: item.Category,
+          score: item.Score,
+          questions: item.Questions,
+        }));
+      }
+      // ========== DEBUG LOGS for subcategory_summaries ==========
+      console.log("DEBUG: Subcategory summaries keys:", Object.keys(result.subcategory_summaries || {}));
+      Object.entries(result.subcategory_summaries || {}).forEach(([group, subcats]) => {
+        console.log(`DEBUG: Group '${group}' subcategories:`, Object.keys(subcats));
+      });
+
+      if (vectorUploadBtn) {
+        vectorUploadBtn.style.display = (result.evaluated_questions && result.evaluated_questions.length) ? 'inline-block' : 'none';
+      }
+
+      if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+        const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
+        evaluatedQuestionsTable.innerHTML = '';
+
+        // Copy buttons container
+        const copyBtnWrapper = document.createElement('div');
+        copyBtnWrapper.className = 'copy-btn-wrapper';
+
+        // Categories for which to add copy buttons
+        const categoriesToCopy = ['인적역량', 'AI기술역량', '솔루션 역량'];
+
+        categoriesToCopy.forEach(category => {
+          const btn = document.createElement('button');
+          btn.textContent = `${category} 점수 복사`;
+          btn.className = 'copy-btn';
+
+          // Set distinct gradient backgrounds
+          switch(category) {
+            case '인적역량':
+              btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)';
+              btn.addEventListener('mouseover', () => { btn.style.background = 'linear-gradient(90deg, #07bc2f, #028a0f)'; });
+              btn.addEventListener('mouseout', () => { btn.style.background = 'linear-gradient(90deg, #028a0f, #07bc2f)'; });
+              break;
+            case 'AI기술역량':
+              btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)';
+              btn.addEventListener('mouseover', () => { btn.style.background = 'linear-gradient(90deg, #07a0bc, #04668c)'; });
+              btn.addEventListener('mouseout', () => { btn.style.background = 'linear-gradient(90deg, #04668c, #07a0bc)'; });
+              break;
+            case '솔루션 역량':
+              btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)';
+              btn.addEventListener('mouseover', () => { btn.style.background = 'linear-gradient(90deg, #bc8707, #8c4604)'; });
+              btn.addEventListener('mouseout', () => { btn.style.background = 'linear-gradient(90deg, #8c4604, #bc8707)'; });
+              break;
+          }
+
+          btn.addEventListener('click', () => {
+            const scoresToCopy = result.evaluated_questions
+              .filter(q => q.category === category)
+              .map(q => (q.score !== undefined ? q.score : ''))
+              .join('\n');
+            navigator.clipboard.writeText(scoresToCopy).then(() => {
+              alert(`✅ ${category} 점수가 클립보드에 복사되었습니다.`);
+            }).catch(() => {
+              alert(`❌ ${category} 점수 복사에 실패했습니다.`);
+            });
+          });
+
+          copyBtnWrapper.appendChild(btn);
+        });
+
+        evaluatedQuestionsTable.appendChild(evalTable);
+        evaluatedQuestionsTable.appendChild(copyBtnWrapper);
+        createOrShowRequestSummaryBtn();
+        if (requestSummaryBtn) requestSummaryBtn.style.display = 'inline-block';
+
+      } else {
+        evaluatedQuestionsTable.innerHTML = '';
+        if (vectorUploadBtn) vectorUploadBtn.style.display = 'none';
+      }
+
+      if (result.summary && Array.isArray(result.summary)) {
+        const table = document.createElement('table');
+        table.classList.add('summary-table');
+
+        const headers = ['Category', 'Score', 'Questions'];
+        const thead = document.createElement('thead');
+        const headRow = document.createElement('tr');
+        headers.forEach(h => {
+          const th = document.createElement('th');
+          th.textContent = h;
+          headRow.appendChild(th);
+        });
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        result.summary.forEach(row => {
+          const tr = document.createElement('tr');
+          // Use normalized keys: name, score, questions
+          const cells = [row.name || '', row.score || '', row.questions || ''];
+          cells.forEach(cell => {
+            const td = document.createElement('td');
+            td.textContent = cell;
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        summaryTable.innerHTML = '';
+        summaryTable.appendChild(table);
+      } else {
+        summaryTable.innerHTML = '';
+      }
+
+      // Remove subcategory summaries container after upload (if exists)
+
+      // TODO: Re-enable radar chart rendering when stable or needed
+      /*
+      // === Prepare radar chart labels and scores using groupSummary from API ===
       const groupSummary = result.groups;
       console.log("🔍 Group data from API:", groupSummary);
 
@@ -14,6 +570,7 @@
       }
       console.log("✅ drawMultipleRadarCharts called with groups:", result.groups);
       drawMultipleRadarCharts(result.groups, result.group_to_category_map);
+      */
       const subCatSummariesDiv = document.getElementById('subCategorySummaries');
       if (subCatSummariesDiv) subCatSummariesDiv.innerHTML = '';
 
@@ -28,3 +585,271 @@
       console.error(error);
     }
   });
+
+  // --- Separate 요약 요청하기 button logic ---
+  let requestSummaryBtn = null;
+  function createOrShowRequestSummaryBtn() {
+    if (!requestSummaryBtn) {
+      requestSummaryBtn = document.createElement('button');
+      requestSummaryBtn.id = 'requestSummaryBtn';
+      requestSummaryBtn.textContent = '요약 요청하기';
+      requestSummaryBtn.className = 'copy-btn';
+      requestSummaryBtn.style.marginTop = '16px';
+      requestSummaryBtn.style.display = 'none'; // initially hidden
+
+      // Wrap in centered div
+      const btnWrapper = document.createElement('div');
+      btnWrapper.id = 'summaryRequestWrapper';
+      btnWrapper.style.textAlign = 'center';
+      btnWrapper.style.marginTop = '24px';
+      btnWrapper.appendChild(requestSummaryBtn);
+
+      summaryTable.parentNode.insertBefore(btnWrapper, summaryTable.nextSibling);
+
+      requestSummaryBtn.addEventListener('click', async () => {
+        try {
+          requestSummaryBtn.disabled = true;
+          requestSummaryBtn.textContent = '요약 생성 중...';
+
+          const response = await fetch('/api/get_summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ evaluated: result.evaluated_questions })
+          });
+
+          if (!response.ok) throw new Error('요약 요청 실패');
+
+          const summaryResult = await response.json();
+          // ========== DEBUG LOGS for 요약 요청 subcategory_summaries ==========
+          console.log("DEBUG: 요약 요청 결과 subcategory_summaries:", summaryResult.subcategory_summaries);
+          Object.entries(summaryResult.subcategory_summaries || {}).forEach(([group, subcats]) => {
+            console.log(`DEBUG: 요약 요청 그룹 '${group}' 하위 카테고리:`, Object.keys(subcats));
+          });
+
+          // Remove or clear previous subcategory summaries container
+          const subCategoryContainerId = 'subCategorySummaries';
+          let subCatContainer = document.getElementById(subCategoryContainerId);
+          if (!subCatContainer) {
+            subCatContainer = document.createElement('div');
+            subCatContainer.id = subCategoryContainerId;
+            summaryTable.parentNode.insertBefore(subCatContainer, btnWrapper.nextSibling);
+          } else {
+            subCatContainer.innerHTML = '';
+          }
+
+          // Render subcategory summaries as flat readable text under group headers
+          Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, summaryData]) => {
+            const title = document.createElement('h3');
+            title.textContent = groupName;
+            title.style.marginTop = '1.8em';
+            title.style.fontSize = '1.1rem';
+            title.style.color = '#03c75a';
+            title.style.borderBottom = '1px solid #ccc';
+            title.style.paddingBottom = '0.2em';
+            subCatContainer.appendChild(title);
+
+            if (typeof summaryData === 'string') {
+              const p = document.createElement('p');
+              p.textContent = summaryData;
+              p.style.marginTop = '0.5em';
+              subCatContainer.appendChild(p);
+            } else if (typeof summaryData === 'object') {
+              Object.entries(summaryData).forEach(([subkey, summaryText]) => {
+                const p = document.createElement('p');
+                p.textContent = summaryText;
+                subCatContainer.appendChild(p);
+              });
+            }
+          });
+
+          requestSummaryBtn.textContent = '요약 요청하기';
+          requestSummaryBtn.disabled = false;
+        } catch (error) {
+          alert('요약 요청 중 오류 발생');
+          requestSummaryBtn.textContent = '요약 요청하기';
+          requestSummaryBtn.disabled = false;
+          console.error(error);
+        }
+      });
+    }
+  }
+
+// --- 벡터 DB 업로드 버튼 핸들러 ---
+const vectorUploadBtnScript = (() => {
+  if (vectorUploadBtn) {
+    vectorUploadBtn.addEventListener('click', async () => {
+      const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
+      if (!mspName) {
+        alert("MSP 이름이 입력되지 않았습니다.");
+        return;
+      }
+
+      const items = [];
+      if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+        result.evaluated_questions.forEach(q => {
+          items.push({
+            question: q.question,
+            answer: q.answer,
+            score: q.score
+          });
+        });
+      }
+
+      const response = await fetch('/api/add_to_vector_db', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          msp_name: mspName,
+          items: items,
+          summary: result.summary
+        })
+      });
+
+      if (response.ok) {
+        alert("✅ 벡터 DB에 업로드되었습니다.");
+      } else {
+        alert("❌ 업로드 실패");
+      }
+    });
+  }
+})();
+
+</script>
+
+<script>
+
+// --- New radar chart rendering logic as per requirements ---
+function renderRadarChartsByGroup(groups) {
+  const container = document.getElementById("radarChartsContainer");
+  container.innerHTML = ""; // Clear existing charts
+
+  console.log("📦 Starting renderRadarChartsByGroup...");
+  console.log("📊 groups parameter:", groups);
+
+  if (!Array.isArray(groups)) {
+    console.warn("❌ groups is not an array:", groups);
+    return;
+  }
+
+  // Ensure groupToCategory is available globally
+  if (typeof groupToCategory === 'undefined' && typeof window.groupToCategory === 'undefined') {
+    console.warn('❌ groupToCategory is not defined');
+    return;
+  }
+
+  // Use global or window-scoped groupToCategory
+  const groupToCategoryMap = typeof groupToCategory !== 'undefined' ? groupToCategory : window.groupToCategory;
+
+  console.log("📍 groupToCategoryMap:", groupToCategoryMap);
+
+  if (!groupToCategoryMap || typeof groupToCategoryMap !== 'object') {
+    console.warn("❌ groupToCategoryMap is missing or invalid");
+    return;
+  }
+
+  const topGroups = [...new Set(Object.values(groupToCategoryMap))];
+  console.log("📌 Extracted topGroups:", topGroups);
+
+  topGroups.forEach(topGroup => {
+    const subGroups = groups.filter(item => {
+      const parent = groupToCategoryMap[item.name];
+      const result = parent === topGroup && item.name !== topGroup;
+      console.log(`🔍 Checking group '${item.name}' → parent: '${parent}', match: ${result}`);
+      return result;
+    });
+
+    console.log(`📐 For topGroup '${topGroup}', subGroups:`, subGroups);
+
+    if (subGroups.length === 0) {
+      console.warn(`⚠️ No subGroups found for topGroup: ${topGroup}`);
+      return;
+    }
+
+    const labels = subGroups.map(g => g.name);
+    const scores = subGroups.map(g => g.score);
+    console.log("➡️ Labels:", labels);
+    console.log("➡️ Scores:", scores);
+
+    // Ensure unique canvas id and correct creation
+    const canvas = document.createElement("canvas");
+    canvas.id = `radar-chart-${topGroup}`;
+    canvas.width = 400;
+    canvas.height = 400;
+    canvas.style.display = "block";
+    canvas.style.margin = "0 auto";
+    // === Debug logs immediately before appendChild ===
+    console.log("🛠️ Attempting to create canvas for:", topGroup);
+    console.log("🖼️ Creating canvas:", canvas.id);
+    console.log("🛠️ Canvas styles – display:", canvas.style.display, "margin:", canvas.style.margin);
+    container.appendChild(canvas);
+
+    // === Insert debugging CSS checks here ===
+    const computed = window.getComputedStyle(canvas);
+    console.log(`📏 Canvas #${canvas.id} dimensions:`, canvas.offsetWidth, canvas.offsetHeight);
+    console.log(`🎨 Canvas #${canvas.id} computed display:`, computed.display);
+    console.log(`🎨 Canvas #${canvas.id} visibility:`, computed.visibility);
+    console.log(`🎨 Canvas #${canvas.id} position:`, computed.position);
+    console.log(`🎨 Canvas #${canvas.id} z-index:`, computed.zIndex);
+    console.log(`🎨 Canvas #${canvas.id} parent node:`, canvas.parentNode);
+
+    // Destroy previous Chart.js instance if it exists for this canvas id
+    if (Chart.getChart(canvas.id)) {
+      Chart.getChart(canvas.id).destroy();
+    }
+
+    try {
+      new Chart(canvas, {
+        type: "radar",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: topGroup,
+            data: scores,
+            fill: true,
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            r: {
+              suggestedMin: 0,
+              suggestedMax: 100
+            }
+          }
+        }
+      });
+      console.log(`✅ Radar chart rendered for topGroup: ${topGroup}`);
+    } catch (e) {
+      console.error(`❌ Error rendering radar chart for topGroup: ${topGroup}`, e);
+    }
+  });
+
+  // Fallback warning if container is empty after rendering
+  if (container.children.length === 0) {
+    console.warn("🚫 No radar charts were rendered. Check group names and mapping.");
+  }
+
+  // Final render completion log
+  console.log("✅ Completed rendering all radar charts");
+}
+
+// Remove or comment out the previous drawMultipleRadarCharts and renderRadarChartsByCategory functions, and use the new one:
+</script>
+<script>
+function drawMultipleRadarCharts(groups, groupToCategoryMap) {
+  // Expose groupToCategory globally for use in renderRadarChartsByGroup
+  window.groupToCategory = groupToCategoryMap;
+  renderRadarChartsByGroup(groups);
+}
+
+// Ensure radar charts are rendered on load if data exists
+if (typeof result !== 'undefined' && result.groups && result.group_to_category_map) {
+  drawMultipleRadarCharts(result.groups, result.group_to_category_map);
+}
+</script>
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>
