@@ -691,6 +691,7 @@
 <script>
 // === Radar chart rendering using backend 'groups' array ===
 function renderRadarChart(labels, scores) {
+  let currentRadarChart = null;
   // Only render if there is at least one group
   if (!labels || !labels.length) {
     console.warn("No group labels to render radar chart.");
@@ -700,16 +701,6 @@ function renderRadarChart(labels, scores) {
   radarContainer.innerHTML = ""; // Clear existing charts
 
   // Only one radar chart for all groups
-  const radarChartInput = {
-    labels: labels,
-    datasets: [{
-      label: "역량 그룹별 점수",
-      data: scores,
-      fill: true,
-      borderWidth: 2,
-      pointRadius: 3
-    }]
-  };
   // Create a container for the chart and download button
   const chartDiv = document.createElement("div");
   chartDiv.style.display = "flex";
@@ -722,6 +713,7 @@ function renderRadarChart(labels, scores) {
   canvas.style.margin = "20px auto";
   canvas.style.display = "block";
   canvas.style.maxWidth = "600px";
+  canvas.style.height = "400px";
   chartDiv.appendChild(canvas);
 
   // Create download button
@@ -736,9 +728,22 @@ function renderRadarChart(labels, scores) {
   radarContainer.appendChild(chartDiv);
 
   // Draw chart
-  const chart = new Chart(canvas, {
+  if (currentRadarChart) {
+    currentRadarChart.destroy();
+  }
+
+  currentRadarChart = new Chart(canvas, {
     type: "radar",
-    data: radarChartInput,
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "역량 그룹별 점수",
+        data: scores,
+        fill: true,
+        borderWidth: 2,
+        pointRadius: 3
+      }]
+    },
     options: {
       scales: {
         r: {
@@ -779,8 +784,6 @@ form.addEventListener('submit', () => {
     }
   }, 500);
 });
-</script>
-</script>
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
