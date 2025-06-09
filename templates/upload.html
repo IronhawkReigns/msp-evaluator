@@ -777,6 +777,15 @@ function renderRadarChartsByGroup(groups) {
     canvas.style.margin = "0 auto";
     container.appendChild(canvas);
 
+    // === Insert debugging CSS checks here ===
+    const computed = window.getComputedStyle(canvas);
+    console.log(`📏 Canvas #${canvas.id} dimensions:`, canvas.offsetWidth, canvas.offsetHeight);
+    console.log(`🎨 Canvas #${canvas.id} computed display:`, computed.display);
+    console.log(`🎨 Canvas #${canvas.id} visibility:`, computed.visibility);
+    console.log(`🎨 Canvas #${canvas.id} position:`, computed.position);
+    console.log(`🎨 Canvas #${canvas.id} z-index:`, computed.zIndex);
+    console.log(`🎨 Canvas #${canvas.id} parent node:`, canvas.parentNode);
+
     // Destroy previous Chart.js instance if it exists for this canvas id
     if (Chart.getChart(canvas.id)) {
       Chart.getChart(canvas.id).destroy();
