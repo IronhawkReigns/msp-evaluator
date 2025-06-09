@@ -833,11 +833,19 @@ function renderRadarChartsByGroup(groups) {
 }
 
 // Remove or comment out the previous drawMultipleRadarCharts and renderRadarChartsByCategory functions, and use the new one:
+</script>
+<script>
 function drawMultipleRadarCharts(groups, groupToCategoryMap) {
   // Expose groupToCategory globally for use in renderRadarChartsByGroup
   window.groupToCategory = groupToCategoryMap;
   renderRadarChartsByGroup(groups);
 }
+
+// Ensure radar charts are rendered on load if data exists
+if (typeof result !== 'undefined' && result.groups && result.group_to_category_map) {
+  drawMultipleRadarCharts(result.groups, result.group_to_category_map);
+}
+</script>
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
