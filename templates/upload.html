@@ -327,8 +327,8 @@
 
 <style>
 canvas {
-  width: 400px !important;
-  height: 400px !important;
+  width: 500px !important;
+  height: 500px !important;
   max-width: 100%;
   background-color: #fff;
 }
@@ -767,13 +767,13 @@ function drawMultipleRadarCharts(groups, groupToCategoryMap) {
     
     // Create canvas for this category
     const canvasWrapper = document.createElement('div');
-    canvasWrapper.style.width = '400px';
+    canvasWrapper.style.width = '500px';
     canvasWrapper.style.textAlign = 'center';
     
     const canvas = document.createElement('canvas');
     canvas.id = `radar-${category.replace(/\s/g, '-')}`;
-    canvas.width = 400;
-    canvas.height = 400;
+    canvas.width = 500;
+    canvas.height = 500;
     
     const title = document.createElement('h4');
     title.textContent = category;
@@ -810,10 +810,10 @@ function drawMultipleRadarCharts(groups, groupToCategoryMap) {
         maintainAspectRatio: true,
         layout: {
           padding: {
-            top: 20,
-            right: 20,
-            bottom: 20,
-            left: 20
+            top: 40,
+            right: 40,
+            bottom: 40,
+            left: 40
           }
         },
         scales: {
@@ -826,10 +826,10 @@ function drawMultipleRadarCharts(groups, groupToCategoryMap) {
             },
             pointLabels: {
               font: {
-                size: 11,
+                size: 10,
                 family: 'NanumSquareNeo'
               },
-              padding: 20  // Add padding to prevent label cutoff
+              padding: 10  // Add padding to prevent label cutoff
             }
           }
         },
