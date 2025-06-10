@@ -10,59 +10,85 @@ def parse_excel_category_sheets(excel_bytes: bytes):
     excel_data = pd.ExcelFile(io.BytesIO(excel_bytes))
     results = {}
 
+    print(f"[DEBUG] Found sheets: {excel_data.sheet_names}")
+
     for sheet_name in excel_data.sheet_names:
         if "역량" not in sheet_name:
             print(f"[DEBUG] Skipping sheet '{sheet_name}' — name does not contain '역량'")
             continue
 
+        print(f"[DEBUG] Processing sheet: {sheet_name}")
         df = pd.read_excel(excel_data, sheet_name=sheet_name, header=None)
 
         if df.shape[0] < 2 or df.shape[1] < 5:
-            print(f"[DEBUG] Skipping sheet '{sheet_name}' — too small or malformed")
+            print(f"[DEBUG] Skipping sheet '{sheet_name}' — too small: {df.shape}")
             continue
 
         try:
             parsed = parse_excel_category_sheet(df)
-            print(f"[DEBUG] Sheet: {sheet_name}")
-            print(f"[DEBUG] Parsed: {parsed}")
+            print(f"[DEBUG] Sheet '{sheet_name}' parsed {len(parsed)} items")
+            
+            if not parsed:
+                print(f"[WARNING] No items parsed from sheet '{sheet_name}'")
+                continue
+                
         except Exception as e:
-            print(f"[DEBUG] Error parsing sheet '{sheet_name}': {e}")
-            continue  # skip problematic sheet
+            print(f"[ERROR] Error parsing sheet '{sheet_name}': {e}")
+            continue
 
+        # Evaluate each parsed item
         sheet_results = []
         for item in parsed:
             question = item.get("question")
             answer = item.get("answer")
+            group = item.get("group")
+            
             if not isinstance(question, str) or not isinstance(answer, str):
                 continue
+                
             if answer.lower() == "nan" or not answer.strip():
+                print(f"[DEBUG] Skipping empty answer for question '{question[:30]}...' in group '{group}'")
                 continue
-            if answer.lower() == "nan" or not answer.strip():
-                print(f"[DEBUG] Skipping empty answer for question '{question}' in group '{item.get('group')}' of sheet '{sheet_name}'")
-                continue
+                
             try:
                 score = evaluate_answer(question, answer)
+                print(f"[DEBUG] Evaluated '{question[:30]}...' -> Score: {score}")
             except Exception as e:
-                print(f"[ERROR] Failed to evaluate: {question[:20]} — {e}")
-                score = f"Error: {str(e)}"
+                print(f"[ERROR] Failed to evaluate question '{question[:30]}...': {e}")
+                score = 0  # Default score instead of error string
 
             sheet_results.append({
                 "question": question,
                 "answer": answer,
                 "score": score,
-                "group": item.get("group")
+                "group": group
             })
 
         if sheet_results:
             results[sheet_name] = sheet_results
+            print(f"[SUCCESS] Sheet '{sheet_name}' added with {len(sheet_results)} evaluated items")
 
-    summary_df = compute_category_scores_from_excel_data(results)
-    # Removed call to summarize_answers_for_subcategories
-    return {
-        "evaluated": results,
-        "summary": summary_df.to_dict(orient="records"),
-        # "answer_summaries": answer_summaries
-    }
+    print(f"[DEBUG] Final results keys: {list(results.keys())}")
+    
+    if not results:
+        print("[WARNING] No results generated from any sheet!")
+        return {
+            "evaluated": {},
+            "summary": []
+        }
+
+    try:
+        summary_df = compute_category_scores_from_excel_data(results)
+        return {
+            "evaluated": results,
+            "summary": summary_df.to_dict(orient="records")
+        }
+    except Exception as e:
+        print(f"[ERROR] Failed to compute summary: {e}")
+        return {
+            "evaluated": results,
+            "summary": []
+        }
 
 
 def generate_summary_for_evaluation(results_by_category: dict) -> dict:
@@ -83,37 +109,69 @@ def evaluate_uploaded_excel(uploaded_file: UploadFile):
 def parse_excel_category_sheet(df: pd.DataFrame):
     parsed = []
     last_valid_group = None
-    for _, row in df.iterrows():
+    
+    print(f"[DEBUG] Processing sheet with {df.shape[0]} rows and {df.shape[1]} columns")
+    
+    for idx, row in df.iterrows():
         try:
-            question = str(row[2]).strip()
-            answer = str(row[4]).strip()
-            raw_group = str(row[1]).strip()
+            # Debug: print first few rows to understand structure
+            if idx < 5:
+                print(f"[DEBUG] Row {idx}: {row.tolist()}")
+            
+            # Extract data from expected columns
+            question = str(row.iloc[2]).strip() if len(row) > 2 else ""  # Column C (index 2)
+            answer = str(row.iloc[4]).strip() if len(row) > 4 else ""    # Column E (index 4)
+            raw_group = str(row.iloc[1]).strip() if len(row) > 1 else "" # Column B (index 1)
 
-            # If the raw_group is empty or 'nan', treat as None
-            if raw_group.lower() in ["", "nan"]:
-                group = None
-            else:
+            # Skip header rows
+            if question.lower() in ["key questions", "질문", "문항"] or "key question" in question.lower():
+                print(f"[DEBUG] Skipping header row {idx}: {question}")
+                continue
+                
+            # Skip empty or invalid questions/answers
+            if not question or not answer or question.lower() == "nan" or answer.lower() == "nan":
+                if idx < 10:  # Only log first 10 for debugging
+                    print(f"[DEBUG] Skipping empty row {idx}: question='{question}', answer='{answer}'")
+                continue
+
+            # Group handling with better logic
+            if raw_group and raw_group.lower() not in ["", "nan", "none"]:
+                # This is a new group
                 group = raw_group
                 last_valid_group = group
-
-            # If no valid group found yet, fallback to None (no "기타" fallback here)
-            if group is None:
+                print(f"[DEBUG] Found new group at row {idx}: '{group}'")
+            else:
+                # Use the last valid group
                 group = last_valid_group
+                if idx < 10:  # Only log first 10 for debugging
+                    print(f"[DEBUG] Using last valid group at row {idx}: '{group}'")
 
-            # Skip header rows or invalid questions/answers
-            if question.lower() == "key questions":
-                continue
-            if not question or not answer or question == "nan":
-                continue
-
-            # Append with proper group value, no forced "기타" fallback
-            parsed.append({
-                "question": question,
-                "answer": answer,
-                "group": group
-            })
-        except Exception:
+            # Only add if we have valid data
+            if question and answer and question != "nan" and answer != "nan":
+                parsed_item = {
+                    "question": question,
+                    "answer": answer,
+                    "group": group if group else "미분류"  # Use "미분류" instead of None
+                }
+                parsed.append(parsed_item)
+                
+                if len(parsed) <= 10:  # Log first 10 parsed items
+                    print(f"[DEBUG] Parsed item {len(parsed)}: {parsed_item}")
+                    
+        except Exception as e:
+            print(f"[ERROR] Error processing row {idx}: {e}")
             continue
+    
+    print(f"[DEBUG] Total parsed items: {len(parsed)}")
+    
+    # Group summary for debugging
+    groups_found = {}
+    for item in parsed:
+        group = item.get("group", "None")
+        groups_found[group] = groups_found.get(group, 0) + 1
+    
+    print(f"[DEBUG] Groups found: {groups_found}")
+    
     return parsed
 
 def compute_category_scores_from_excel_data(results_by_category):
