@@ -419,67 +419,108 @@ async def get_group_to_category_map():
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Group-to-category map failed: {str(e)}")
 
+# Replace your existing /api/leaderboard endpoint in api_server.py with this safer version:
+
 @app.get("/api/leaderboard")
 async def get_leaderboard():
     try:
         # Fetch all metadata from ChromaDB
         results = collection.get(include=["metadatas"])
-        score_aggregates = {}
-        main_categories = ["인적역량", "AI기술역량", "솔루션 역량"]
+        msp_aggregates = {}
 
+        # First pass: collect all data per MSP
         for meta in results["metadatas"]:
             msp_name = meta.get("msp_name")
-            category = meta.get("category", "기타")  # Use the mapped category
             score = meta.get("score")
-
+            
             if not msp_name or score is None:
                 continue
 
-            if msp_name not in score_aggregates:
-                score_aggregates[msp_name] = {
+            if msp_name not in msp_aggregates:
+                msp_aggregates[msp_name] = {
                     "name": msp_name,
-                    "total_score": 0,
-                    "category_totals": {cat: 0 for cat in main_categories},
-                    "category_counts": {cat: 0 for cat in main_categories},
-                    "count": 0
+                    "scores": [],
+                    "groups": {}
                 }
 
-            agg = score_aggregates[msp_name]
-            agg["total_score"] += score
-            agg["count"] += 1
-
-            # Aggregate by main category
-            if category in main_categories:
-                agg["category_totals"][category] += score
-                agg["category_counts"][category] += 1
-
-        # Calculate final averages
-        leaderboard = []
-        for msp in score_aggregates.values():
-            # Calculate overall average (out of 5)
-            avg_total = round(msp["total_score"] / msp["count"], 2) if msp["count"] else 0
+            # Add score to total
+            msp_aggregates[msp_name]["scores"].append(score)
             
-            # Calculate category averages (out of 5)
+            # Try to get group information for category mapping
+            group = meta.get("group") or meta.get("category") or "Unknown"
+            if group not in msp_aggregates[msp_name]["groups"]:
+                msp_aggregates[msp_name]["groups"][group] = []
+            msp_aggregates[msp_name]["groups"][group].append(score)
+
+        # Second pass: calculate averages and map to main categories
+        leaderboard = []
+        main_categories = ["인적역량", "AI기술역량", "솔루션 역량"]
+        
+        # Group mapping - customize this based on your actual group names
+        group_to_category_mapping = {
+            # Human resources related
+            "AI 전문 인력 구성": "인적역량",
+            "프로젝트 경험 및 성공 사례": "인적역량", 
+            "지속적인 교육 및 학습": "인적역량",
+            "프로젝트 관리 및 커뮤니케이션": "인적역량",
+            "AI 윤리 및 책임 의식": "인적역량",
+            
+            # AI Technology related
+            "AI 기술 연구 능력": "AI기술역량",
+            "AI 모델 개발 능력": "AI기술역량",
+            "AI 플랫폼 및 인프라 구축 능력": "AI기술역량", 
+            "데이터 처리 및 분석 능력": "AI기술역량",
+            "AI 기술의 융합 및 활용 능력": "AI기술역량",
+            "AI 기술의 특허 및 인증 보유 현황": "AI기술역량",
+            
+            # Solution related
+            "다양성 및 전문성": "솔루션 역량",
+            "안정성": "솔루션 역량", 
+            "확장성 및 유연성": "솔루션 역량",
+            "사용자 편의성": "솔루션 역량",
+            "보안성": "솔루션 역량",
+            "기술 지원 및 유지보수": "솔루션 역량",
+            "차별성 및 경쟁력": "솔루션 역량",
+            "개발 로드맵 및 향후 계획": "솔루션 역량"
+        }
+
+        for msp_name, data in msp_aggregates.items():
+            # Calculate total average
+            total_avg = sum(data["scores"]) / len(data["scores"]) if data["scores"] else 0
+            
+            # Calculate category averages
             category_scores = {}
-            for cat in main_categories:
-                if msp["category_counts"][cat] > 0:
-                    category_avg = msp["category_totals"][cat] / msp["category_counts"][cat]
-                    category_scores[cat] = round(category_avg, 2)
+            for main_cat in main_categories:
+                category_score_list = []
+                
+                # Collect scores from groups that belong to this main category
+                for group_name, group_scores in data["groups"].items():
+                    if group_name in group_to_category_mapping:
+                        if group_to_category_mapping[group_name] == main_cat:
+                            category_score_list.extend(group_scores)
+                    # Fallback: if group name contains category keywords
+                    elif any(keyword in group_name for keyword in main_cat.split()):
+                        category_score_list.extend(group_scores)
+                
+                # Calculate average for this category
+                if category_score_list:
+                    category_scores[main_cat] = sum(category_score_list) / len(category_score_list)
                 else:
-                    category_scores[cat] = 0
+                    category_scores[main_cat] = 0
 
             leaderboard.append({
-                "name": msp["name"],
-                "total_score": avg_total,
-                "category_scores": category_scores
+                "name": msp_name,
+                "total_score": round(total_avg, 2),
+                "category_scores": {k: round(v, 2) for k, v in category_scores.items()}
             })
 
-        # Sort descending by total score
+        # Sort by total score (descending)
         leaderboard.sort(key=lambda x: x["total_score"], reverse=True)
         
-        print(f"[DEBUG] Leaderboard generated with {len(leaderboard)} MSPs")
-        for msp in leaderboard[:3]:  # Log first 3 for debugging
-            print(f"[DEBUG] {msp['name']}: {msp['total_score']} - {msp['category_scores']}")
+        # Debug logging
+        print(f"[DEBUG] Generated leaderboard for {len(leaderboard)} MSPs:")
+        for msp in leaderboard[:3]:
+            print(f"[DEBUG] {msp['name']}: Total={msp['total_score']}, Categories={msp['category_scores']}")
         
         return JSONResponse(content=leaderboard)
 
@@ -487,3 +528,38 @@ async def get_leaderboard():
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Leaderboard generation failed: {str(e)}")
+
+
+# Also add this debug endpoint to help you understand your current data structure:
+@app.get("/api/debug_groups")
+async def debug_groups():
+    """Debug endpoint to see what groups/categories exist in your data"""
+    try:
+        results = collection.get(include=["metadatas"])
+        
+        groups_by_msp = {}
+        all_groups = set()
+        
+        for meta in results["metadatas"]:
+            msp_name = meta.get("msp_name")
+            group = meta.get("group") or meta.get("category") or "Unknown"
+            
+            if msp_name:
+                if msp_name not in groups_by_msp:
+                    groups_by_msp[msp_name] = set()
+                groups_by_msp[msp_name].add(group)
+                all_groups.add(group)
+        
+        # Convert sets to lists for JSON serialization
+        groups_by_msp = {k: list(v) for k, v in groups_by_msp.items()}
+        
+        return {
+            "all_unique_groups": sorted(list(all_groups)),
+            "groups_by_msp": groups_by_msp,
+            "total_msps": len(groups_by_msp)
+        }
+    
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Debug failed: {str(e)}")
