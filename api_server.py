@@ -419,14 +419,14 @@ async def get_group_to_category_map():
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Group-to-category map failed: {str(e)}")
 
-# Replace your existing /api/leaderboard endpoint in api_server.py with this safer version:
-
 @app.get("/api/leaderboard")
 async def get_leaderboard():
     try:
         # Fetch all metadata from ChromaDB
         results = collection.get(include=["metadatas"])
         msp_aggregates = {}
+
+        print(f"[DEBUG] Processing {len(results['metadatas'])} metadata entries")
 
         # First pass: collect all data per MSP
         for meta in results["metadatas"]:
@@ -439,74 +439,100 @@ async def get_leaderboard():
             if msp_name not in msp_aggregates:
                 msp_aggregates[msp_name] = {
                     "name": msp_name,
-                    "scores": [],
-                    "groups": {}
+                    "all_scores": [],  # All scores for total average
+                    "category_data": {}  # Organized by category
                 }
 
-            # Add score to total
-            msp_aggregates[msp_name]["scores"].append(score)
+            # Add to total scores
+            msp_aggregates[msp_name]["all_scores"].append(score)
             
-            # Try to get group information for category mapping
-            group = meta.get("group") or meta.get("category") or "Unknown"
-            if group not in msp_aggregates[msp_name]["groups"]:
-                msp_aggregates[msp_name]["groups"][group] = []
-            msp_aggregates[msp_name]["groups"][group].append(score)
+            # Try to determine category from multiple sources
+            category = None
+            group = meta.get("group", "").strip()
+            original_category = meta.get("category", "").strip()
+            
+            # Method 1: Use explicit category if available
+            if original_category and original_category not in ["Unknown", "unknown", ""]:
+                category = original_category
+            
+            # Method 2: Map group to category if group is meaningful
+            elif group and group not in ["Unknown", "unknown", ""]:
+                # Group mapping based on common patterns
+                group_to_category_mapping = {
+                    # Human resources related
+                    "AI 전문 인력 구성": "인적역량",
+                    "프로젝트 경험 및 성공 사례": "인적역량", 
+                    "지속적인 교육 및 학습": "인적역량",
+                    "프로젝트 관리 및 커뮤니케이션": "인적역량",
+                    "AI 윤리 및 책임 의식": "인적역량",
+                    
+                    # AI Technology related
+                    "AI 기술 연구 능력": "AI기술역량",
+                    "AI 모델 개발 능력": "AI기술역량",
+                    "AI 플랫폼 및 인프라 구축 능력": "AI기술역량", 
+                    "데이터 처리 및 분석 능력": "AI기술역량",
+                    "AI 기술의 융합 및 활용 능력": "AI기술역량",
+                    "AI 기술의 특허 및 인증 보유 현황": "AI기술역량",
+                    
+                    # Solution related
+                    "다양성 및 전문성": "솔루션 역량",
+                    "안정성": "솔루션 역량", 
+                    "확장성 및 유연성": "솔루션 역량",
+                    "사용자 편의성": "솔루션 역량",
+                    "보안성": "솔루션 역량",
+                    "기술 지원 및 유지보수": "솔루션 역량",
+                    "차별성 및 경쟁력": "솔루션 역량",
+                    "개발 로드맵 및 향후 계획": "솔루션 역량"
+                }
+                
+                category = group_to_category_mapping.get(group)
+                
+                # Fallback: keyword matching
+                if not category:
+                    if any(keyword in group for keyword in ["인력", "교육", "학습", "관리", "커뮤니케이션", "윤리"]):
+                        category = "인적역량"
+                    elif any(keyword in group for keyword in ["AI", "기술", "모델", "플랫폼", "인프라", "데이터", "융합", "특허"]):
+                        category = "AI기술역량"
+                    elif any(keyword in group for keyword in ["솔루션", "다양성", "안정성", "확장성", "편의성", "보안", "지원", "차별성", "로드맵"]):
+                        category = "솔루션 역량"
+            
+            # Method 3: Fallback to even distribution (temporary solution)
+            if not category:
+                # If we can't determine category, we'll distribute evenly later
+                category = "미분류"
+            
+            # Store in category data
+            if category not in msp_aggregates[msp_name]["category_data"]:
+                msp_aggregates[msp_name]["category_data"][category] = []
+            msp_aggregates[msp_name]["category_data"][category].append(score)
 
-        # Second pass: calculate averages and map to main categories
+        # Second pass: calculate averages
         leaderboard = []
         main_categories = ["인적역량", "AI기술역량", "솔루션 역량"]
         
-        # Group mapping - customize this based on your actual group names
-        group_to_category_mapping = {
-            # Human resources related
-            "AI 전문 인력 구성": "인적역량",
-            "프로젝트 경험 및 성공 사례": "인적역량", 
-            "지속적인 교육 및 학습": "인적역량",
-            "프로젝트 관리 및 커뮤니케이션": "인적역량",
-            "AI 윤리 및 책임 의식": "인적역량",
-            
-            # AI Technology related
-            "AI 기술 연구 능력": "AI기술역량",
-            "AI 모델 개발 능력": "AI기술역량",
-            "AI 플랫폼 및 인프라 구축 능력": "AI기술역량", 
-            "데이터 처리 및 분석 능력": "AI기술역량",
-            "AI 기술의 융합 및 활용 능력": "AI기술역량",
-            "AI 기술의 특허 및 인증 보유 현황": "AI기술역량",
-            
-            # Solution related
-            "다양성 및 전문성": "솔루션 역량",
-            "안정성": "솔루션 역량", 
-            "확장성 및 유연성": "솔루션 역량",
-            "사용자 편의성": "솔루션 역량",
-            "보안성": "솔루션 역량",
-            "기술 지원 및 유지보수": "솔루션 역량",
-            "차별성 및 경쟁력": "솔루션 역량",
-            "개발 로드맵 및 향후 계획": "솔루션 역량"
-        }
-
         for msp_name, data in msp_aggregates.items():
             # Calculate total average
-            total_avg = sum(data["scores"]) / len(data["scores"]) if data["scores"] else 0
+            total_avg = sum(data["all_scores"]) / len(data["all_scores"]) if data["all_scores"] else 0
             
             # Calculate category averages
             category_scores = {}
+            
             for main_cat in main_categories:
-                category_score_list = []
-                
-                # Collect scores from groups that belong to this main category
-                for group_name, group_scores in data["groups"].items():
-                    if group_name in group_to_category_mapping:
-                        if group_to_category_mapping[group_name] == main_cat:
-                            category_score_list.extend(group_scores)
-                    # Fallback: if group name contains category keywords
-                    elif any(keyword in group_name for keyword in main_cat.split()):
-                        category_score_list.extend(group_scores)
-                
-                # Calculate average for this category
-                if category_score_list:
-                    category_scores[main_cat] = sum(category_score_list) / len(category_score_list)
+                if main_cat in data["category_data"] and data["category_data"][main_cat]:
+                    # We have specific data for this category
+                    category_scores[main_cat] = sum(data["category_data"][main_cat]) / len(data["category_data"][main_cat])
                 else:
-                    category_scores[main_cat] = 0
+                    # No specific data - use total average as fallback
+                    # This ensures we show something rather than 0
+                    category_scores[main_cat] = total_avg
+            
+            # Handle "미분류" data by distributing evenly
+            if "미분류" in data["category_data"]:
+                unclassified_avg = sum(data["category_data"]["미분류"]) / len(data["category_data"]["미분류"])
+                # If no other category data exists, use unclassified for all
+                if all(cat not in data["category_data"] or not data["category_data"][cat] for cat in main_categories):
+                    for main_cat in main_categories:
+                        category_scores[main_cat] = unclassified_avg
 
             leaderboard.append({
                 "name": msp_name,
@@ -519,7 +545,7 @@ async def get_leaderboard():
         
         # Debug logging
         print(f"[DEBUG] Generated leaderboard for {len(leaderboard)} MSPs:")
-        for msp in leaderboard[:3]:
+        for msp in leaderboard:
             print(f"[DEBUG] {msp['name']}: Total={msp['total_score']}, Categories={msp['category_scores']}")
         
         return JSONResponse(content=leaderboard)
