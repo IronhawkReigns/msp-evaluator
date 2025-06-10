@@ -101,65 +101,107 @@ def clova_embedding(text: str):
         print(f"[Embedding API Error] {result}")
         return []
 
+# Add this function to your vector_writer.py
+
 def add_msp_data_to_chroma(company_name, company_data, summary):
     documents = []
     embeddings = []
     metadatas = []
     ids = []
 
-    # Print summary types for debugging
-    print(f"Summary types for debugging: {[ (row.get('Category'), type(row)) for row in summary ]}")
+    # Create category mapping from groups to main categories
+    category_mapping = {}
+    
+    # Extract category information from summary
+    main_categories = ["인적역량", "AI기술역량", "솔루션 역량"]
+    
+    # If company_data has group information, map it to main categories
+    if isinstance(company_data, list):
+        for item in company_data:
+            group = item.get('group', '').strip()
+            if group and group not in category_mapping:
+                # Try to match group to main category based on common patterns
+                for main_cat in main_categories:
+                    # You might need to adjust this logic based on your actual group names
+                    if any(keyword in group for keyword in main_cat.split()):
+                        category_mapping[group] = main_cat
+                        break
+                else:
+                    # Default mapping - you might need to customize this
+                    category_mapping[group] = "기타"
+
+    print(f"[DEBUG] Category mapping for {company_name}: {category_mapping}")
+
+    # Process summary to get category scores
+    category_scores = {}
+    if isinstance(summary, list):
+        for item in summary:
+            if isinstance(item, dict):
+                cat_name = item.get('Category', '').strip()
+                score = item.get('Score')
+                if cat_name in main_categories and score is not None:
+                    try:
+                        # Convert percentage back to 1-5 scale
+                        category_scores[cat_name] = float(score) / 20.0  # 100% scale to 5-point scale
+                    except (ValueError, TypeError):
+                        pass
+
+    print(f"[DEBUG] Category scores for {company_name}: {category_scores}")
+
+    # Process each data item
     for idx, entry in enumerate(company_data):
         question = entry.get('question', '')
-        answer = entry["answer"]
-        score = entry["score"]
+        answer = entry.get("answer", "")
+        score = entry.get("score", 0)
+        group = entry.get('group', '').strip()
+        
+        # Map group to main category
+        main_category = category_mapping.get(group, "기타")
+        
         chunks = chunk_text(answer)
         for cidx, chunk in enumerate(chunks):
             document = f"Q: {question}\nA: {chunk}"
             embedding = clova_embedding(document)
             if not embedding:
                 continue
+            
             uid = f"{company_name}_{idx}_{cidx}"
-            # Clean summary, log and skip problematic keys
-            cleaned_summary = {}
-            for item in summary:
-                k = item.get('Category')
-                v = item.get('Score')
-                if k is None:
-                    print(f"[Metadata Error] Found summary item with None as key: {item}")
-                    continue
-                if isinstance(v, (str, int, float, bool)) or v is None:
-                    cleaned_summary[k] = v
-                else:
-                    print(f"[Metadata Error] Key '{k}' has invalid type {type(v)}. Value: {v}")
-
+            
+            # Create metadata with proper category mapping
             metadata = {
                 "msp_name": company_name,
                 "question": question,
                 "answer": chunk,
                 "score": score,
+                "group": group,  # Keep original group
+                "category": main_category,  # Add mapped main category
                 "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-                **cleaned_summary
             }
+            
+            # Add category scores to metadata
+            for cat_name, cat_score in category_scores.items():
+                metadata[f"{cat_name}_score"] = cat_score
+            
             documents.append(document)
             embeddings.append(embedding)
             metadatas.append(metadata)
             ids.append(uid)
 
-    collection.add(
-        documents=documents,
-        embeddings=embeddings,
-        metadatas=metadatas,
-        ids=ids
-    )
+    if documents:  # Only add if we have documents
+        collection.add(
+            documents=documents,
+            embeddings=embeddings,
+            metadatas=metadatas,
+            ids=ids
+        )
+        print(f"[SUCCESS] Added {len(documents)} chunks for {company_name}")
+    else:
+        print(f"[WARNING] No documents to add for {company_name}")
 
-def run_from_msp_name(company_name: str):
-    print(f"Running vector DB update for: {company_name}")
+# Also update the run_from_direct_input function
+def run_from_direct_input(company_name: str, company_data: list, summary: list):
+    print(f"Running vector DB update (direct input) for: {company_name}")
     try:
-        company_data = get_company_data_from_sheet(company_name)
-        print("Fetched company data")
-        summary = get_summary_scores(company_name)
-        print("Fetched summary scores")
         add_msp_data_to_chroma(company_name, company_data, summary)
         print(f"{company_name} successfully written to ChromaDB.")
     except Exception as e:
@@ -168,9 +210,13 @@ def run_from_msp_name(company_name: str):
         traceback.print_exc()
         raise
 
-def run_from_direct_input(company_name: str, company_data: dict, summary: dict):
-    print(f"Running vector DB update (direct input) for: {company_name}")
+def run_from_msp_name(company_name: str):
+    print(f"Running vector DB update for: {company_name}")
     try:
+        company_data = get_company_data_from_sheet(company_name)
+        print("Fetched company data")
+        summary = get_summary_scores(company_name)
+        print("Fetched summary scores")
         add_msp_data_to_chroma(company_name, company_data, summary)
         print(f"{company_name} successfully written to ChromaDB.")
     except Exception as e:
