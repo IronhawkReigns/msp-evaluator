@@ -5,3 +5,4 @@ secrets.json
 .envCriteria.xlsx
 Criteria.xlsx
 .env
+chroma_store/

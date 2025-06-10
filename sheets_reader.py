@@ -19,21 +19,26 @@ def connect_to_sheets():
     return client
 
 # Read the interview sheet
-def load_evaluation_data():
+def load_evaluation_data(sheet_name=None):
     client = connect_to_sheets()
     interview_sheet = client.open(INTERVIEW_SHEET_DOC_NAME)
 
     fixed_tabs = ["인적역량", "AI기술역량", "솔루션 역량"]
-    combined_df = pd.DataFrame()
-
-    for tab in fixed_tabs:
-        worksheet = interview_sheet.worksheet(tab)
+    if sheet_name in fixed_tabs:
+        worksheet = interview_sheet.worksheet(sheet_name)
         records = worksheet.get_all_records()
         df = pd.DataFrame(records)
         df["Key Questions"] = df["Key Questions"].str.strip()
-        combined_df = pd.concat([combined_df, df], ignore_index=True)
-
-    return combined_df, None
+        return df, worksheet
+    else:
+        combined_df = pd.DataFrame()
+        for tab in fixed_tabs:
+            worksheet = interview_sheet.worksheet(tab)
+            records = worksheet.get_all_records()
+            df = pd.DataFrame(records)
+            df["Key Questions"] = df["Key Questions"].str.strip()
+            combined_df = pd.concat([combined_df, df], ignore_index=True)
+        return combined_df, None
 
 # Write back the score column
 def update_scores_to_sheet(df, sheet):

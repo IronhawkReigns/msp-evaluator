@@ -1,0 +1,542 @@
+<head>
+  <title>MSP 검색 도구</title>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&display=swap');
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+ .header {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   width: calc(100% - 56px);
+   position: absolute;
+   top: 20px;
+   left: 28px;
+   right: 28px;
+   background: none;
+   box-shadow: none;
+   padding: 0;
+ }
+
+.admin-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  font-family: 'Noto Sans KR', sans-serif;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.admin-link:hover {
+  color: #03c75a;
+}
+
+ .header-title {
+   font-size: 20px;
+   font-weight: 700;
+   color: #03c75a;
+   font-family: 'Noto Sans KR', sans-serif !important;
+   text-decoration: none;
+ }
+
+ .header-title:hover {
+   text-decoration: none;
+   cursor: pointer;
+ }
+
+.footer {
+  text-align: center;
+  margin-top: 40px;
+  color: #999;
+  font-size: 12px;
+}
+
+:root {
+  --primary: #03c75a;
+  --bg: #f5f7fa;
+  --card-bg: #ffffff;
+  --card-shadow: rgba(0, 0, 0, 0.08);
+  --text: #333;
+  --muted: #666;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'NanumSquareNeo', sans-serif !important;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'NanumSquareNeo', sans-serif !important;
+  background: linear-gradient(135deg, #e8fef3 0%, #f0fbf6 100%);
+  color: #1e1e1e;
+}
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  position: relative;
+}
+
+.hero {
+  background: transparent;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  background: transparent;
+  border-radius: 0;
+  padding: 48px 24px;
+  max-width: 680px;
+  width: 100%;
+  box-shadow: none;
+  margin-top: 24px;
+}
+
+ h1 {
+   text-align: center;
+   font-size: 28px;
+   font-weight: 900;
+   margin-bottom: 32px;
+   color: #03c75a;
+   font-family: 'NanumSquareNeo', sans-serif;
+ }
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%2303c75a' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  padding-right: 40px;
+  width: 100%;
+  padding: 18px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  border-radius: 12px;
+  border: 1px solid #d0d7de;
+  transition: box-shadow 0.3s ease;
+}
+
+select:focus {
+  box-shadow: 0 0 0 3px rgba(3, 199, 90, 0.25);
+  outline: none;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 18px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  border-radius: 12px;
+  border: 1px solid #d0d7de;
+  transition: border 0.3s, box-shadow 0.3s;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+select:focus, input[type="text"]:focus {
+  border-color: #03c75a;
+  box-shadow: 0 0 0 3px rgba(3, 199, 90, 0.3);
+  outline: none;
+}
+
+#submitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: bold;
+  background: linear-gradient(90deg, #03c75a, #1ecb8f);
+  box-shadow: 0 4px 10px rgba(3, 199, 90, 0.2);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+#submitBtn:hover {
+  filter: brightness(1.08);
+}
+
+.result-card {
+  background: #fcfffc;
+  border: 1px solid #e5e8eb;
+  border-left: 4px solid #03c75a;
+  padding: 24px;
+  border-radius: 10px;
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.result-card p {
+  margin: 6px 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+  .evidence-btn {
+    margin-top: 12px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    color: var(--text);
+    z-index: 1;
+  }
+  .evidence-btn:hover {
+    background-color: #e0e0e0;
+  }
+input[type="text"],
+select,
+.result-card,
+.result-card p {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.6;
+  font-family: 'NanumSquareNeo', sans-serif !important;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #03c75a;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+  .tooltip-wrapper {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+  }
+
+  .tooltip-wrapper .tooltip-text {
+    visibility: hidden;
+    width: 220px;
+    background: linear-gradient(135deg, rgba(30,30,30,0.9), rgba(60,60,60,0.9));
+    color: #f9f9f9;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 0;
+    margin-left: -10px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .tooltip-wrapper:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /* Updated evidence-card style to match .result-card left border and background */
+  .evidence-card {
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-left: 4px solid #03c75a;
+    padding: 16px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
+  }
+
+  .evidence-card strong {
+    display: block;
+    color: #555;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+.search-button:hover {
+  background: linear-gradient(135deg, #f8f8f8, #ececec);
+}
+</style>
+
+<body>
+  <div class="layout">
+    <header class="header">
+      <a class="header-title" href="https://mspevaluator.duckdns.org" target="_blank" rel="noopener noreferrer">NAVER Cloud</a>
+      <a class="admin-link" href="/login?next=/admin">관리자</a>
+    </header>
+    <div class="container">
+      <h1>🔍 MSP 검색 도구</h1>
+      <label for="minScore">최소 추천 기준 점수 선택</label>
+      <select id="minScore">
+        <option value="0">0 이상</option>
+        <option value="1">1 이상</option>
+        <option value="2">2 이상</option>
+        <option value="3">3 이상</option>
+        <option value="4">4 이상</option>
+        <option value="5">5점만</option>
+      </select>
+      <input type="text" id="questionInput" placeholder="예: 금융 회사와의 프로젝트에 어울리는 보안이 강점인 파트너사 추천해줘 / 메가존 주력 솔루션 알려줘" />
+      <div id="sample-questions" style="margin-bottom: 20px; display: none; text-align: center;">
+        <p style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 6px;">예시 질문:</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+          <button class="sample-btn">ITCEN CLOIT의 AI 전문 인력 구성은?</button>
+          <button class="sample-btn">MLOps 관련 경험이 풍부한 MSP는?</button>
+          <button class="sample-btn">디딤365의 협업 방식은 어떤가?</button>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+        <label class="switch">
+          <input type="checkbox" id="advancedSearch">
+          <span class="slider round"></span>
+        </label>
+        <span class="tooltip-wrapper" style="font-size: 14px; font-weight: 600; color: var(--muted);">
+          고급 검색 (Web 기반)
+          <span class="tooltip-text">Perplexity 기반 웹 검색을 사용합니다. 더 깊이 있는 검색 결과가 제공됩니다.</span>
+        </span>
+        <button id="toggle-sample-btn" style="font-size: 13px; padding: 6px 10px; border-radius: 6px; border: 1px solid #ddd; background-color: #f0f0f0; color: #333; margin-left: auto; cursor: pointer;">
+          예시 질문 보기 ▼
+        </button>
+      </div>
+      <button id="submitBtn">검색</button>
+<div class="tooltip-wrapper" style="width: 100%;">
+  <button type="button" class="search-button" style="margin-top: 10px; font-size: 15px; font-weight: bold; width: 100%; padding: 16px; border-radius: 12px; border: 1px solid #03c75a; background-color: white; color: #03c75a; cursor: pointer; transition: background 0.2s ease; font-family: 'NanumSquareNeo', sans-serif;">
+    고급 검색 (NAVER)
+  </button>
+  <span class="tooltip-text" style="left: 50%; transform: translateX(-50%);">NAVER 뉴스 검색을 기반으로 정보에 접근합니다.</span>
+</div>
+      <p style="font-size: 13px; color: #777; margin-top: 8px;">
+        ⚠️ 주의사항: 본 서비스는 AI 기반으로 제공되며, 간헐적으로 부정확한 응답이 포함될 수 있습니다. 이 경우 다시 검색을 권장합니다.
+      </p>
+      <h2 id="resultTitle" style="font-size: 18px; font-weight: 700; margin-top: 30px; color: #03c75a; display: none;">🔎 검색 결과</h2>
+      <div id="advanced-badge" style="display: none;">
+        <span style="background-color: #e9f8f0; color: #03c75a; font-size: 13px; font-weight: bold; padding: 6px 12px; border-radius: 20px; display: inline-block; margin-top: 12px; border: 1px solid #03c75a;">
+          🌐 고급 검색 결과
+        </span>
+      </div>
+      <div id="results"></div>
+    </div>
+    <footer class="footer">ⓒ 2025 Naver Cloud MSP 평가 도구</footer>
+  </div>
+</body>
+
+<script>
+  document.getElementById("submitBtn").addEventListener("click", async () => {
+    const question = document.getElementById("questionInput").value;
+    const min_score = document.getElementById("minScore").value;
+    const advanced = document.getElementById("advancedSearch").checked; // 고급 검색 토글 상태
+
+    if (!question.trim()) {
+      alert("질문을 입력해 주세요.");
+      return;
+    }
+
+    const results = document.getElementById("results");
+    results.innerHTML = `
+    <div class="result-card" style="display: flex; align-items: center; gap: 10px;">
+      <div class="loader" style="border: 4px solid #f3f3f3; border-top: 4px solid #03c75a; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite;"></div>
+      <p style="margin: 0;">파트너사 검색 중...</p>
+    </div>`;
+
+    const res = await fetch("/query/router", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: question, chat_history: [], advanced: advanced })
+    });
+
+    const data = await res.json();
+    results.innerHTML = "";
+
+    const resultTitle = document.getElementById("resultTitle");
+    resultTitle.style.display = "block";
+
+    const badge = document.getElementById("advanced-badge");
+    if (badge) {
+      badge.style.display = data.advanced ? "inline-block" : "none";
+    }
+
+    if (data.answer) {
+      const card = document.createElement("div");
+      card.className = "result-card";
+      // Prepare answer HTML
+      card.innerHTML = `<p>${data.answer.replace(/\n/g, "<br/>")}</p>`;
+      let evidenceBtn = null;
+      let evidenceList = null;
+      let visible = false;
+      if (data.evidence && data.evidence.length > 0) {
+        evidenceBtn = document.createElement("button");
+        evidenceBtn.className = "evidence-btn";
+        evidenceBtn.textContent = "🔍 왜 이 답변인가요?";
+        evidenceList = document.createElement("div");
+        evidenceList.style.marginTop = "10px";
+        evidenceList.style.display = "none";
+        data.evidence.forEach(ev => {
+          const evBlock = document.createElement("div");
+          evBlock.className = "evidence-card";
+          evBlock.innerHTML = `<strong>Q:</strong> ${ev.question}<strong>A:</strong> ${ev.answer}<strong>Score:</strong> ${ev.score}`;
+          evidenceList.appendChild(evBlock);
+        });
+        evidenceBtn.onclick = () => {
+          visible = !visible;
+          evidenceList.style.display = visible ? "block" : "none";
+          evidenceBtn.textContent = visible ? "근거 숨기기" : "🔍 왜 이 답변인가요?";
+        };
+      }
+      // Append the answer card first
+      results.appendChild(card);
+      // Append evidenceList before evidenceBtn inside the card for correct layout
+      if (evidenceList) {
+        card.appendChild(evidenceList);
+      }
+      if (evidenceBtn) {
+        card.appendChild(evidenceBtn);
+      }
+    }
+  });
+</script>
+<script>
+  document.querySelectorAll(".sample-btn").forEach(btn => {
+    btn.style.padding = "8px 12px";
+    btn.style.fontSize = "13px";
+    btn.style.border = "1px solid #ddd";
+    btn.style.color = "#333";
+    btn.style.borderRadius = "6px";
+    btn.style.backgroundColor = "#f0f0f0";
+    btn.style.cursor = "pointer";
+    btn.style.transition = "background 0.2s";
+
+    btn.addEventListener("mouseover", () => {
+      btn.style.backgroundColor = "#e0e0e0";
+    });
+    btn.addEventListener("mouseout", () => {
+      btn.style.backgroundColor = "#f0f0f0";
+    });
+
+    btn.addEventListener("click", () => {
+      document.getElementById("questionInput").value = btn.textContent;
+      document.getElementById("submitBtn").click();
+    });
+  });
+</script>
+<script>
+  const toggleSampleBtn = document.getElementById("toggle-sample-btn");
+  const sampleQuestionsDiv = document.getElementById("sample-questions");
+
+  toggleSampleBtn.addEventListener("click", () => {
+    const isVisible = sampleQuestionsDiv.style.display === "block";
+    sampleQuestionsDiv.style.display = isVisible ? "none" : "block";
+    toggleSampleBtn.innerText = isVisible ? "예시 질문 보기 ▼" : "예시 질문 닫기 ▲";
+  });
+</script>
+<script>
+  document.querySelector(".search-button").addEventListener("click", async () => {
+    const question = document.getElementById("questionInput").value;
+
+    if (!question.trim()) {
+      alert("질문을 입력해 주세요.");
+      return;
+    }
+
+    const results = document.getElementById("results");
+    results.innerHTML = `
+    <div class="result-card" style="display: flex; align-items: center; gap: 10px;">
+      <div class="loader" style="border: 4px solid #f3f3f3; border-top: 4px solid #03c75a; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite;"></div>
+      <p style="margin: 0;">NAVER 뉴스 기반 검색 중...</p>
+    </div>`;
+
+    const res = await fetch("/query/advanced_naver", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: question })
+    });
+
+    const data = await res.json();
+    results.innerHTML = "";
+
+    const resultTitle = document.getElementById("resultTitle");
+    resultTitle.style.display = "block";
+
+    if (data.answer) {
+      const card = document.createElement("div");
+      card.className = "result-card";
+      card.innerHTML = `<p>${data.answer.replace(/\n/g, "<br/>")}</p>`;
+      results.appendChild(card);
+    } else {
+      results.innerHTML = `<div class="result-card"><p>결과를 찾을 수 없습니다.</p></div>`;
+    }
+  });
+</script>

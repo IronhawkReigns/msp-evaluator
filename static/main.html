@@ -1,0 +1,81 @@
+
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MSP 평가 도구</title>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'NanumSquareNeo', sans-serif !important;
+      background: linear-gradient(135deg, #e8fef3 0%, #f0fbf6 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #1e1e1e;
+    }
+
+    .main-container {
+      background: white;
+      padding: 48px;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      max-width: 480px;
+      width: 90%;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 900;
+      margin-bottom: 16px;
+      color: #03c75a;
+    }
+
+    p {
+      font-size: 15px;
+      margin-bottom: 32px;
+      color: #444;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .btn {
+      padding: 16px;
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+      background: linear-gradient(90deg, #03c75a, #1ecb8f);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: filter 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      filter: brightness(1.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <h1>MSP 평가 도구</h1>
+    <p>클라우드 MSP를 효율적으로 검색하고 평가할 수 있는 통합 도구입니다.</p>
+    <div class="btn-group">
+      <a class="btn" href="/query">🔍 MSP 검색 도구</a>
+      <a class="btn" href="/login?next=/admin">📊 벡터 DB 뷰어 (관리자용)</a>
+      <a class="btn" href="/upload">📥 파트너 평가 도구</a>
+    </div>
+  </div>
+</body>
+</html>
