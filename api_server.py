@@ -658,10 +658,18 @@ async def debug_groups():
 async def fix_existing_data():
     """Fix encoding issues and add proper categories to existing data"""
     try:
-        results = collection.get(include=["metadatas", "ids"])
+        # Fixed ChromaDB API call - remove "ids" from include
+        results = collection.get(include=["metadatas"])
         
         if not results["metadatas"]:
             return {"message": "No data found"}
+        
+        # Get IDs separately
+        all_results = collection.get()
+        ids = all_results["ids"]
+        
+        if len(ids) != len(results["metadatas"]):
+            raise HTTPException(status_code=500, detail="Mismatch between IDs and metadata count")
         
         updates = []
         msp_names = set()
@@ -690,16 +698,15 @@ async def fix_existing_data():
             msp_names.add(msp_name)
             
             # Fix other text fields
+            from utils import fix_korean_encoding, map_group_to_category
             question = fix_korean_encoding(str(meta.get("question", "")))
             answer = fix_korean_encoding(str(meta.get("answer", "")))
             group = fix_korean_encoding(str(meta.get("group", "")))
             
-            # Determine proper category
-            if group in ["Unknown", "unknown", ""]:
-                # Try to infer from sheet context or use fallback
-                category = "인적역량"  # Default category
-            else:
-                category = map_group_to_category(group)
+            # Determine proper category based on the question content since groups are "Unknown"
+            # We'll try to infer category from the question itself
+            category = infer_category_from_question(question)
+            group_name = infer_group_from_question(question)
             
             # Create updated metadata
             updated_meta = {
@@ -707,13 +714,13 @@ async def fix_existing_data():
                 "question": question,
                 "answer": answer,
                 "score": meta.get("score", 0),
-                "group": group if group not in ["Unknown", "unknown"] else "미분류",
+                "group": group_name,  # Use inferred group
                 "category": category,
                 "timestamp": meta.get("timestamp", datetime.datetime.now(datetime.timezone.utc).isoformat())
             }
             
             updates.append({
-                "id": results["ids"][i],
+                "id": ids[i],
                 "metadata": updated_meta
             })
         
@@ -721,17 +728,17 @@ async def fix_existing_data():
         print(f"[DEBUG] Prepared {len(updates)} updates")
         
         # Apply updates in batches
-        batch_size = 100
+        batch_size = 50  # Smaller batch size to avoid issues
         updated_count = 0
         
         for i in range(0, len(updates), batch_size):
             batch = updates[i:i + batch_size]
             
             try:
-                ids = [item["id"] for item in batch]
-                metadatas = [item["metadata"] for item in batch]
+                batch_ids = [item["id"] for item in batch]
+                batch_metadatas = [item["metadata"] for item in batch]
                 
-                collection.update(ids=ids, metadatas=metadatas)
+                collection.update(ids=batch_ids, metadatas=batch_metadatas)
                 updated_count += len(batch)
                 print(f"[DEBUG] Updated batch {i//batch_size + 1}: {len(batch)} items")
                 
@@ -755,3 +762,85 @@ async def fix_existing_data():
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Fix failed: {str(e)}")
+
+def infer_category_from_question(question):
+    """Infer category from question content since groups are Unknown"""
+    if not question:
+        return "미분류"
+    
+    question_lower = question.lower()
+    
+    # Human resources patterns
+    if any(keyword in question_lower for keyword in [
+        "인력", "직원", "교육", "학습", "프로젝트 경험", "성공 사례", 
+        "관리", "커뮤니케이션", "윤리", "책임", "전문", "구성"
+    ]):
+        return "인적역량"
+    
+    # AI technology patterns
+    elif any(keyword in question_lower for keyword in [
+        "ai", "기술", "모델", "플랫폼", "인프라", "데이터", "융합", 
+        "특허", "연구", "머신러닝", "딥러닝", "자연어", "개발"
+    ]):
+        return "AI기술역량"
+    
+    # Solution patterns
+    elif any(keyword in question_lower for keyword in [
+        "솔루션", "다양성", "안정성", "확장성", "편의성", "보안", 
+        "지원", "차별성", "로드맵", "계획", "유지보수"
+    ]):
+        return "솔루션 역량"
+    
+    return "미분류"
+
+
+def infer_group_from_question(question):
+    """Infer more specific group from question content"""
+    if not question:
+        return "미분류"
+    
+    question_lower = question.lower()
+    
+    # Specific group patterns based on common question types
+    if "인력" in question_lower and ("구성" in question_lower or "비율" in question_lower):
+        return "AI 전문 인력 구성"
+    elif "프로젝트" in question_lower and ("경험" in question_lower or "사례" in question_lower):
+        return "프로젝트 경험 및 성공 사례"
+    elif "교육" in question_lower or "학습" in question_lower:
+        return "지속적인 교육 및 학습"
+    elif "관리" in question_lower or "커뮤니케이션" in question_lower:
+        return "프로젝트 관리 및 커뮤니케이션"
+    elif "윤리" in question_lower or "책임" in question_lower:
+        return "AI 윤리 및 책임 의식"
+    elif "연구" in question_lower:
+        return "AI 기술 연구 능력"
+    elif "모델" in question_lower and "개발" in question_lower:
+        return "AI 모델 개발 능력"
+    elif "플랫폼" in question_lower or "인프라" in question_lower:
+        return "AI 플랫폼 및 인프라 구축 능력"
+    elif "데이터" in question_lower and ("처리" in question_lower or "분석" in question_lower):
+        return "데이터 처리 및 분석 능력"
+    elif "융합" in question_lower or "활용" in question_lower:
+        return "AI 기술의 융합 및 활용 능력"
+    elif "특허" in question_lower or "인증" in question_lower:
+        return "AI 기술의 특허 및 인증 보유 현황"
+    elif "다양성" in question_lower or "전문성" in question_lower:
+        return "다양성 및 전문성"
+    elif "안정성" in question_lower:
+        return "안정성"
+    elif "확장성" in question_lower or "유연성" in question_lower:
+        return "확장성 및 유연성"
+    elif "편의성" in question_lower or "사용자" in question_lower:
+        return "사용자 편의성"
+    elif "보안" in question_lower:
+        return "보안성"
+    elif "지원" in question_lower or "유지보수" in question_lower:
+        return "기술 지원 및 유지보수"
+    elif "차별성" in question_lower or "경쟁력" in question_lower:
+        return "차별성 및 경쟁력"
+    elif "로드맵" in question_lower or "계획" in question_lower:
+        return "개발 로드맵 및 향후 계획"
+    
+    # If no specific match, return category-level group
+    category = infer_category_from_question(question)
+    return category if category != "미분류" else "기타"
