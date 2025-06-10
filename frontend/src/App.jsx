@@ -1,9 +1,12 @@
-
-import React from "react";
-import LeaderboardPage from "./pages/LeaderboardPage";
+import React from 'react';
+import LeaderboardPage from './pages/LeaderboardPage';
 
 function App() {
-  return <LeaderboardPage />;
+  return (
+    <div className="App">
+      <LeaderboardPage />
+    </div>
+  );
 }
 
 export default App;
