@@ -419,18 +419,17 @@ async def get_group_to_category_map():
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Group-to-category map failed: {str(e)}")
 
-
-# Leaderboard endpoint
 @app.get("/api/leaderboard")
 async def get_leaderboard():
     try:
         # Fetch all metadata from ChromaDB
         results = collection.get(include=["metadatas"])
         score_aggregates = {}
+        main_categories = ["인적역량", "AI기술역량", "솔루션 역량"]
 
         for meta in results["metadatas"]:
             msp_name = meta.get("msp_name")
-            category = meta.get("category") or meta.get("group") or "Unknown"
+            category = meta.get("category", "기타")  # Use the mapped category
             score = meta.get("score")
 
             if not msp_name or score is None:
@@ -440,7 +439,8 @@ async def get_leaderboard():
                 score_aggregates[msp_name] = {
                     "name": msp_name,
                     "total_score": 0,
-                    "category_scores": {},
+                    "category_totals": {cat: 0 for cat in main_categories},
+                    "category_counts": {cat: 0 for cat in main_categories},
                     "count": 0
                 }
 
@@ -448,17 +448,26 @@ async def get_leaderboard():
             agg["total_score"] += score
             agg["count"] += 1
 
-            if category not in agg["category_scores"]:
-                agg["category_scores"][category] = 0
-            agg["category_scores"][category] += score
+            # Aggregate by main category
+            if category in main_categories:
+                agg["category_totals"][category] += score
+                agg["category_counts"][category] += 1
 
-        # Finalize results
+        # Calculate final averages
         leaderboard = []
         for msp in score_aggregates.values():
+            # Calculate overall average (out of 5)
             avg_total = round(msp["total_score"] / msp["count"], 2) if msp["count"] else 0
-            category_scores = {
-                k: round(v / msp["count"], 2) for k, v in msp["category_scores"].items()
-            }
+            
+            # Calculate category averages (out of 5)
+            category_scores = {}
+            for cat in main_categories:
+                if msp["category_counts"][cat] > 0:
+                    category_avg = msp["category_totals"][cat] / msp["category_counts"][cat]
+                    category_scores[cat] = round(category_avg, 2)
+                else:
+                    category_scores[cat] = 0
+
             leaderboard.append({
                 "name": msp["name"],
                 "total_score": avg_total,
@@ -467,6 +476,11 @@ async def get_leaderboard():
 
         # Sort descending by total score
         leaderboard.sort(key=lambda x: x["total_score"], reverse=True)
+        
+        print(f"[DEBUG] Leaderboard generated with {len(leaderboard)} MSPs")
+        for msp in leaderboard[:3]:  # Log first 3 for debugging
+            print(f"[DEBUG] {msp['name']}: {msp['total_score']} - {msp['category_scores']}")
+        
         return JSONResponse(content=leaderboard)
 
     except Exception as e:
