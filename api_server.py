@@ -13,6 +13,7 @@ from clova_router import Executor
 from pydantic import BaseModel
 from difflib import get_close_matches
 import os
+import datetime  # ADD THIS IMPORT
 from dotenv import load_dotenv
 load_dotenv()
 from fastapi import FastAPI, HTTPException, Depends, Request
@@ -58,7 +59,216 @@ app.add_middleware(
 app.include_router(admin_router)
 print("📦 admin router included")
 
+# Load ChromaDB
+CHROMA_PATH = os.path.abspath("chroma_store")
+client = PersistentClient(path=CHROMA_PATH)
+collection = client.get_or_create_collection("msp_chunks")
 
+# MOVE UTILITY FUNCTIONS TO THE TOP
+
+def fix_korean_encoding(text):
+    """Fix Korean character encoding issues"""
+    if not isinstance(text, str):
+        return str(text)
+    
+    if not text or text in ["nan", "None"]:
+        return ""
+    
+    try:
+        # If text contains replacement characters, try to fix
+        if '�' in text:
+            # Try common Korean encodings
+            for encoding in ['euc-kr', 'cp949']:
+                try:
+                    # Encode as latin-1 then decode as Korean encoding
+                    fixed = text.encode('latin-1').decode(encoding)
+                    return fixed
+                except:
+                    continue
+        
+        # Ensure it's properly UTF-8 encoded
+        return text.encode('utf-8').decode('utf-8')
+        
+    except:
+        return text
+
+def map_group_to_category(group):
+    """Map group names to main categories"""
+    if not group or group in ["Unknown", "unknown", "미분류", ""]:
+        return "미분류"
+    
+    group_lower = group.lower()
+    
+    # Exact matches first
+    group_mapping = {
+        "AI 전문 인력 구성": "인적역량",
+        "프로젝트 경험 및 성공 사례": "인적역량", 
+        "지속적인 교육 및 학습": "인적역량",
+        "프로젝트 관리 및 커뮤니케이션": "인적역량",
+        "AI 윤리 및 책임 의식": "인적역량",
+        "AI 기술 연구 능력": "AI기술역량",
+        "AI 모델 개발 능력": "AI기술역량",
+        "AI 플랫폼 및 인프라 구축 능력": "AI기술역량", 
+        "데이터 처리 및 분석 능력": "AI기술역량",
+        "AI 기술의 융합 및 활용 능력": "AI기술역량",
+        "AI 기술의 특허 및 인증 보유 현황": "AI기술역량",
+        "다양성 및 전문성": "솔루션 역량",
+        "안정성": "솔루션 역량", 
+        "확장성 및 유연성": "솔루션 역량",
+        "사용자 편의성": "솔루션 역량",
+        "보안성": "솔루션 역량",
+        "기술 지원 및 유지보수": "솔루션 역량",
+        "차별성 및 경쟁력": "솔루션 역량",
+        "개발 로드맵 및 향후 계획": "솔루션 역량"
+    }
+    
+    if group in group_mapping:
+        return group_mapping[group]
+    
+    # Keyword matching as fallback
+    if any(keyword in group_lower for keyword in ["인력", "교육", "학습", "관리", "커뮤니케이션", "윤리", "프로젝트", "경험"]):
+        return "인적역량"
+    elif any(keyword in group_lower for keyword in ["ai", "기술", "모델", "플랫폼", "인프라", "데이터", "융합", "특허", "연구"]):
+        return "AI기술역량"
+    elif any(keyword in group_lower for keyword in ["솔루션", "다양성", "안정성", "확장성", "편의성", "보안", "지원", "차별성", "로드맵"]):
+        return "솔루션 역량"
+    
+    return "미분류"
+
+def manual_category_calculation(grouped_data, total_avg):
+    """Fallback manual calculation if the existing logic fails"""
+    
+    # Enhanced group-to-category mapping based on your existing patterns
+    group_to_category_mapping = {
+        # Human Resources (인적역량)
+        "AI 전문 인력 구성": "인적역량",
+        "프로젝트 경험 및 성공 사례": "인적역량", 
+        "지속적인 교육 및 학습": "인적역량",
+        "프로젝트 관리 및 커뮤니케이션": "인적역량",
+        "AI 윤리 및 책임 의식": "인적역량",
+        
+        # AI Technology (AI기술역량)
+        "AI 기술 연구 능력": "AI기술역량",
+        "AI 모델 개발 능력": "AI기술역량",
+        "AI 플랫폼 및 인프라 구축 능력": "AI기술역량", 
+        "데이터 처리 및 분석 능력": "AI기술역량",
+        "AI 기술의 융합 및 활용 능력": "AI기술역량",
+        "AI 기술의 특허 및 인증 보유 현황": "AI기술역량",
+        
+        # Solution (솔루션 역량)
+        "다양성 및 전문성": "솔루션 역량",
+        "안정성": "솔루션 역량", 
+        "확장성 및 유연성": "솔루션 역량",
+        "사용자 편의성": "솔루션 역량",
+        "보안성": "솔루션 역량",
+        "기술 지원 및 유지보수": "솔루션 역량",
+        "차별성 및 경쟁력": "솔루션 역량",
+        "개발 로드맵 및 향후 계획": "솔루션 역량"
+    }
+    
+    # Aggregate scores by main category
+    main_categories = ["인적역량", "AI기술역량", "솔루션 역량"]
+    category_data = {cat: [] for cat in main_categories}
+    
+    for group_name, items in grouped_data.items():
+        # Map group to main category
+        main_category = group_to_category_mapping.get(group_name)
+        
+        # Fallback: keyword matching
+        if not main_category:
+            group_lower = group_name.lower()
+            if any(keyword in group_lower for keyword in ["인력", "교육", "학습", "관리", "커뮤니케이션", "윤리", "프로젝트"]):
+                main_category = "인적역량"
+            elif any(keyword in group_lower for keyword in ["ai", "기술", "모델", "플랫폼", "인프라", "데이터", "융합", "특허", "연구"]):
+                main_category = "AI기술역량"
+            elif any(keyword in group_lower for keyword in ["솔루션", "다양성", "안정성", "확장성", "편의성", "보안", "지원", "차별성", "로드맵"]):
+                main_category = "솔루션 역량"
+        
+        # Add scores to appropriate category
+        if main_category and main_category in category_data:
+            for item in items:
+                category_data[main_category].append(item["score"])
+    
+    # Calculate averages
+    category_scores = {}
+    for cat in main_categories:
+        if category_data[cat]:
+            category_scores[cat] = round(sum(category_data[cat]) / len(category_data[cat]), 2)
+        else:
+            # Use total average as fallback
+            category_scores[cat] = total_avg
+    
+    return category_scores
+
+def calculate_msp_category_scores(msp_name: str):
+    """
+    Calculate category scores for a specific MSP using the same logic as the upload summary
+    """
+    try:
+        # Get all data for this MSP
+        results = collection.get(
+            where={"msp_name": msp_name},
+            include=["metadatas"]
+        )
+        
+        if not results["metadatas"]:
+            return {"total_score": 0, "category_scores": {cat: 0 for cat in ["인적역량", "AI기술역량", "솔루션 역량"]}}
+        
+        # Organize data by group (similar to your upload logic)
+        grouped_data = {}
+        all_scores = []
+        
+        for meta in results["metadatas"]:
+            question = meta.get("question", "")
+            answer = meta.get("answer", "")
+            score = meta.get("score")
+            group = meta.get("group", "Unknown").strip()
+            
+            if not question or not answer or score is None:
+                continue
+                
+            all_scores.append(score)
+            
+            if group not in grouped_data:
+                grouped_data[group] = []
+            
+            grouped_data[group].append({
+                "question": question,
+                "answer": answer,
+                "score": score
+            })
+        
+        # Calculate total average
+        total_avg = sum(all_scores) / len(all_scores) if all_scores else 0
+        
+        # Calculate category scores using your group-to-category mapping logic
+        main_categories = ["인적역량", "AI기술역량", "솔루션 역량"]
+        category_scores = {}
+        
+        try:
+            # Use manual calculation since we're dealing with ChromaDB data
+            category_scores = manual_category_calculation(grouped_data, total_avg)
+        except Exception as e:
+            print(f"[WARNING] Manual calculation failed for {msp_name}: {e}")
+            # Final fallback: use total average for all categories
+            for cat in main_categories:
+                category_scores[cat] = total_avg
+        
+        # Ensure all main categories are present
+        for cat in main_categories:
+            if cat not in category_scores:
+                category_scores[cat] = total_avg
+        
+        return {
+            "total_score": round(total_avg, 2),
+            "category_scores": category_scores
+        }
+        
+    except Exception as e:
+        print(f"[ERROR] Failed to calculate scores for {msp_name}: {e}")
+        return {"total_score": 0, "category_scores": {cat: 0 for cat in ["인적역량", "AI기술역량", "솔루션 역량"]}}
+
+# NOW ALL THE ENDPOINTS
 
 @app.post("/run/{msp_name}")
 def run_msp_vector_pipeline(msp_name: str):
@@ -71,7 +281,6 @@ def run_msp_vector_pipeline(msp_name: str):
 # Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-
 @app.get("/ui")
 def serve_ui(request: Request):
     try:
@@ -80,16 +289,10 @@ def serve_ui(request: Request):
     except:
         return RedirectResponse(url="/login?next=/ui")
 
-
 # Serve query UI
 @app.get("/query")
 def serve_query_ui():
     return FileResponse("static/query.html")
-
-# Load ChromaDB
-CHROMA_PATH = os.path.abspath("chroma_store")
-client = PersistentClient(path=CHROMA_PATH)
-collection = client.get_or_create_collection("msp_chunks")
 
 @app.get("/ui/data")
 def get_filtered_chunks(question: str = None, min_score: int = 0):
@@ -184,7 +387,6 @@ async def query_router(data: RouterQuery):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Router 처리 중 오류 발생: {str(e)}")
 
-
 # Advanced Naver route
 @app.post("/query/advanced_naver")
 async def query_advanced_naver(data: RouterQuery):
@@ -199,13 +401,10 @@ def serve_admin_ui(request: Request):
     except Exception as e:
         return RedirectResponse(url="/login?next=/admin")
 
-
 # Serve main page at root
 @app.get("/")
 def serve_main_page():
     return FileResponse("static/main.html")
-
-
 
 # Serve upload page
 from fastapi.templating import Jinja2Templates
@@ -338,7 +537,6 @@ async def upload_excel(file: UploadFile = File(...)):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Excel 평가 처리 중 오류 발생: {str(e)}")
 
-
 # New endpoint: /api/get_summary
 from fastapi import Request
 @app.post("/api/get_summary")
@@ -457,7 +655,6 @@ async def get_leaderboard():
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Leaderboard generation failed: {str(e)}")
 
-
 # Optional: Add a debug endpoint to test individual MSP calculation
 @app.get("/api/debug_msp/{msp_name}")
 async def debug_msp_calculation(msp_name: str):
@@ -493,308 +690,39 @@ async def debug_msp_calculation(msp_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Debug failed: {str(e)}")
 
-
-@app.post("/api/fix_existing_data")
-async def fix_existing_data():
-    """Fix encoding issues and add proper categories to existing data"""
+# Also add this debug endpoint to help you understand your current data structure:
+@app.get("/api/debug_groups")
+async def debug_groups():
+    """Debug endpoint to see what groups/categories exist in your data"""
     try:
-        results = collection.get(include=["metadatas", "ids"])
+        results = collection.get(include=["metadatas"])
         
-        if not results["metadatas"]:
-            return {"message": "No data found"}
-        
-        updates = []
-        msp_names = set()
-        
-        # First pass: collect MSP names and fix encoding
-        for i, meta in enumerate(results["metadatas"]):
-            msp_name = meta.get("msp_name", "")
-            
-            # Try to fix MSP name encoding
-            if msp_name:
-                try:
-                    # Try different decoding approaches
-                    for encoding in ['utf-8', 'euc-kr', 'cp949']:
-                        try:
-                            if isinstance(msp_name, str) and '�' in msp_name:
-                                # Try to fix corrupted encoding
-                                bytes_data = msp_name.encode('iso-8859-1')
-                                fixed_name = bytes_data.decode(encoding)
-                                msp_name = fixed_name
-                                break
-                        except:
-                            continue
-                except:
-                    pass
-            
-            msp_names.add(msp_name)
-            
-            # Fix other text fields
-            question = fix_korean_encoding(str(meta.get("question", "")))
-            answer = fix_korean_encoding(str(meta.get("answer", "")))
-            group = fix_korean_encoding(str(meta.get("group", "")))
-            
-            # Determine proper category
-            if group in ["Unknown", "unknown", ""]:
-                # Try to infer from sheet context or use fallback
-                category = "인적역량"  # Default category
-            else:
-                category = map_group_to_category(group)
-            
-            # Create updated metadata
-            updated_meta = {
-                "msp_name": msp_name,
-                "question": question,
-                "answer": answer,
-                "score": meta.get("score", 0),
-                "group": group if group not in ["Unknown", "unknown"] else "미분류",
-                "category": category,
-                "timestamp": meta.get("timestamp", datetime.datetime.now(datetime.timezone.utc).isoformat())
-            }
-            
-            updates.append({
-                "id": results["ids"][i],
-                "metadata": updated_meta
-            })
-        
-        print(f"[DEBUG] Found MSP names: {msp_names}")
-        print(f"[DEBUG] Prepared {len(updates)} updates")
-        
-        # Apply updates in batches
-        batch_size = 100
-        updated_count = 0
-        
-        for i in range(0, len(updates), batch_size):
-            batch = updates[i:i + batch_size]
-            
-            try:
-                ids = [item["id"] for item in batch]
-                metadatas = [item["metadata"] for item in batch]
-                
-                collection.update(ids=ids, metadatas=metadatas)
-                updated_count += len(batch)
-                print(f"[DEBUG] Updated batch {i//batch_size + 1}: {len(batch)} items")
-                
-            except Exception as e:
-                print(f"[ERROR] Failed to update batch {i//batch_size + 1}: {e}")
-                # Try updating one by one for this batch
-                for item in batch:
-                    try:
-                        collection.update(ids=[item["id"]], metadatas=[item["metadata"]])
-                        updated_count += 1
-                    except Exception as e2:
-                        print(f"[ERROR] Failed to update individual item: {e2}")
-        
-        return {
-            "message": f"Updated {updated_count} entries",
-            "msp_names_found": list(msp_names),
-            "total_entries": len(results["metadatas"])
-        }
-        
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Fix failed: {str(e)}")
-    
-def calculate_msp_category_scores(msp_name: str):
-    """
-    Calculate category scores for a specific MSP using the same logic as the upload summary
-    """
-    try:
-        # Get all data for this MSP
-        results = collection.get(
-            where={"msp_name": msp_name},
-            include=["metadatas"]
-        )
-        
-        if not results["metadatas"]:
-            return {}
-        
-        # Organize data by group (similar to your upload logic)
-        grouped_data = {}
-        all_scores = []
+        groups_by_msp = {}
+        all_groups = set()
         
         for meta in results["metadatas"]:
-            question = meta.get("question", "")
-            answer = meta.get("answer", "")
-            score = meta.get("score")
-            group = meta.get("group", "Unknown").strip()
+            msp_name = meta.get("msp_name")
+            group = meta.get("group") or meta.get("category") or "Unknown"
             
-            if not question or not answer or score is None:
-                continue
-                
-            all_scores.append(score)
-            
-            if group not in grouped_data:
-                grouped_data[group] = []
-            
-            grouped_data[group].append({
-                "question": question,
-                "answer": answer,
-                "score": score
-            })
+            if msp_name:
+                if msp_name not in groups_by_msp:
+                    groups_by_msp[msp_name] = set()
+                groups_by_msp[msp_name].add(group)
+                all_groups.add(group)
         
-        # Calculate total average
-        total_avg = sum(all_scores) / len(all_scores) if all_scores else 0
-        
-        # Calculate category scores using your group-to-category mapping logic
-        main_categories = ["인적역량", "AI기술역량", "솔루션 역량"]
-        category_scores = {}
-        
-        # Use the same group_to_category logic from your upload handler
-        from excel_upload_handler import compute_category_scores_from_excel_data
-        
-        # Prepare data in the same format as your upload handler expects
-        formatted_data = {}
-        for group, items in grouped_data.items():
-            formatted_data[group] = items
-        
-        try:
-            # Try to use your existing computation logic
-            summary_df = compute_category_scores_from_excel_data(formatted_data)
-            
-            # Extract category scores from the summary
-            for _, row in summary_df.iterrows():
-                category_name = row.get("Category", "").strip()
-                score = row.get("Score")
-                
-                if category_name in main_categories and score is not None:
-                    try:
-                        # Convert percentage to 5-point scale if needed
-                        if score > 5:  # Assume it's percentage if > 5
-                            category_scores[category_name] = round(score / 20.0, 2)
-                        else:
-                            category_scores[category_name] = round(float(score), 2)
-                    except (ValueError, TypeError):
-                        category_scores[category_name] = total_avg
-        
-        except Exception as e:
-            print(f"[WARNING] Could not use existing computation logic for {msp_name}: {e}")
-            # Fallback to manual calculation
-            category_scores = manual_category_calculation(grouped_data, total_avg)
-        
-        # Ensure all main categories are present
-        for cat in main_categories:
-            if cat not in category_scores:
-                category_scores[cat] = total_avg
+        # Convert sets to lists for JSON serialization
+        groups_by_msp = {k: list(v) for k, v in groups_by_msp.items()}
         
         return {
-            "total_score": round(total_avg, 2),
-            "category_scores": category_scores
+            "all_unique_groups": sorted(list(all_groups)),
+            "groups_by_msp": groups_by_msp,
+            "total_msps": len(groups_by_msp)
         }
-        
+    
     except Exception as e:
-        print(f"[ERROR] Failed to calculate scores for {msp_name}: {e}")
-        return {"total_score": 0, "category_scores": {cat: 0 for cat in ["인적역량", "AI기술역량", "솔루션 역량"]}}
-
-
-def manual_category_calculation(grouped_data, total_avg):
-    """Fallback manual calculation if the existing logic fails"""
-    
-    # Enhanced group-to-category mapping based on your existing patterns
-    group_to_category_mapping = {
-        # Human Resources (인적역량)
-        "AI 전문 인력 구성": "인적역량",
-        "프로젝트 경험 및 성공 사례": "인적역량", 
-        "지속적인 교육 및 학습": "인적역량",
-        "프로젝트 관리 및 커뮤니케이션": "인적역량",
-        "AI 윤리 및 책임 의식": "인적역량",
-        
-        # AI Technology (AI기술역량)
-        "AI 기술 연구 능력": "AI기술역량",
-        "AI 모델 개발 능력": "AI기술역량",
-        "AI 플랫폼 및 인프라 구축 능력": "AI기술역량", 
-        "데이터 처리 및 분석 능력": "AI기술역량",
-        "AI 기술의 융합 및 활용 능력": "AI기술역량",
-        "AI 기술의 특허 및 인증 보유 현황": "AI기술역량",
-        
-        # Solution (솔루션 역량)
-        "다양성 및 전문성": "솔루션 역량",
-        "안정성": "솔루션 역량", 
-        "확장성 및 유연성": "솔루션 역량",
-        "사용자 편의성": "솔루션 역량",
-        "보안성": "솔루션 역량",
-        "기술 지원 및 유지보수": "솔루션 역량",
-        "차별성 및 경쟁력": "솔루션 역량",
-        "개발 로드맵 및 향후 계획": "솔루션 역량"
-    }
-    
-    # Aggregate scores by main category
-    main_categories = ["인적역량", "AI기술역량", "솔루션 역량"]
-    category_data = {cat: [] for cat in main_categories}
-    
-    for group_name, items in grouped_data.items():
-        # Map group to main category
-        main_category = group_to_category_mapping.get(group_name)
-        
-        # Fallback: keyword matching
-        if not main_category:
-            group_lower = group_name.lower()
-            if any(keyword in group_lower for keyword in ["인력", "교육", "학습", "관리", "커뮤니케이션", "윤리", "프로젝트"]):
-                main_category = "인적역량"
-            elif any(keyword in group_lower for keyword in ["ai", "기술", "모델", "플랫폼", "인프라", "데이터", "융합", "특허", "연구"]):
-                main_category = "AI기술역량"
-            elif any(keyword in group_lower for keyword in ["솔루션", "다양성", "안정성", "확장성", "편의성", "보안", "지원", "차별성", "로드맵"]):
-                main_category = "솔루션 역량"
-        
-        # Add scores to appropriate category
-        if main_category and main_category in category_data:
-            for item in items:
-                category_data[main_category].append(item["score"])
-    
-    # Calculate averages
-    category_scores = {}
-    for cat in main_categories:
-        if category_data[cat]:
-            category_scores[cat] = round(sum(category_data[cat]) / len(category_data[cat]), 2)
-        else:
-            # Use total average as fallback
-            category_scores[cat] = total_avg
-    
-    return category_scores
-
-def map_group_to_category(group):
-    """Map group names to main categories"""
-    if not group or group in ["Unknown", "unknown", "미분류", ""]:
-        return "미분류"
-    
-    group_lower = group.lower()
-    
-    # Exact matches first
-    group_mapping = {
-        "AI 전문 인력 구성": "인적역량",
-        "프로젝트 경험 및 성공 사례": "인적역량", 
-        "지속적인 교육 및 학습": "인적역량",
-        "프로젝트 관리 및 커뮤니케이션": "인적역량",
-        "AI 윤리 및 책임 의식": "인적역량",
-        "AI 기술 연구 능력": "AI기술역량",
-        "AI 모델 개발 능력": "AI기술역량",
-        "AI 플랫폼 및 인프라 구축 능력": "AI기술역량", 
-        "데이터 처리 및 분석 능력": "AI기술역량",
-        "AI 기술의 융합 및 활용 능력": "AI기술역량",
-        "AI 기술의 특허 및 인증 보유 현황": "AI기술역량",
-        "다양성 및 전문성": "솔루션 역량",
-        "안정성": "솔루션 역량", 
-        "확장성 및 유연성": "솔루션 역량",
-        "사용자 편의성": "솔루션 역량",
-        "보안성": "솔루션 역량",
-        "기술 지원 및 유지보수": "솔루션 역량",
-        "차별성 및 경쟁력": "솔루션 역량",
-        "개발 로드맵 및 향후 계획": "솔루션 역량"
-    }
-    
-    if group in group_mapping:
-        return group_mapping[group]
-    
-    # Keyword matching as fallback
-    if any(keyword in group_lower for keyword in ["인력", "교육", "학습", "관리", "커뮤니케이션", "윤리", "프로젝트", "경험"]):
-        return "인적역량"
-    elif any(keyword in group_lower for keyword in ["ai", "기술", "모델", "플랫폼", "인프라", "데이터", "융합", "특허", "연구"]):
-        return "AI기술역량"
-    elif any(keyword in group_lower for keyword in ["솔루션", "다양성", "안정성", "확장성", "편의성", "보안", "지원", "차별성", "로드맵"]):
-        return "솔루션 역량"
-    
-    return "미분류"
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Debug failed: {str(e)}")
 
 @app.post("/api/fix_existing_data")
 async def fix_existing_data():
@@ -897,30 +825,3 @@ async def fix_existing_data():
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Fix failed: {str(e)}")
-
-# Add the encoding fix function if not already present
-def fix_korean_encoding(text):
-    """Fix Korean character encoding issues"""
-    if not isinstance(text, str):
-        return str(text)
-    
-    if not text or text in ["nan", "None"]:
-        return ""
-    
-    try:
-        # If text contains replacement characters, try to fix
-        if '�' in text:
-            # Try common Korean encodings
-            for encoding in ['euc-kr', 'cp949']:
-                try:
-                    # Encode as latin-1 then decode as Korean encoding
-                    fixed = text.encode('latin-1').decode(encoding)
-                    return fixed
-                except:
-                    continue
-        
-        # Ensure it's properly UTF-8 encoded
-        return text.encode('utf-8').decode('utf-8')
-        
-    except:
-        return text
