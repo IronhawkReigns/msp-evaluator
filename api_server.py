@@ -215,7 +215,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 def serve_ui(request: Request):
     try:
         user = manager(request)
-        return FileResponse("static/index.html")
+        return FileResponse("static/vector-db-viewer.html")  # Vector DB viewer page
     except:
         return RedirectResponse(url="/login?next=/ui")
 
