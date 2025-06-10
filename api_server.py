@@ -844,3 +844,127 @@ def infer_group_from_question(question):
     # If no specific match, return category-level group
     category = infer_category_from_question(question)
     return category if category != "미분류" else "기타"
+
+@app.post("/api/refresh_leaderboard_public")
+async def refresh_leaderboard_public():
+    """Public endpoint to refresh leaderboard data when needed"""
+    try:
+        # Get all results
+        results = collection.get(include=["metadatas"])
+        
+        if not results["metadatas"]:
+            return {"success": False, "message": "데이터가 없습니다"}
+        
+        # Get IDs separately
+        all_results = collection.get()
+        ids = all_results["ids"]
+        
+        # Count how many items need updating
+        needs_update = 0
+        for meta in results["metadatas"]:
+            current_group = meta.get("group", "")
+            current_category = meta.get("category", "")
+            if current_group in ["Unknown", "unknown", ""] or not current_category:
+                needs_update += 1
+        
+        # If no updates needed, return early
+        if needs_update == 0:
+            return {
+                "success": True, 
+                "message": "순위표가 이미 최신 상태입니다",
+                "updated_count": 0,
+                "total_checked": len(results["metadatas"])
+            }
+        
+        updates = []
+        
+        # Process each entry that needs updating
+        for i, meta in enumerate(results["metadatas"]):
+            current_group = meta.get("group", "")
+            current_category = meta.get("category", "")
+            
+            if current_group in ["Unknown", "unknown", ""] or not current_category:
+                from utils import fix_korean_encoding
+                
+                msp_name = meta.get("msp_name", "")
+                question = fix_korean_encoding(str(meta.get("question", "")))
+                answer = fix_korean_encoding(str(meta.get("answer", "")))
+                
+                # Infer proper group and category
+                category = infer_category_from_question(question)
+                group_name = infer_group_from_question(question)
+                
+                updated_meta = {
+                    "msp_name": msp_name,
+                    "question": question,
+                    "answer": answer,
+                    "score": meta.get("score", 0),
+                    "group": group_name,
+                    "category": category,
+                    "timestamp": meta.get("timestamp", datetime.datetime.now(datetime.timezone.utc).isoformat())
+                }
+                
+                updates.append({
+                    "id": ids[i],
+                    "metadata": updated_meta
+                })
+        
+        # Apply updates
+        updated_count = 0
+        if updates:
+            batch_size = 50
+            for i in range(0, len(updates), batch_size):
+                batch = updates[i:i + batch_size]
+                try:
+                    batch_ids = [item["id"] for item in batch]
+                    batch_metadatas = [item["metadata"] for item in batch]
+                    collection.update(ids=batch_ids, metadatas=batch_metadatas)
+                    updated_count += len(batch)
+                except Exception as e:
+                    print(f"[ERROR] Batch update failed: {e}")
+                    # Try individual updates for failed batch
+                    for item in batch:
+                        try:
+                            collection.update(ids=[item["id"]], metadatas=[item["metadata"]])
+                            updated_count += 1
+                        except Exception as e2:
+                            print(f"[ERROR] Individual update failed: {e2}")
+        
+        return {
+            "success": True, 
+            "message": f"순위표 새로고침 완료: {updated_count}개 항목 업데이트",
+            "updated_count": updated_count,
+            "total_checked": len(results["metadatas"])
+        }
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "message": f"새로고침 실패: {str(e)}"}
+
+# Also add a simple status check endpoint
+@app.get("/api/leaderboard_status_public")
+async def get_public_leaderboard_status():
+    """Public endpoint to check if leaderboard needs refresh"""
+    try:
+        results = collection.get(include=["metadatas"])
+        
+        if not results["metadatas"]:
+            return {"needs_refresh": False, "unknown_count": 0, "total": 0}
+        
+        # Count unknown groups
+        unknown_count = 0
+        for meta in results["metadatas"]:
+            group = meta.get("group", "")
+            category = meta.get("category", "")
+            if group in ["Unknown", "unknown", ""] or not category:
+                unknown_count += 1
+        
+        return {
+            "needs_refresh": unknown_count > 0,
+            "unknown_count": unknown_count,
+            "total": len(results["metadatas"])
+        }
+        
+    except Exception as e:
+        return {"needs_refresh": False, "error": str(e)}
