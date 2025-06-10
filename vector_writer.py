@@ -107,14 +107,6 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
     metadatas = []
     ids = []
 
-    # Create question to group mapping
-    question_to_group = {}
-    for item in summary:
-        q = item.get('Key Questions') or item.get('Question')  # fallback
-        g = item.get('Category')
-        if q and g:
-            question_to_group[q.strip()] = g.strip()
-
     # Print summary types for debugging
     print(f"Summary types for debugging: {[ (row.get('Category'), type(row)) for row in summary ]}")
     for idx, entry in enumerate(company_data):
@@ -138,28 +130,11 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
                 else:
                     print(f"[Metadata Error] Key '{k}' has invalid type {type(v)}. Value: {v}")
 
-            # Sanitize cleaned_summary to avoid non-str keys and ensure ChromaDB-compatible value types
-            new_cleaned_summary = {}
-            for k, v in cleaned_summary.items():
-                if k is None or v is None:
-                    continue
-                if isinstance(v, (str, int, float, bool)):
-                    new_cleaned_summary[str(k)] = v
-                else:
-                    print(f"[Metadata Warning] Skipped key '{k}' due to unsupported type: {type(v)}")
-            cleaned_summary = new_cleaned_summary
-
-            group = question_to_group.get(question.strip())
-            if group is None:
-                print(f"[Warning] No group found for question: '{question}'")
-                group = "unknown"
-
             metadata = {
                 "msp_name": company_name,
                 "question": question,
                 "answer": chunk,
                 "score": score,
-                "group": group,
                 "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 **cleaned_summary
             }
