@@ -150,6 +150,9 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
             cleaned_summary = new_cleaned_summary
 
             group = question_to_group.get(question.strip())
+            if group is None:
+                print(f"[Warning] No group found for question: '{question}'")
+                group = "unknown"
 
             metadata = {
                 "msp_name": company_name,
