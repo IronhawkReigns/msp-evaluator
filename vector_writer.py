@@ -138,9 +138,11 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
                 else:
                     print(f"[Metadata Error] Key '{k}' has invalid type {type(v)}. Value: {v}")
 
-            # Sanitize cleaned_summary to avoid non-str keys (ChromaDB restriction)
+            # Sanitize cleaned_summary to avoid non-str keys and ensure ChromaDB-compatible value types
             cleaned_summary = {
-                str(k): v for k, v in cleaned_summary.items() if k is not None
+                str(k): v
+                for k, v in cleaned_summary.items()
+                if k is not None and isinstance(v, (str, int, float, bool))
             }
 
             group = question_to_group.get(question.strip())
