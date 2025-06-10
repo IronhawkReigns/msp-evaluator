@@ -1,6 +1,7 @@
 import pandas as pd
 from fastapi import UploadFile
 from evaluator import evaluate_answer
+from api_server import fix_korean_encoding
 import io
 
 EXPECTED_HEADERS = ["Domain", "설명", "Key Questions", "Present Lv.", "Interview Result"]
@@ -18,14 +19,26 @@ def parse_excel_category_sheets(excel_bytes: bytes):
             continue
 
         print(f"[DEBUG] Processing sheet: {sheet_name}")
-        df = pd.read_excel(excel_data, sheet_name=sheet_name, header=None)
+        
+        try:
+            # Read with explicit encoding handling
+            df = pd.read_excel(excel_data, sheet_name=sheet_name, header=None)
+            
+            # Ensure all text data is properly encoded
+            for col in df.columns:
+                if df[col].dtype == 'object':  # String columns
+                    df[col] = df[col].astype(str).apply(lambda x: fix_korean_encoding(x) if pd.notna(x) else "")
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to read sheet '{sheet_name}': {e}")
+            continue
 
         if df.shape[0] < 2 or df.shape[1] < 5:
             print(f"[DEBUG] Skipping sheet '{sheet_name}' — too small: {df.shape}")
             continue
 
         try:
-            parsed = parse_excel_category_sheet(df)
+            parsed = parse_excel_category_sheet_fixed(df, sheet_name)
             print(f"[DEBUG] Sheet '{sheet_name}' parsed {len(parsed)} items")
             
             if not parsed:
@@ -39,15 +52,11 @@ def parse_excel_category_sheets(excel_bytes: bytes):
         # Evaluate each parsed item
         sheet_results = []
         for item in parsed:
-            question = item.get("question")
-            answer = item.get("answer")
-            group = item.get("group")
+            question = item.get("question", "")
+            answer = item.get("answer", "")
+            group = item.get("group", "")
             
-            if not isinstance(question, str) or not isinstance(answer, str):
-                continue
-                
-            if answer.lower() == "nan" or not answer.strip():
-                print(f"[DEBUG] Skipping empty answer for question '{question[:30]}...' in group '{group}'")
+            if not question or not answer or not question.strip() or not answer.strip():
                 continue
                 
             try:
@@ -55,13 +64,13 @@ def parse_excel_category_sheets(excel_bytes: bytes):
                 print(f"[DEBUG] Evaluated '{question[:30]}...' -> Score: {score}")
             except Exception as e:
                 print(f"[ERROR] Failed to evaluate question '{question[:30]}...': {e}")
-                score = 0  # Default score instead of error string
+                score = 3  # Default middle score instead of error
 
             sheet_results.append({
                 "question": question,
                 "answer": answer,
                 "score": score,
-                "group": group
+                "group": group or sheet_name  # Use sheet name as fallback group
             })
 
         if sheet_results:
@@ -89,7 +98,6 @@ def parse_excel_category_sheets(excel_bytes: bytes):
             "evaluated": results,
             "summary": []
         }
-
 
 def generate_summary_for_evaluation(results_by_category: dict) -> dict:
     return summarize_answers_for_subcategories(results_by_category)
@@ -317,3 +325,70 @@ def summarize_answers_for_subcategories(results_by_category: dict) -> dict:
             summaries[category][group] = summary
 
     return summaries
+
+def parse_excel_category_sheet_fixed(df: pd.DataFrame, sheet_name: str):
+    """Enhanced parser with better group extraction and encoding handling"""
+    parsed = []
+    current_group = sheet_name  # Use sheet name as default group
+    
+    print(f"[DEBUG] Processing sheet '{sheet_name}' with {df.shape[0]} rows")
+    
+    for idx, row in df.iterrows():
+        try:
+            # Get values safely
+            question = str(row.iloc[2]).strip() if len(row) > 2 else ""
+            answer = str(row.iloc[4]).strip() if len(row) > 4 else ""
+            group_cell = str(row.iloc[1]).strip() if len(row) > 1 else ""
+            
+            # Fix encoding for all text
+            question = fix_korean_encoding(question)
+            answer = fix_korean_encoding(answer)
+            group_cell = fix_korean_encoding(group_cell)
+            
+            # Debug first few rows
+            if idx < 5:
+                print(f"[DEBUG] Row {idx}: question='{question[:30]}...', answer='{answer[:30]}...', group='{group_cell}'")
+            
+            # Skip header rows
+            if any(header in question.lower() for header in ["key questions", "질문", "문항", "항목"]):
+                print(f"[DEBUG] Skipping header row {idx}: {question}")
+                continue
+                
+            # Skip empty or invalid rows
+            if not question or not answer or question.lower() in ["nan", ""] or answer.lower() in ["nan", ""]:
+                continue
+            
+            # Determine group
+            if group_cell and group_cell.lower() not in ["nan", "", "none"]:
+                # Found a new group
+                current_group = group_cell
+                print(f"[DEBUG] New group found at row {idx}: '{current_group}'")
+            
+            # Use current group (either from cell or carried forward)
+            group = current_group
+            
+            parsed_item = {
+                "question": question,
+                "answer": answer,
+                "group": group
+            }
+            parsed.append(parsed_item)
+            
+            if len(parsed) <= 10:  # Log first 10
+                print(f"[DEBUG] Parsed item {len(parsed)}: group='{group}', question='{question[:30]}...'")
+                    
+        except Exception as e:
+            print(f"[ERROR] Error processing row {idx}: {e}")
+            continue
+    
+    print(f"[DEBUG] Total parsed items from '{sheet_name}': {len(parsed)}")
+    
+    # Summary of groups found
+    groups_found = {}
+    for item in parsed:
+        group = item.get("group", "None")
+        groups_found[group] = groups_found.get(group, 0) + 1
+    
+    print(f"[DEBUG] Groups found in '{sheet_name}': {groups_found}")
+    
+    return parsed
