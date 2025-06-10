@@ -684,3 +684,175 @@ def manual_category_calculation(grouped_data, total_avg):
             category_scores[cat] = total_avg
     
     return category_scores
+
+def map_group_to_category(group):
+    """Map group names to main categories"""
+    if not group or group in ["Unknown", "unknown", "미분류", ""]:
+        return "미분류"
+    
+    group_lower = group.lower()
+    
+    # Exact matches first
+    group_mapping = {
+        "AI 전문 인력 구성": "인적역량",
+        "프로젝트 경험 및 성공 사례": "인적역량", 
+        "지속적인 교육 및 학습": "인적역량",
+        "프로젝트 관리 및 커뮤니케이션": "인적역량",
+        "AI 윤리 및 책임 의식": "인적역량",
+        "AI 기술 연구 능력": "AI기술역량",
+        "AI 모델 개발 능력": "AI기술역량",
+        "AI 플랫폼 및 인프라 구축 능력": "AI기술역량", 
+        "데이터 처리 및 분석 능력": "AI기술역량",
+        "AI 기술의 융합 및 활용 능력": "AI기술역량",
+        "AI 기술의 특허 및 인증 보유 현황": "AI기술역량",
+        "다양성 및 전문성": "솔루션 역량",
+        "안정성": "솔루션 역량", 
+        "확장성 및 유연성": "솔루션 역량",
+        "사용자 편의성": "솔루션 역량",
+        "보안성": "솔루션 역량",
+        "기술 지원 및 유지보수": "솔루션 역량",
+        "차별성 및 경쟁력": "솔루션 역량",
+        "개발 로드맵 및 향후 계획": "솔루션 역량"
+    }
+    
+    if group in group_mapping:
+        return group_mapping[group]
+    
+    # Keyword matching as fallback
+    if any(keyword in group_lower for keyword in ["인력", "교육", "학습", "관리", "커뮤니케이션", "윤리", "프로젝트", "경험"]):
+        return "인적역량"
+    elif any(keyword in group_lower for keyword in ["ai", "기술", "모델", "플랫폼", "인프라", "데이터", "융합", "특허", "연구"]):
+        return "AI기술역량"
+    elif any(keyword in group_lower for keyword in ["솔루션", "다양성", "안정성", "확장성", "편의성", "보안", "지원", "차별성", "로드맵"]):
+        return "솔루션 역량"
+    
+    return "미분류"
+
+@app.post("/api/fix_existing_data")
+async def fix_existing_data():
+    """Fix encoding issues and add proper categories to existing data"""
+    try:
+        results = collection.get(include=["metadatas", "ids"])
+        
+        if not results["metadatas"]:
+            return {"message": "No data found"}
+        
+        updates = []
+        msp_names = set()
+        
+        # First pass: collect MSP names and fix encoding
+        for i, meta in enumerate(results["metadatas"]):
+            msp_name = meta.get("msp_name", "")
+            
+            # Try to fix MSP name encoding
+            if msp_name:
+                try:
+                    # Try different decoding approaches
+                    for encoding in ['utf-8', 'euc-kr', 'cp949']:
+                        try:
+                            if isinstance(msp_name, str) and '�' in msp_name:
+                                # Try to fix corrupted encoding
+                                bytes_data = msp_name.encode('iso-8859-1')
+                                fixed_name = bytes_data.decode(encoding)
+                                msp_name = fixed_name
+                                break
+                        except:
+                            continue
+                except:
+                    pass
+            
+            msp_names.add(msp_name)
+            
+            # Fix other text fields
+            question = fix_korean_encoding(str(meta.get("question", "")))
+            answer = fix_korean_encoding(str(meta.get("answer", "")))
+            group = fix_korean_encoding(str(meta.get("group", "")))
+            
+            # Determine proper category
+            if group in ["Unknown", "unknown", ""]:
+                # Try to infer from sheet context or use fallback
+                category = "인적역량"  # Default category
+            else:
+                category = map_group_to_category(group)
+            
+            # Create updated metadata
+            updated_meta = {
+                "msp_name": msp_name,
+                "question": question,
+                "answer": answer,
+                "score": meta.get("score", 0),
+                "group": group if group not in ["Unknown", "unknown"] else "미분류",
+                "category": category,
+                "timestamp": meta.get("timestamp", datetime.datetime.now(datetime.timezone.utc).isoformat())
+            }
+            
+            updates.append({
+                "id": results["ids"][i],
+                "metadata": updated_meta
+            })
+        
+        print(f"[DEBUG] Found MSP names: {msp_names}")
+        print(f"[DEBUG] Prepared {len(updates)} updates")
+        
+        # Apply updates in batches
+        batch_size = 100
+        updated_count = 0
+        
+        for i in range(0, len(updates), batch_size):
+            batch = updates[i:i + batch_size]
+            
+            try:
+                ids = [item["id"] for item in batch]
+                metadatas = [item["metadata"] for item in batch]
+                
+                collection.update(ids=ids, metadatas=metadatas)
+                updated_count += len(batch)
+                print(f"[DEBUG] Updated batch {i//batch_size + 1}: {len(batch)} items")
+                
+            except Exception as e:
+                print(f"[ERROR] Failed to update batch {i//batch_size + 1}: {e}")
+                # Try updating one by one for this batch
+                for item in batch:
+                    try:
+                        collection.update(ids=[item["id"]], metadatas=[item["metadata"]])
+                        updated_count += 1
+                    except Exception as e2:
+                        print(f"[ERROR] Failed to update individual item: {e2}")
+        
+        return {
+            "message": f"Updated {updated_count} entries",
+            "msp_names_found": list(msp_names),
+            "total_entries": len(results["metadatas"])
+        }
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Fix failed: {str(e)}")
+
+# Add the encoding fix function if not already present
+def fix_korean_encoding(text):
+    """Fix Korean character encoding issues"""
+    if not isinstance(text, str):
+        return str(text)
+    
+    if not text or text in ["nan", "None"]:
+        return ""
+    
+    try:
+        # If text contains replacement characters, try to fix
+        if '�' in text:
+            # Try common Korean encodings
+            for encoding in ['euc-kr', 'cp949']:
+                try:
+                    # Encode as latin-1 then decode as Korean encoding
+                    fixed = text.encode('latin-1').decode(encoding)
+                    return fixed
+                except:
+                    continue
+        
+        # Ensure it's properly UTF-8 encoded
+        return text.encode('utf-8').decode('utf-8')
+        
+    except:
+        return text
