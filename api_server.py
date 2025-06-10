@@ -968,3 +968,11 @@ async def get_public_leaderboard_status():
         
     except Exception as e:
         return {"needs_refresh": False, "error": str(e)}
+
+@app.get("/leaderboard")
+def serve_leaderboard():
+    return FileResponse("static/index.html")
+
+@app.get("/leaderboard/{path:path}")
+def serve_leaderboard_paths(path: str):
+    return FileResponse("static/index.html")
