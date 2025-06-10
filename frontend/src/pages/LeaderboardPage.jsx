@@ -3,6 +3,9 @@ import axios from "axios";
 import { Trophy, Medal, Award, TrendingUp, Users, Cpu, Settings, Eye, Filter, RefreshCw } from "lucide-react";
 import { Zap, Star, Target } from "lucide-react";
 
+// Environment-aware API URL
+const API_BASE = 'https://mspevaluator.duckdns.org';
+
 // Component for score visualization bars
 const ScoreBar = ({ score, maxScore = 5, color = "blue" }) => {
   const percentage = (score / maxScore) * 100;
@@ -406,7 +409,7 @@ export default function LeaderboardPage() {
     if (showLoading) setLoading(true);
     
     try {
-      const response = await axios.get("http://mspevaluator.duckdns.org/api/leaderboard");
+      const response = await axios.get(`${API_BASE}/api/leaderboard`);
       setData(response.data);
     } catch (err) {
       console.error("Failed to load leaderboard", err);
@@ -418,7 +421,7 @@ export default function LeaderboardPage() {
   const checkRefreshStatus = async () => {
     try {
       // Check if there are any Unknown groups that need fixing
-      const response = await axios.get("http://mspevaluator.duckdns.org/api/debug_groups");
+      const response = await axios.get(`${API_BASE}/api/debug_groups`);
       const hasUnknown = response.data.all_unique_groups.includes("Unknown") || 
                          response.data.all_unique_groups.includes("unknown");
       setNeedsRefresh(hasUnknown);
@@ -433,7 +436,7 @@ export default function LeaderboardPage() {
     
     try {
       // Call the public refresh endpoint
-      const response = await axios.post("http://mspevaluator.duckdns.org/api/refresh_leaderboard_public");
+      const response = await axios.post(`${API_BASE}/api/refresh_leaderboard_public`);
       
       if (response.data.success) {
         setRefreshMessage(`✅ ${response.data.message}`);
