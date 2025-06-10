@@ -125,6 +125,9 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
             for item in summary:
                 k = item.get('Category')
                 v = item.get('Score')
+                if k is None:
+                    print(f"[Metadata Error] Found summary item None as key: {item}")
+                    continue
                 if isinstance(v, (str, int, float, bool)) or v is None:
                     cleaned_summary[k] = v
                 else:
