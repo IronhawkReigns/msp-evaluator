@@ -1,7 +1,7 @@
 import pandas as pd
 from fastapi import UploadFile
 from evaluator import evaluate_answer
-from api_server import fix_korean_encoding
+from utils import fix_korean_encoding
 import io
 
 EXPECTED_HEADERS = ["Domain", "설명", "Key Questions", "Present Lv.", "Interview Result"]
