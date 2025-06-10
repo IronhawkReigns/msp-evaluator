@@ -143,6 +143,8 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
                 str(k): v for k, v in cleaned_summary.items() if k is not None
             }
 
+            group = question_to_group.get(question.strip())
+
             metadata = {
                 "msp_name": company_name,
                 "question": question,
