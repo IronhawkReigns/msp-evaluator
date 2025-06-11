@@ -1,321 +1,740 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-    <title>MSP 벡터 DB 뷰어</title>
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css">
-    <style>
-        body {
-            font-family: 'NanumSquareNeo', sans-serif !important;
-            background: linear-gradient(135deg, #e8fef3 0%, #f0fbf6 100%);
-            color: #1e1e1e;
-            margin: 40px;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>벡터 DB 뷰어 - NAVER Cloud</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'fade-in-up': 'fadeInUp 0.8s ease-out',
+            'fade-in-down': 'fadeInDown 0.6s ease-out',
+            'slide-in-right': 'slideInRight 0.7s ease-out',
+            'bounce-subtle': 'bounceSubtle 3s ease-in-out infinite',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'gradient': 'gradient 8s ease infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'glow': 'glow 2s ease-in-out infinite alternate',
+            'shimmer': 'shimmer 2.5s linear infinite',
+            'card-float': 'cardFloat 4s ease-in-out infinite',
+          },
+          keyframes: {
+            fadeInUp: {
+              '0%': { opacity: '0', transform: 'translateY(40px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            fadeInDown: {
+              '0%': { opacity: '0', transform: 'translateY(-30px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            slideInRight: {
+              '0%': { opacity: '0', transform: 'translateX(30px)' },
+              '100%': { opacity: '1', transform: 'translateX(0)' },
+            },
+            bounceSubtle: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-8px)' },
+            },
+            gradient: {
+              '0%, 100%': { backgroundPosition: '0% 50%' },
+              '50%': { backgroundPosition: '100% 50%' },
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+            },
+            glow: {
+              'from': { textShadow: '0 0 5px #059669, 0 0 10px #059669, 0 0 15px #059669' },
+              'to': { textShadow: '0 0 10px #0d9488, 0 0 20px #0d9488, 0 0 30px #0d9488' },
+            },
+            shimmer: {
+              '0%': { backgroundPosition: '-200% 0' },
+              '100%': { backgroundPosition: '200% 0' },
+            },
+            cardFloat: {
+              '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+              '33%': { transform: 'translateY(-5px) rotate(1deg)' },
+              '66%': { transform: 'translateY(-3px) rotate(-0.5deg)' },
+            }
+          },
+          backgroundSize: {
+            '300%': '300%',
+          }
         }
-
-        h1 {
-            text-align: center;
-            font-size: 28px;
-            font-weight: 900;
-            margin-bottom: 32px;
-            color: #03c75a;
-            font-family: 'NanumSquareNeo', sans-serif;
-        }
-
-        input[type="text"], #minScoreFilter {
-            display: block;
-            margin: 0 auto 20px auto;
-            padding: 12px 15px;
-            width: 320px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-            font-weight: 600;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            outline: none;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-            font-family: 'NanumSquareNeo', sans-serif !important;
-        }
-
-        #minScoreFilter {
-            width: 170px;
-            background-color: #f9f9f9;
-            cursor: pointer;
-            font-weight: 600;
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            background-image: url("data:image/svg+xml;utf8,<svg fill='%2303c75a' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 16px 16px;
-            padding-right: 40px;
-            padding: 12px 15px;
-            border-radius: 12px;
-            border: 1px solid #d0d7de;
-            font-size: 15px;
-        }
-
-        input[type="text"]:focus, #minScoreFilter:focus {
-            border-color: #03c75a;
-            box-shadow: 0 0 8px rgba(3,199,90,0.3);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #fff;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        th, td {
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            text-align: left;
-            vertical-align: middle;
-        }
-
-        td {
-            font-size: 14px;
-        }
-
-        th {
-            background-color: #03c75a;
-            color: white;
-            font-weight: 700;
-        }
-
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        button {
-            padding: 10px 18px;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            transition: filter 0.2s ease;
-            font-family: 'NanumSquareNeo', sans-serif;
-        }
-
-        .delete-btn {
-            background: #ff4d4f;
-            color: white;
-            font-size: 13px;
-            padding: 8px 14px;
-            font-weight: 600;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            transition: filter 0.2s ease;
-            font-family: 'NanumSquareNeo', sans-serif;
-        }
-
-        .delete-btn:hover {
-            background: #d9363e;
-        }
-        td:last-child {
-            text-align: center;
-        }
-
-        details summary {
-            cursor: pointer;
-            font-weight: 600;
-            outline: none;
-            user-select: none;
-        }
-
-        details ul {
-            margin: 8px 0 0 20px;
-            padding-left: 0;
-        }
-
-        details ul li {
-            margin-bottom: 6px;
-            list-style-type: disc;
-        }
-    </style>
+      }
+    }
+  </script>
+  
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-feature-settings: 'cv11', 'ss01';
+      font-variation-settings: 'opsz' 32;
+    }
+    
+    .glass-morphism {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #14b8a6 100%);
+      background-size: 300% 300%;
+      animation: gradient 8s ease infinite;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .gradient-border {
+      background: linear-gradient(45deg, #059669, #0d9488, #14b8a6, #06b6d4);
+      background-size: 300% 300%;
+      animation: gradient 6s ease infinite;
+    }
+    
+    .shimmer-effect {
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 2.5s linear infinite;
+    }
+    
+    .hover-lift {
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    
+    .hover-lift:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .btn-gradient {
+      background: linear-gradient(135deg, #059669 0%, #0d9488 25%, #14b8a6 50%, #06b6d4 75%, #0ea5e9 100%);
+      background-size: 300% 300%;
+      animation: gradient 4s ease infinite;
+    }
+    
+    .text-glow {
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+    
+    .floating {
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    .card-floating {
+      animation: card-float 4s ease-in-out infinite;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(226, 232, 240, 0.3);
+      border-radius: 4px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #059669, #0d9488);
+      border-radius: 4px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #047857, #0f766e);
+    }
+    
+    @media (max-width: 768px) {
+      .glass-morphism {
+        backdrop-filter: blur(15px);
+      }
+    }
+  </style>
 </head>
 <body>
-    <a class="header-title" href="https://mspevaluator.duckdns.org" target="_blank" rel="noopener noreferrer"
-       style="position: absolute; top: 20px; left: 30px; font-size: 20px; font-weight: 700; color: #03c75a; font-family: 'Noto Sans KR', sans-serif; text-decoration: none;">
-      NAVER Cloud
-    </a>
-    <a href="/logout"
-       style="position: absolute; top: 20px; right: 30px; font-size: 14px; font-weight: 600; color: #666; font-family: 'Noto Sans KR', sans-serif; text-decoration: none;">
-      로그아웃
-    </a>
-    <h1>📊 MSP 벡터 DB 뷰어</h1>
-    <input type="text" id="searchInput" placeholder="예: '솔루션' / '클라이온'"  />
-    <select id="minScoreFilter">
-        <option value="">최소 점수</option>
-        <option value="1">1+</option>
-        <option value="2">2+</option>
-        <option value="3">3+</option>
-        <option value="4">4+</option>
-        <option value="5">5</option>
-    </select>
-    <button class="delete-btn" onclick="deleteCompanyPrompt()" style="margin-bottom: 16px;">특정 파트너사 일괄 삭제</button>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>MSP 이름</th>
-                <th>점수</th>
-                <th colspan="2">문항</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody id="data-body"></tbody>
-    </table>
+  <div id="root"></div>
 
-    <script>
-        let originalData = [];
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
 
-        function renderTable(data, minScore = "") {
-            const tbody = document.getElementById("data-body");
-            tbody.innerHTML = "";
+    // Enhanced icon components
+    const DatabaseIcon = ({ className = "w-6 h-6" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+      </svg>
+    );
 
-            const filteredData = minScore
-                ? data.filter(entry => Number(entry.score) >= Number(minScore))
-                : data;
+    const SearchIcon = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    );
 
-            // Group by question (per msp_name, question, score)
-            const grouped = {};
-            filteredData.forEach(entry => {
-                const key = `${entry.msp_name}|${entry.question}|${entry.score}`;
-                if (!grouped[key]) grouped[key] = [];
-                grouped[key].push(entry);
-            });
+    const TrashIcon = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    );
 
-            Object.entries(grouped).forEach(([key, entries]) => {
-                const [mspName, question, score] = key.split('|');
-                const row = document.createElement("tr");
+    const FilterIcon = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
+      </svg>
+    );
 
-                const mspCell = document.createElement("td");
-                mspCell.textContent = mspName;
-                mspCell.style.fontWeight = "bold";
+    const SparklesIcon = ({ className = "w-6 h-6" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+      </svg>
+    );
 
-                const scoreCell = document.createElement("td");
-                scoreCell.textContent = score;
+    const BuildingIcon = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+      </svg>
+    );
 
-                const questionCell = document.createElement("td");
-                questionCell.textContent = question;
+    const ExclamationIcon = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+      </svg>
+    );
 
-                const chunkCell = document.createElement("td");
-                chunkCell.textContent = `${entries.length} chunk${entries.length > 1 ? "s" : ""}`;
+    const ChevronDownIcon = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    );
 
-                const deleteBtnCell = document.createElement("td");
-                const delBtn = document.createElement("button");
-                delBtn.textContent = "삭제";
-                delBtn.className = "delete-btn";
-                delBtn.style.display = "block";
-                delBtn.style.margin = "0 auto";
-                delBtn.onclick = () => deleteQuestion(mspName, question);
-                deleteBtnCell.appendChild(delBtn);
+    const ModernVectorDBViewer = () => {
+      const [originalData, setOriginalData] = useState([]);
+      const [filteredData, setFilteredData] = useState([]);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [minScore, setMinScore] = useState('');
+      const [isLoading, setIsLoading] = useState(true);
+      const [currentTime, setCurrentTime] = useState(new Date());
+      const [stats, setStats] = useState({ totalEntries: 0, totalMSPs: 0, avgScore: 0 });
+      const [deleteModal, setDeleteModal] = useState({ show: false, company: '', type: 'company' });
+      const [message, setMessage] = useState({ text: '', type: '' });
+      const searchRef = useRef(null);
 
-                row.appendChild(mspCell);
-                row.appendChild(scoreCell);
-                row.appendChild(questionCell);
-                row.appendChild(chunkCell);
-                row.appendChild(deleteBtnCell);
-                tbody.appendChild(row);
-            });
+      useEffect(() => {
+        fetchData();
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        const authTimer = setInterval(checkAuth, 30000); // Check auth every 30 seconds
+        
+        return () => {
+          clearInterval(timer);
+          clearInterval(authTimer);
+        };
+      }, []);
+
+      useEffect(() => {
+        applyFilters();
+      }, [searchQuery, minScore, originalData]);
+
+      const checkAuth = async () => {
+        try {
+          const res = await fetch("/auth/check");
+          if (res.status === 401) {
+            window.location.href = "/login?next=/ui";
+          }
+        } catch (err) {
+          console.error("Auth check failed:", err);
         }
+      };
 
-        function deleteCompanyData(companyName) {
-            if (confirm(`Are you sure you want to delete all data for MSP "${companyName}"?`)) {
-                fetch(`/ui/delete_company/${encodeURIComponent(companyName)}`, {
-                    method: "DELETE"
-                }).then(response => {
-                    if (response.ok) {
-                        originalData = originalData.filter(entry => entry.msp_name !== companyName);
-                        const filtered = document.getElementById("searchInput").value.toLowerCase();
-                        const minScore = document.getElementById("minScoreFilter").value;
-                        const displayed = originalData.filter(entry =>
-                            (entry.msp_name.toLowerCase().includes(filtered) ||
-                             entry.question.toLowerCase().includes(filtered)) &&
-                            (!minScore || Number(entry.score) >= Number(minScore))
-                        );
-                        renderTable(displayed, minScore);
-                    } else {
-                        alert("Failed to delete company data.");
-                    }
-                });
-            }
-        }
-
-        function deleteQuestion(mspName, question) {
-            if (confirm(`Delete all chunks for "${question}" under MSP "${mspName}"?`)) {
-                fetch(`/ui/delete_question/${encodeURIComponent(mspName)}/${encodeURIComponent(question)}`, {
-                    method: "DELETE"
-                }).then(response => {
-                    if (response.ok) {
-                        originalData = originalData.filter(entry => !(entry.msp_name === mspName && entry.question === question));
-                        applyFilters();
-                    } else {
-                        alert("Failed to delete question data.");
-                    }
-                });
-            }
-        }
-
-        function deleteCompanyPrompt() {
-            const name = prompt("Enter the MSP name to delete all its data:");
-            if (name) {
-                deleteCompanyData(name.trim());
-            }
-        }
-
-        fetch("/ui/data")
-            .then(response => response.json())
-            .then(data => {
-                originalData = data;
-                const keyword = document.getElementById("searchInput").value.toLowerCase();
-                const minScore = document.getElementById("minScoreFilter").value;
-                const filtered = originalData.filter(entry =>
-                    (entry.msp_name.toLowerCase().includes(keyword) ||
-                     entry.question.toLowerCase().includes(keyword)) &&
-                    (!minScore || Number(entry.score) >= Number(minScore))
-                );
-                renderTable(filtered, minScore);
-            });
-
-        document.getElementById("searchInput").addEventListener("input", applyFilters);
-        document.getElementById("minScoreFilter").addEventListener("change", applyFilters);
-
-        function applyFilters() {
-            const keyword = document.getElementById("searchInput").value.toLowerCase();
-            const minScore = document.getElementById("minScoreFilter").value;
-            const filtered = originalData.filter(entry =>
-                (entry.msp_name.toLowerCase().includes(keyword) ||
-                 entry.question.toLowerCase().includes(keyword)) &&
-                (!minScore || Number(entry.score) >= Number(minScore))
-            );
-            renderTable(filtered, minScore);
-        }
-    </script>
-<script>
-  async function checkAuth() {
-    try {
-      const res = await fetch("/auth/check");
-      if (res.status === 401) {
-        window.location.href = "/login?next=/admin";
-      }
-    } catch (err) {
-      console.error("Auth check failed:", err);
-    }
-  }
-  checkAuth();
-
-  function logout() {
-      fetch("/logout")
-          .then(() => {
-              window.location.href = "/login";
-          })
-          .catch(err => {
-              console.error("Logout failed:", err);
+      const fetchData = async () => {
+        try {
+          setIsLoading(true);
+          const response = await fetch('/ui/data');
+          const data = await response.json();
+          
+          setOriginalData(data);
+          
+          // Calculate stats
+          const uniqueMSPs = new Set(data.map(item => item.msp_name)).size;
+          const totalScore = data.reduce((sum, item) => sum + (item.score || 0), 0);
+          const avgScore = data.length > 0 ? (totalScore / data.length).toFixed(1) : 0;
+          
+          setStats({
+            totalEntries: data.length,
+            totalMSPs: uniqueMSPs,
+            avgScore: avgScore
           });
-  }
-</script>
+          
+        } catch (error) {
+          console.error('데이터 로딩 실패:', error);
+          showMessage('데이터를 불러오는데 실패했습니다.', 'error');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      const applyFilters = () => {
+        let filtered = originalData;
+
+        if (searchQuery.trim()) {
+          const query = searchQuery.toLowerCase();
+          filtered = filtered.filter(item => 
+            item.msp_name.toLowerCase().includes(query) ||
+            item.question.toLowerCase().includes(query) ||
+            item.answer.toLowerCase().includes(query)
+          );
+        }
+
+        if (minScore) {
+          filtered = filtered.filter(item => item.score >= parseInt(minScore));
+        }
+
+        setFilteredData(filtered);
+      };
+
+      const groupDataByQuestion = (data) => {
+        const grouped = {};
+        data.forEach(entry => {
+          const key = `${entry.msp_name}|${entry.question}|${entry.score}`;
+          if (!grouped[key]) {
+            grouped[key] = [];
+          }
+          grouped[key].push(entry);
+        });
+        return grouped;
+      };
+
+      const deleteQuestion = async (mspName, question) => {
+        try {
+          const response = await fetch(`/ui/delete_question/${encodeURIComponent(mspName)}/${encodeURIComponent(question)}`, {
+            method: 'DELETE'
+          });
+          
+          if (response.ok) {
+            setOriginalData(prev => prev.filter(item => 
+              !(item.msp_name === mspName && item.question === question)
+            ));
+            showMessage(`질문 "${question}" 삭제 완료`, 'success');
+          } else {
+            throw new Error('삭제 실패');
+          }
+        } catch (error) {
+          console.error('삭제 오류:', error);
+          showMessage('삭제에 실패했습니다.', 'error');
+        }
+      };
+
+      const deleteCompany = async (companyName) => {
+        try {
+          const response = await fetch(`/ui/delete_company/${encodeURIComponent(companyName)}`, {
+            method: 'DELETE'
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            setOriginalData(prev => prev.filter(item => item.msp_name !== companyName));
+            showMessage(`${companyName} 삭제 완료 (${result.count}개 항목)`, 'success');
+          } else {
+            throw new Error('삭제 실패');
+          }
+        } catch (error) {
+          console.error('삭제 오류:', error);
+          showMessage('삭제에 실패했습니다.', 'error');
+        }
+      };
+
+      const showMessage = (text, type) => {
+        setMessage({ text, type });
+        setTimeout(() => setMessage({ text: '', type: '' }), 5000);
+      };
+
+      const handleDeleteClick = (mspName, question = null) => {
+        setDeleteModal({
+          show: true,
+          company: mspName,
+          question: question,
+          type: question ? 'question' : 'company'
+        });
+      };
+
+      const confirmDelete = () => {
+        if (deleteModal.type === 'question') {
+          deleteQuestion(deleteModal.company, deleteModal.question);
+        } else {
+          deleteCompany(deleteModal.company);
+        }
+        setDeleteModal({ show: false, company: '', type: 'company' });
+      };
+
+      const logout = async () => {
+        try {
+          await fetch("/logout");
+          window.location.href = "/login";
+        } catch (err) {
+          console.error("Logout failed:", err);
+        }
+      };
+
+      const groupedData = groupDataByQuestion(filteredData);
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
+          {/* Enhanced Background Decoration */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-emerald-400/30 to-teal-600/30 rounded-full blur-3xl floating"></div>
+            <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-blue-400/30 to-indigo-600/30 rounded-full blur-3xl floating" style={{ animationDelay: '2s' }}></div>
+            <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-br from-purple-400/20 to-pink-500/20 rounded-full blur-2xl floating" style={{ animationDelay: '4s' }}></div>
+            
+            {/* Grid Pattern */}
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(5,150,105,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(5,150,105,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+          </div>
+
+          {/* Enhanced Header */}
+          <header className="sticky top-0 z-50 glass-morphism border-b border-white/20 animate-fade-in-down">
+            <div className="max-w-7xl mx-auto px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 gradient-border rounded-2xl p-0.5">
+                    <div className="w-full h-full bg-white rounded-xl flex items-center justify-center">
+                      <SparklesIcon className="w-6 h-6 text-emerald-600" />
+                    </div>
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-black gradient-text text-glow">NAVER Cloud</h1>
+                    <p className="text-xs text-slate-500 font-medium">벡터 DB 뷰어 • {currentTime.toLocaleTimeString('ko-KR')}</p>
+                  </div>
+                </div>
+                
+                {/* Stats */}
+                <div className="hidden lg:flex items-center space-x-8">
+                  <div className="text-center">
+                    <div className="text-2xl font-black gradient-text">{stats.totalEntries}</div>
+                    <div className="text-xs text-slate-500 font-medium">총 항목</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-black gradient-text">{stats.totalMSPs}</div>
+                    <div className="text-xs text-slate-500 font-medium">MSP 수</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-black gradient-text">{stats.avgScore}</div>
+                    <div className="text-xs text-slate-500 font-medium">평균 점수</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <a 
+                    href="/" 
+                    className="px-4 py-2 text-slate-600 hover:text-slate-900 font-semibold transition-all duration-300 hover:scale-105"
+                  >
+                    홈
+                  </a>
+                  <button 
+                    onClick={logout}
+                    className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl font-bold hover:shadow-2xl transition-all duration-300 hover:scale-105 shadow-lg"
+                  >
+                    로그아웃
+                  </button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <div className="max-w-7xl mx-auto px-6 py-8 relative z-10">
+            {/* Hero Section */}
+            <div className="text-center mb-16 animate-fade-in-up">
+              <div className="inline-flex items-center space-x-3 glass-morphism px-8 py-4 rounded-full text-emerald-700 font-bold mb-8">
+                <DatabaseIcon className="w-6 h-6" />
+                <span className="text-lg">벡터 데이터베이스 관리</span>
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+              </div>
+              
+              <h1 className="text-5xl md:text-6xl font-black gradient-text mb-6 leading-tight tracking-tight">
+                벡터 DB 뷰어
+              </h1>
+
+              <p className="text-xl md:text-2xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+                MSP 파트너사 데이터를 실시간으로 관리하고 <br />
+                <span className="font-semibold gradient-text text-glow">모니터링</span>할 수 있습니다
+              </p>
+            </div>
+
+            {/* Message Display */}
+            {message.text && (
+              <div className={`mb-6 p-4 rounded-2xl border ${
+                message.type === 'success' 
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                  : 'bg-red-50 border-red-200 text-red-700'
+              } animate-fade-in-up`}>
+                <div className="flex items-center space-x-3">
+                  {message.type === 'success' ? (
+                    <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">✓</span>
+                    </div>
+                  ) : (
+                    <ExclamationIcon className="w-6 h-6 text-red-500" />
+                  )}
+                  <span className="font-semibold">{message.text}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Search and Filter Controls */}
+            <div className="glass-morphism rounded-3xl shadow-2xl p-8 mb-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Search Input */}
+                <div className="lg:col-span-6">
+                  <label className="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">
+                    검색
+                  </label>
+                  <div className="relative">
+                    <div className="gradient-border rounded-2xl p-0.5">
+                      <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-emerald-600">
+                          <SearchIcon className="w-5 h-5" />
+                        </div>
+                        <input
+                          ref={searchRef}
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="MSP명, 질문, 답변 검색..."
+                          className="w-full pl-12 pr-4 py-3 bg-transparent border-0 rounded-2xl focus:ring-0 focus:outline-none transition-all duration-300 text-base placeholder-slate-400 font-medium"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Score Filter */}
+                <div className="lg:col-span-3">
+                  <label className="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">
+                    최소 점수
+                  </label>
+                  <div className="relative">
+                    <div className="gradient-border rounded-2xl p-0.5">
+                      <select
+                        value={minScore}
+                        onChange={(e) => setMinScore(e.target.value)}
+                        className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-0 rounded-2xl focus:ring-0 focus:outline-none transition-all duration-300 appearance-none cursor-pointer font-medium text-base"
+                      >
+                        <option value="">전체</option>
+                        <option value="1">1점 이상</option>
+                        <option value="2">2점 이상</option>
+                        <option value="3">3점 이상</option>
+                        <option value="4">4점 이상</option>
+                        <option value="5">5점만</option>
+                      </select>
+                    </div>
+                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-emerald-600 pointer-events-none">
+                      <ChevronDownIcon className="w-5 h-5" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bulk Delete Button */}
+                <div className="lg:col-span-3">
+                  <label className="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">
+                    관리 도구
+                  </label>
+                  <button
+                    onClick={() => {
+                      const company = prompt("삭제할 MSP 이름을 입력하세요:");
+                      if (company && company.trim()) {
+                        handleDeleteClick(company.trim());
+                      }
+                    }}
+                    className="w-full px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl font-bold hover:shadow-xl transition-all duration-300 hover:scale-105 shadow-lg flex items-center justify-center space-x-2"
+                  >
+                    <BuildingIcon className="w-5 h-5" />
+                    <span>MSP 삭제</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-6 text-center">
+                <p className="text-base text-slate-500 font-medium">
+                  📊 총 {Object.keys(groupedData).length}개 질문 • {filteredData.length}개 항목 표시 중
+                </p>
+              </div>
+            </div>
+
+            {/* Data Table */}
+            {isLoading ? (
+              <div className="glass-morphism rounded-3xl shadow-2xl p-16 text-center animate-fade-in-up">
+                <div className="flex flex-col items-center space-y-6">
+                  <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xl font-semibold text-slate-600">데이터를 불러오는 중...</p>
+                </div>
+              </div>
+            ) : Object.keys(groupedData).length === 0 ? (
+              <div className="glass-morphism rounded-3xl shadow-2xl p-16 text-center animate-fade-in-up">
+                <div className="flex flex-col items-center space-y-6">
+                  <div className="w-20 h-20 bg-gradient-to-br from-slate-200 to-slate-300 rounded-2xl flex items-center justify-center">
+                    <SearchIcon className="w-10 h-10 text-slate-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-700 mb-2">검색 결과가 없습니다</h3>
+                    <p className="text-lg text-slate-500">다른 검색어나 필터를 시도해보세요.</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="glass-morphism rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                <div className="overflow-x-auto custom-scrollbar">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 text-white">
+                        <th className="px-6 py-4 text-left font-black text-lg">MSP 이름</th>
+                        <th className="px-6 py-4 text-center font-black text-lg">점수</th>
+                        <th className="px-6 py-4 text-left font-black text-lg">질문</th>
+                        <th className="px-6 py-4 text-center font-black text-lg">청크 수</th>
+                        <th className="px-6 py-4 text-center font-black text-lg">관리</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(groupedData).map(([key, entries], index) => {
+                        const [mspName, question, score] = key.split('|');
+                        return (
+                          <tr 
+                            key={key} 
+                            className={`transition-all duration-300 hover:bg-emerald-50/50 border-b border-slate-200/60 ${
+                              index % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/60'
+                            }`}
+                            style={{ animationDelay: `${index * 0.05}s` }}
+                          >
+                            <td className="px-6 py-4">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                                  <BuildingIcon className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                  <div className="font-black text-slate-800 text-lg">{mspName}</div>
+                                  <div className="text-sm text-slate-500 font-medium">파트너사</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <div className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl font-black text-lg shadow-lg ${
+                                score >= 4 ? 'bg-gradient-to-br from-emerald-500 to-green-600 text-white' :
+                                score >= 3 ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white' :
+                                'bg-gradient-to-br from-red-400 to-red-600 text-white'
+                              }`}>
+                                {score}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="max-w-md">
+                                <p className="font-semibold text-slate-800 leading-relaxed line-clamp-2">
+                                  {question}
+                                </p>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <div className="inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-full font-bold text-sm border border-blue-200">
+                                {entries.length} 개
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <button
+                                onClick={() => handleDeleteClick(mspName, question)}
+                                className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:shadow-xl transition-all duration-300 hover:scale-110 shadow-lg group"
+                                title="질문 삭제"
+                              >
+                                <TrashIcon className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteModal.show && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in-up">
+                <div className="glass-morphism rounded-3xl shadow-2xl p-8 max-w-md w-full mx-4">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                      <ExclamationIcon className="w-8 h-8 text-white" />
+                    </div>
+                    
+                    <h3 className="text-2xl font-black text-slate-800 mb-4">
+                      {deleteModal.type === 'question' ? '질문 삭제' : 'MSP 삭제'}
+                    </h3>
+                    
+                    <p className="text-lg text-slate-600 mb-8 leading-relaxed">
+                      {deleteModal.type === 'question' 
+                        ? `"${deleteModal.question}"을(를) 삭제하시겠습니까?`
+                        : `"${deleteModal.company}"의 모든 데이터를 삭제하시겠습니까?`
+                      }
+                    </p>
+                    
+                    <div className="flex space-x-4">
+                      <button
+                        onClick={() => setDeleteModal({ show: false, company: '', type: 'company' })}
+                        className="flex-1 px-6 py-3 glass-card border-2 border-slate-300 text-slate-700 rounded-2xl font-bold hover:bg-slate-50 transition-all duration-300 hover:scale-105"
+                      >
+                        취소
+                      </button>
+                      <button
+                        onClick={confirmDelete}
+                        className="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl font-bold hover:shadow-xl transition-all duration-300 hover:scale-105 shadow-lg"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Enhanced Footer */}
+          <footer className="text-center py-16 text-slate-500 relative z-10 animate-fade-in-up">
+            <div className="max-w-3xl mx-auto">
+              <div className="glass-card rounded-3xl p-8 shadow-xl">
+                <p className="text-2xl font-bold mb-4 gradient-text">ⓒ 2025 Naver Cloud MSP 벡터 DB 뷰어</p>
+                <div className="flex justify-center space-x-4 mt-6">
+                  <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                  <div className="w-3 h-3 bg-teal-500 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+                  <div className="w-3 h-3 bg-cyan-500 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+                </div>
+              </div>
+            </div>
+          </footer>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<ModernVectorDBViewer />, document.getElementById('root'));
+  </script>
 </body>
 </html>
