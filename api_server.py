@@ -2,6 +2,7 @@ from msp_core import (
     run_msp_recommendation,
     run_msp_information_summary,
     run_msp_information_summary_claude,
+    run_msp_information_summary_pplx,
     extract_msp_name,
     query_embed,
     collection,
@@ -302,9 +303,9 @@ async def query_router(data: RouterQuery):
             print(f"🟢 Advanced toggle received: {data.advanced}")
             if "Information" in blocked:
                 if data.advanced:
-                    return run_msp_information_summary_claude(data.query)
+                    return run_msp_information_summary_pplx(data.query)
                 else:
-                    return run_msp_information_summary(data.query)
+                    return run_msp_information_summary_claude(data.query)
             elif "Recommend" in blocked:
                 return run_msp_recommendation(data.query, min_score=0)
             elif "Unrelated" in blocked:
