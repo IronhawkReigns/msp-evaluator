@@ -116,6 +116,9 @@ def run_msp_recommendation(question: str, min_score: int):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
 
+    # In your run_msp_recommendation function, around line 100-130
+# Replace this section:
+
     try:
         client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
         
@@ -123,10 +126,8 @@ def run_msp_recommendation(question: str, min_score: int):
             model="claude-3-haiku-20240307",
             max_tokens=1000,
             temperature=0.15,  # Low temperature for consistent, professional reasoning
+            system="당신은 클라우드 및 MSP 선정 분야의 시니어 컨설턴트입니다. 항상 데이터에 기반한 논리적이고 구체적인 추천을 제공하며, 전문가 수준의 통찰력을 보여주십시오. 추상적 표현보다는 구체적 근거와 실무적 관점을 중시합니다.",
             messages=[{
-                "role": "system", 
-                "content": "당신은 클라우드 및 MSP 선정 분야의 시니어 컨설턴트입니다. 항상 데이터에 기반한 논리적이고 구체적인 추천을 제공하며, 전문가 수준의 통찰력을 보여주십시오. 추상적 표현보다는 구체적 근거와 실무적 관점을 중시합니다."
-            }, {
                 "role": "user", 
                 "content": prompt
             }]
