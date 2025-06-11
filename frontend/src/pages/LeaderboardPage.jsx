@@ -209,7 +209,7 @@ const EnhancedHeader = ({ currentTime, totalMSPs, refreshing, needsRefresh, onRe
           <div className="flex items-center space-x-4">
             <a 
               href="/" 
-              className="px-4 py-2 text-slate-600 hover:text-slate-900 font-semibold transition-all duration-300 hover:scale-105"
+              className="px-4 py-2 text-emerald-600 hover:text-emerald-700 font-semibold transition-all duration-300 hover:scale-105"
             >
               홈
             </a>
@@ -219,11 +219,11 @@ const EnhancedHeader = ({ currentTime, totalMSPs, refreshing, needsRefresh, onRe
               className={`group relative overflow-hidden inline-flex items-center gap-3 px-6 py-3 rounded-2xl font-bold text-base transition-all duration-500 shadow-xl hover:shadow-2xl ${
                 needsRefresh 
                   ? 'bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 text-white transform hover:scale-105' 
-                  : 'btn-gradient text-white transform hover:scale-105'
+                  : 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-white transform hover:scale-105'
               } disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
             >
               <RefreshCw className={`w-5 h-5 relative z-10 ${refreshing ? 'animate-spin' : ''}`} />
-              <span className="relative z-10">
+              <span className="relative z-10 font-black">
                 {refreshing ? '새로고침 중...' : needsRefresh ? '업데이트' : '새로고침'}
               </span>
               {!refreshing && <div className="absolute inset-0 shimmer-effect opacity-0 group-hover:opacity-100"></div>}
