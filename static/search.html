@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MSP 검색 도구 - NAVER Cloud</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'fade-in-up': 'fadeInUp 0.6s ease-out',
+            'bounce-subtle': 'bounceSubtle 2s infinite',
+          },
+          keyframes: {
+            fadeInUp: {
+              '0%': { opacity: '0', transform: 'translateY(30px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            bounceSubtle: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-5px)' },
+            }
+          },
+          backdropBlur: {
+            'xs': '2px',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-feature-settings: 'cv11', 'ss01';
+      font-variation-settings: 'opsz' 32;
+    }
+    
+    .glass-morphism {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+    const { Search, Settings, Zap, ChevronDown, ChevronUp, Eye, EyeOff, Sparkles, Globe, Shield, Cpu, Users, ArrowRight, TrendingUp, Award } = lucideReact;
+
+    const ModernMSPSearch = () => {
+      const [query, setQuery] = useState('');
+      const [minScore, setMinScore] = useState('0');
+      const [isAdvanced, setIsAdvanced] = useState(false);
+      const [isLoading, setIsLoading] = useState(false);
+      const [results, setResults] = useState(null);
+      const [showSamples, setShowSamples] = useState(false);
+      const [showEvidence, setShowEvidence] = useState(false);
+      const [searchType, setSearchType] = useState('standard');
+      const inputRef = useRef(null);
+
+      const sampleQuestions = [
+        { text: "ITCEN CLOIT의 AI 전문 인력 구성은?", icon: Users, category: "인력", color: "from-blue-500 to-indigo-600" },
+        { text: "MLOps 관련 경험이 풍부한 MSP는?", icon: Cpu, category: "기술", color: "from-purple-500 to-pink-600" },
+        { text: "디딤365의 협업 방식은 어떤가?", icon: Users, category: "협업", color: "from-orange-500 to-red-600" },
+        { text: "보안이 강점인 파트너사 추천해줘", icon: Shield, category: "보안", color: "from-emerald-500 to-teal-600" }
+      ];
+
+      useEffect(() => {
+        inputRef.current?.focus();
+      }, []);
+
+      const handleSearch = async (endpoint = '/query/router') => {
+        if (!query.trim()) {
+          inputRef.current?.focus();
+          return;
+        }
+
+        setIsLoading(true);
+        setResults(null);
+
+        try {
+          const payload = endpoint === '/query/router' 
+            ? { query, chat_history: [], advanced: isAdvanced }
+            : { query };
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (!response.ok) throw new Error(`서버 오류: ${response.status}`);
+          
+          const data = await response.json();
+          setResults(data);
+          setSearchType(endpoint === '/query/advanced_naver' ? 'naver' : 'standard');
+        } catch (error) {
+          console.error('검색 오류:', error);
+          setResults({ error: '검색 중 오류가 발생했습니다. 다시 시도해 주세요.' });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      const handleSampleClick = (sampleText) => {
+        setQuery(sampleText);
+        setShowSamples(false);
+        setTimeout(() => inputRef.current?.focus(), 100);
+      };
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
+          {/* Background Decoration */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-emerald-400/20 to-teal-600/20 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-indigo-600/20 rounded-full blur-3xl"></div>
+          </div>
+
+          {/* Header */}
+          <header className="sticky top-0 z-50 glass-morphism border-b border-white/20">
+            <div className="max-w-7xl mx-auto px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Sparkles className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold gradient-text">NAVER Cloud</h1>
+                    <p className="text-xs text-slate-500">MSP 평가 플랫폼</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <a 
+                    href="/" 
+                    className="px-4 py-2 text-slate-600 hover:text-slate-900 font-medium transition-colors duration-300"
+                  >
+                    홈
+                  </a>
+                  <a 
+                    href="/login?next=/admin" 
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105"
+                  >
+                    관리자
+                  </a>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <div className="max-w-5xl mx-auto px-6 py-12 relative z-10">
+            {/* Hero Section */}
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center space-x-2 glass-morphism px-6 py-3 rounded-full text-emerald-700 font-medium mb-8 animate-bounce-subtle">
+                <Zap className="w-5 h-5" />
+                <span>AI 기반 MSP 검색</span>
+              </div>
+              <h1 className="text-6xl md:text-7xl font-black gradient-text mb-8 leading-tight">
+                MSP 검색 도구
+              </h1>
+              <p className="text-xl md:text-2xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+                클라우드 MSP를 효율적으로 검색하고 평가할 수 있는 <br />
+                <span className="font-semibold gradient-text">차세대 AI 통합 도구</span>입니다
+              </p>
+              
+              {/* Stats */}
+              <div className="flex flex-wrap items-center justify-center gap-8 mt-12">
+                <div className="flex items-center space-x-2 text-slate-600">
+                  <TrendingUp className="w-5 h-5 text-emerald-600" />
+                  <span className="font-semibold">99% 정확도</span>
+                </div>
+                <div className="flex items-center space-x-2 text-slate-600">
+                  <Award className="w-5 h-5 text-emerald-600" />
+                  <span className="font-semibold">실시간 분석</span>
+                </div>
+                <div className="flex items-center space-x-2 text-slate-600">
+                  <Globe className="w-5 h-5 text-emerald-600" />
+                  <span className="font-semibold">웹 통합 검색</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Search Card */}
+            <div className="glass-morphism rounded-3xl shadow-2xl p-8 mb-8 animate-fade-in-up">
+              {/* Score Filter */}
+              <div className="mb-8">
+                <label className="block text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">
+                  최소 추천 기준 점수
+                </label>
+                <div className="relative">
+                  <select 
+                    value={minScore}
+                    onChange={(e) => setMinScore(e.target.value)}
+                    className="w-full px-6 py-4 bg-white/60 backdrop-blur-sm border border-white/40 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300 appearance-none cursor-pointer font-medium shadow-lg"
+                  >
+                    <option value="0">0 이상 - 모든 결과</option>
+                    <option value="1">1 이상 - 기본 수준</option>
+                    <option value="2">2 이상 - 양호 수준</option>
+                    <option value="3">3 이상 - 우수 수준</option>
+                    <option value="4">4 이상 - 최우수 수준</option>
+                    <option value="5">5점만 - 완벽한 매치</option>
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Search Input */}
+              <div className="relative mb-8">
+                <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                  <Search className="h-6 w-6 text-slate-400" />
+                </div>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  placeholder="예: 금융 회사와의 프로젝트에 어울리는 보안이 강점인 파트너사 추천해줘"
+                  className="w-full pl-16 pr-6 py-5 bg-white/60 backdrop-blur-sm border border-white/40 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300 text-lg placeholder-slate-400 font-medium shadow-lg"
+                />
+                <div className="absolute inset-y-0 right-0 pr-6 flex items-center">
+                  <kbd className="px-2 py-1 bg-slate-200/60 text-slate-500 text-xs rounded font-medium">Enter</kbd>
+                </div>
+              </div>
+
+              {/* Advanced Options */}
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 p-6 bg-white/40 backdrop-blur-sm rounded-2xl shadow-lg">
+                <div className="flex items-center space-x-4 mb-4 lg:mb-0">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={isAdvanced}
+                      onChange={(e) => setIsAdvanced(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div 
+                      onClick={() => setIsAdvanced(!isAdvanced)}
+                      className={`w-14 h-7 rounded-full cursor-pointer transition-all duration-300 shadow-inner ${
+                        isAdvanced ? 'bg-gradient-to-r from-emerald-500 to-teal-600' : 'bg-slate-300'
+                      }`}
+                    >
+                      <div className={`w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 ${
+                        isAdvanced ? 'transform translate-x-7' : 'transform translate-x-0.5'
+                      } mt-0.5`} />
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-bold text-slate-700">고급 검색 (Web 기반)</span>
+                    <div className="relative group">
+                      <Settings className="w-5 h-5 text-slate-400 cursor-help" />
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-4 py-3 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap shadow-xl">
+                        Perplexity 기반 웹 검색을 사용합니다
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-800"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowSamples(!showSamples)}
+                  className="flex items-center space-x-3 px-6 py-3 bg-white/60 backdrop-blur-sm border border-white/40 rounded-xl hover:bg-white/80 transition-all duration-300 shadow-lg font-medium"
+                >
+                  <span>예시 질문</span>
+                  {showSamples ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                </button>
+              </div>
+
+              {/* Sample Questions */}
+              {showSamples && (
+                <div className="mb-8 p-6 bg-gradient-to-r from-emerald-50/80 to-teal-50/80 backdrop-blur-sm rounded-2xl border border-emerald-100/60 shadow-lg animate-fade-in-up">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {sampleQuestions.map((sample, index) => {
+                      const IconComponent = sample.icon;
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => handleSampleClick(sample.text)}
+                          className="group flex items-center space-x-4 p-4 bg-white/80 backdrop-blur-sm rounded-xl hover:shadow-xl transition-all duration-300 text-left hover:scale-105 border border-white/60"
+                        >
+                          <div className={`w-12 h-12 bg-gradient-to-br ${sample.color} rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                            <IconComponent className="w-6 h-6 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-xs font-bold text-emerald-600 mb-2 uppercase tracking-wider">{sample.category}</div>
+                            <div className="text-sm text-slate-700 font-medium leading-relaxed">{sample.text}</div>
+                          </div>
+                          <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all duration-300" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Search Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={() => handleSearch()}
+                  disabled={isLoading}
+                  className="flex-1 flex items-center justify-center space-x-3 px-8 py-5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-bold text-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>검색 중...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-6 h-6" />
+                      <span>검색 시작</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => handleSearch('/query/advanced_naver')}
+                  disabled={isLoading}
+                  className="flex-1 flex items-center justify-center space-x-3 px-8 py-5 bg-white/80 backdrop-blur-sm border-2 border-emerald-500 text-emerald-600 rounded-2xl font-bold text-lg hover:bg-emerald-50 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                >
+                  <Globe className="w-6 h-6" />
+                  <span>NAVER 검색</span>
+                </button>
+              </div>
+
+              <p className="text-center text-sm text-slate-500 mt-6 italic">
+                ⚠️ 본 서비스는 AI 기반으로 제공되며, 간헐적으로 부정확한 응답이 포함될 수 있습니다.
+              </p>
+            </div>
+
+            {/* Results Section */}
+            {results && (
+              <div className="glass-morphism rounded-3xl shadow-2xl p-8 animate-fade-in-up">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8">
+                  <h2 className="text-3xl font-black text-slate-800 mb-4 sm:mb-0">검색 결과</h2>
+                  {(results.advanced || searchType === 'naver') && (
+                    <div className="flex items-center space-x-3 px-4 py-2 bg-gradient-to-r from-emerald-100 to-teal-100 rounded-full shadow-lg">
+                      <Globe className="w-5 h-5 text-emerald-600" />
+                      <span className="text-sm font-bold text-emerald-700">
+                        {searchType === 'naver' ? 'NAVER 검색' : '고급 검색'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {results.error ? (
+                  <div className="p-8 bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-2xl shadow-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm font-bold">!</span>
+                      </div>
+                      <p className="text-red-600 font-medium">{results.error}</p>
+                    </div>
+                  </div>
+                ) : results.answer ? (
+                  <div className="space-y-8">
+                    <div className="p-8 bg-gradient-to-r from-slate-50/80 to-emerald-50/80 backdrop-blur-sm rounded-2xl border-l-4 border-emerald-500 shadow-lg">
+                      <div 
+                        className="text-slate-700 leading-relaxed text-lg font-medium custom-scrollbar"
+                        dangerouslySetInnerHTML={{ __html: results.answer.replace(/\n/g, '<br>') }}
+                        style={{ maxHeight: '400px', overflowY: 'auto' }}
+                      />
+                    </div>
+
+                    {results.evidence && results.evidence.length > 0 && (
+                      <div>
+                        <button
+                          onClick={() => setShowEvidence(!showEvidence)}
+                          className="flex items-center space-x-3 px-6 py-3 bg-slate-100/80 backdrop-blur-sm hover:bg-slate-200/80 rounded-xl transition-all duration-300 shadow-lg font-medium"
+                        >
+                          {showEvidence ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          <span className="font-bold">
+                            {showEvidence ? '근거 숨기기' : '🔍 왜 이 답변인가요?'}
+                          </span>
+                          <span className="text-sm text-slate-500">({results.evidence.length}개 근거)</span>
+                        </button>
+
+                        {showEvidence && (
+                          <div className="mt-6 space-y-4 animate-fade-in-up">
+                            {results.evidence.map((evidence, index) => (
+                              <div key={index} className="p-6 bg-slate-50/80 backdrop-blur-sm rounded-xl border-l-4 border-emerald-500 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                                <div className="font-bold text-slate-800 mb-3 text-lg">
+                                  Q: {evidence.question}
+                                </div>
+                                <div className="text-slate-600 mb-4 leading-relaxed">
+                                  A: {evidence.answer}
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <div className="inline-flex items-center px-3 py-1 bg-emerald-500 text-white text-sm rounded-full font-bold shadow-md">
+                                    점수: {evidence.score}/5
+                                  </div>
+                                  <div className="text-xs text-slate-400">
+                                    근거 #{index + 1}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <footer className="text-center py-12 text-slate-500 relative z-10">
+            <div className="max-w-2xl mx-auto">
+              <p className="text-lg font-medium mb-2">ⓒ 2025 Naver Cloud MSP 평가 도구</p>
+              <p className="text-sm">Powered by AI • Built with ❤️</p>
+            </div>
+          </footer>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<ModernMSPSearch />, document.getElementById('root'));
+  </script>
+</body>
+</html>
