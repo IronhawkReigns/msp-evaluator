@@ -35,7 +35,7 @@
       position: absolute;
       border-radius: 50%;
       filter: blur(60px);
-      /* animation: float 8s ease-in-out infinite; */
+      animation: float 8s ease-in-out infinite;
     }
 
     .orb-1 {
@@ -100,9 +100,8 @@
     }
 
     @keyframes cardFloat {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      33% { transform: translateY(-5px) rotate(1deg); }
-      66% { transform: translateY(-3px) rotate(-0.5deg); }
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
     }
 
     /* Glass Morphism */
@@ -348,7 +347,7 @@
       transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
       position: relative;
       overflow: hidden;
-      animation: cardFloat 4s ease-in-out infinite;
+      /* animation: cardFloat 4s ease-in-out infinite; */
     }
 
     .dashboard-card::before {
