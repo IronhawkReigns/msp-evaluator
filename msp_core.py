@@ -91,11 +91,11 @@ def run_msp_recommendation(question: str, min_score: int):
     # Claude API call
     try:
         client = anthropic.Anthropic(
-            api_key=os.getenv("ANTHROPIC_API_KEY")  # Add this to your .env file
+            api_key=os.getenv("ANTHROPIC_API_KEY")
         )
         
         response = client.messages.create(
-            model="claude-3-sonnet-20241022",  # or claude-3-haiku-20240307 for faster/cheaper
+            model="claude-3-sonnet-20240229", 
             max_tokens=1000,
             temperature=0.3,
             messages=[
