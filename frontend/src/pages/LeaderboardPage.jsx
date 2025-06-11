@@ -245,25 +245,22 @@ const ModernHeader = ({ totalMSPs, refreshing, needsRefresh, onRefresh }) => {
     <div className="relative mb-12">
       {/* Enhanced Background Decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-3xl">
-        <div className="absolute -top-20 -right-20 w-96 h-96 bg-gradient-to-br from-emerald-400/30 to-teal-600/30 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-gradient-to-br from-blue-400/30 to-indigo-600/30 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
-        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-br from-purple-400/20 to-pink-500/20 rounded-full blur-2xl animate-pulse" style={{animationDelay: '4s'}}></div>
-        
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(5,150,105,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(5,150,105,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+        <div className="absolute -top-20 -right-20 w-96 h-96 bg-gradient-to-br from-emerald-400 to-teal-600 opacity-30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-gradient-to-br from-blue-400 to-indigo-600 opacity-30 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-br from-purple-400 to-pink-500 opacity-20 rounded-full blur-2xl animate-pulse" style={{animationDelay: '4s'}}></div>
       </div>
 
       {/* Glass Morphism Container */}
-      <div className="relative backdrop-blur-20 bg-white/10 border border-white/20 rounded-3xl shadow-2xl overflow-hidden">
+      <div className="relative bg-white bg-opacity-10 backdrop-blur-lg border border-white border-opacity-20 rounded-3xl shadow-2xl overflow-hidden">
         {/* Gradient Border Effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 rounded-3xl"></div>
-        <div className="absolute inset-[1px] bg-white/5 backdrop-blur-15 rounded-3xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 opacity-20 rounded-3xl"></div>
+        <div className="absolute inset-1 bg-white bg-opacity-5 backdrop-blur-sm rounded-3xl"></div>
         
         {/* Content */}
         <div className="relative p-8 md:p-12">
           <div className="max-w-4xl">
             {/* Top badge with glassmorphism */}
-            <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-20 border border-white/20 px-6 py-3 rounded-full text-emerald-700 font-bold mb-8 shadow-xl">
+            <div className="inline-flex items-center gap-3 bg-white bg-opacity-10 backdrop-blur-lg border border-white border-opacity-20 px-6 py-3 rounded-full text-emerald-700 font-bold mb-8 shadow-xl">
               <div className="w-6 h-6 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
                 <Star className="w-4 h-4 text-white" />
               </div>
@@ -273,7 +270,7 @@ const ModernHeader = ({ totalMSPs, refreshing, needsRefresh, onRefresh }) => {
             
             {/* Main title with gradient text */}
             <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight tracking-tight">
-              <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent animate-pulse">
+              <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
                 MSP 파트너
               </span>
               <span className="block bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
@@ -289,7 +286,7 @@ const ModernHeader = ({ totalMSPs, refreshing, needsRefresh, onRefresh }) => {
             
             {/* Enhanced Stats row with glass cards */}
             <div className="flex flex-wrap gap-6 md:gap-8 mb-12">
-              <div className="flex items-center gap-4 bg-white/10 backdrop-blur-15 border border-white/20 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <div className="flex items-center gap-4 bg-white bg-opacity-10 backdrop-blur-sm border border-white border-opacity-20 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-xl">
                   <Users className="w-8 h-8 text-white" />
                 </div>
@@ -299,7 +296,7 @@ const ModernHeader = ({ totalMSPs, refreshing, needsRefresh, onRefresh }) => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 bg-white/10 backdrop-blur-15 border border-white/20 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <div className="flex items-center gap-4 bg-white bg-opacity-10 backdrop-blur-sm border border-white border-opacity-20 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">
                   <Target className="w-8 h-8 text-white" />
                 </div>
@@ -309,7 +306,7 @@ const ModernHeader = ({ totalMSPs, refreshing, needsRefresh, onRefresh }) => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 bg-white/10 backdrop-blur-15 border border-white/20 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <div className="flex items-center gap-4 bg-white bg-opacity-10 backdrop-blur-sm border border-white border-opacity-20 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-xl">
                   <Zap className="w-8 h-8 text-white" />
                 </div>
@@ -331,9 +328,6 @@ const ModernHeader = ({ totalMSPs, refreshing, needsRefresh, onRefresh }) => {
                     : 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-white transform hover:scale-105'
                 } disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
               >
-                {/* Shimmer effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 group-hover:animate-pulse"></div>
-                
                 <RefreshCw className={`w-6 h-6 relative z-10 ${refreshing ? 'animate-spin' : ''}`} />
                 <span className="relative z-10">
                   {refreshing ? '새로고침 중...' : needsRefresh ? '데이터 업데이트 필요' : '최신 데이터로 새로고침'}
