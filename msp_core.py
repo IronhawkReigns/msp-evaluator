@@ -95,7 +95,7 @@ def run_msp_recommendation(question: str, min_score: int):
         )
         
         response = client.messages.create(
-            model="claude-3-sonnet-20240229", 
+            model="claude-3-haiku-2024030", 
             max_tokens=1000,
             temperature=0.3,
             messages=[
