@@ -578,9 +578,9 @@
 
             {/* Enhanced Results Section */}
             {results && (
-              <div className="glass-morphism rounded-3xl shadow-2xl p-10 animate-fade-in-up">
+              <div className="glass-morphism rounded-3xl shadow-2xl p-6 animate-fade-in-up">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-10">
-                  <h2 className="text-4xl font-black text-slate-800 mb-6 lg:mb-0 gradient-text">검색 결과</h2>
+                  <h2 className="text-2xl font-black text-slate-800 mb-4 lg:mb-0 gradient-text">검색 결과</h2>
                   {(results.advanced || searchType === 'naver') && (
                     <div className="flex items-center space-x-4 px-6 py-3 bg-gradient-to-r from-emerald-100 to-teal-100 rounded-full shadow-lg border border-emerald-200">
                       <GlobeIcon className="w-6 h-6 text-emerald-600" />
@@ -603,9 +603,9 @@
                   </div>
                 ) : results.answer ? (
                   <div className="space-y-10">
-                    <div className="p-10 glass-card rounded-3xl border-l-6 border-emerald-500 shadow-xl hover:shadow-2xl transition-shadow duration-500">
-                      <div 
-                        className="text-slate-700 leading-relaxed text-xl font-semibold custom-scrollbar"
+                    <div className="p-6 glass-card rounded-2xl border-l-4 border-emerald-500 shadow-lg hover:shadow-xl transition-shadow duration-500">
+                        <div 
+                            className="text-slate-700 leading-relaxed text-base font-medium custom-scrollbar"
                         dangerouslySetInnerHTML={{ __html: results.answer.replace(/\n/g, '<br>') }}
                         style={{ maxHeight: '500px', overflowY: 'auto' }}
                       />
@@ -614,11 +614,11 @@
                     {results.evidence && results.evidence.length > 0 && (
                       <div>
                         <button
-                          onClick={() => setShowEvidence(!showEvidence)}
-                          className="flex items-center space-x-4 px-8 py-4 glass-card hover:shadow-xl rounded-2xl transition-all duration-300 font-bold text-lg hover-lift"
-                        >
-                          {showEvidence ? <EyeOffIcon className="w-6 h-6" /> : <EyeIcon className="w-6 h-6" />}
-                          <span className="text-xl">
+                            onClick={() => setShowEvidence(!showEvidence)}
+                            className="flex items-center space-x-3 px-6 py-3 glass-card hover:shadow-lg rounded-xl transition-all duration-300 font-medium text-base"
+                            >
+                            {showEvidence ? <EyeOffIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+                            <span className="text-base">
                             {showEvidence ? '🙈 근거 숨기기' : '🔍 왜 이 답변인가요?'}
                           </span>
                           <span className="text-lg text-emerald-600 font-black">({results.evidence.length}개 근거)</span>
@@ -627,8 +627,8 @@
                         {showEvidence && (
                           <div className="mt-8 space-y-6 animate-fade-in-up">
                             {results.evidence.map((evidence, index) => (
-                              <div key={index} className="p-8 glass-card rounded-2xl border-l-4 border-emerald-500 shadow-xl hover:shadow-2xl transition-all duration-500 hover-lift">
-                                <div className="font-black text-slate-800 mb-4 text-xl">
+                              <div key={index} className="p-4 glass-card rounded-xl border-l-3 border-emerald-500 shadow-md hover:shadow-lg transition-all duration-300">
+                                <div className="font-bold text-slate-800 mb-3 text-base">
                                   💬 Q: {evidence.question}
                                 </div>
                                 <div className="text-slate-600 mb-6 leading-relaxed text-lg font-medium">
