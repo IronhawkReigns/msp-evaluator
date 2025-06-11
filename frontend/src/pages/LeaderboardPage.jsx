@@ -240,9 +240,6 @@ const ModernFilterDropdown = ({ sortBy, setSortBy, refreshMessage }) => {
   );
 };
 
-import React from 'react';
-import { RefreshCw, Users, Target, Star, Zap } from 'lucide-react';
-
 const ModernHeader = ({ totalMSPs, refreshing, needsRefresh, onRefresh }) => {
   return (
     <div className="relative mb-12">
