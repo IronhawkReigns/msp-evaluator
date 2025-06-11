@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Trophy, Medal, Award, TrendingUp, Users, Cpu, Settings, Eye, Filter, RefreshCw } from "lucide-react";
-import { Zap, Star, Target } from "lucide-react";
+import { Zap, Star, Target, SparklesIcon } from "lucide-react";
 
 // Environment-aware API URL
 const API_BASE = 'https://mspevaluator.duckdns.org';
@@ -49,7 +49,7 @@ const MSPCard = ({ msp, rank, onSelect }) => {
   const categories = Object.entries(msp.category_scores || {});
   
   return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-blue-300">
+    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-blue-300 card-floating">
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -172,6 +172,69 @@ const MSPModal = ({ msp, onClose }) => {
   );
 };
 
+// Enhanced header component matching the style of other pages
+const EnhancedHeader = ({ currentTime, totalMSPs, refreshing, needsRefresh, onRefresh }) => {
+  return (
+    <header className="sticky top-0 z-50 glass-morphism border-b border-white/20 animate-fade-in-down">
+      <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 gradient-border rounded-2xl p-0.5">
+              <div className="w-full h-full bg-white rounded-xl flex items-center justify-center">
+                <Trophy className="w-6 h-6 text-emerald-600" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-2xl font-black gradient-text text-glow">NAVER Cloud</h1>
+              <p className="text-xs text-slate-500 font-medium">MSP 순위표 • {currentTime}</p>
+            </div>
+          </div>
+          
+          {/* Live Stats */}
+          <div className="hidden lg:flex items-center space-x-8">
+            <div className="text-center">
+              <div className="text-2xl font-black gradient-text">{totalMSPs}</div>
+              <div className="text-xs text-slate-500 font-medium">등록된 MSP</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-black gradient-text">3</div>
+              <div className="text-xs text-slate-500 font-medium">평가 영역</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-black gradient-text">실시간</div>
+              <div className="text-xs text-slate-500 font-medium">업데이트</div>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <a 
+              href="/" 
+              className="px-4 py-2 text-slate-600 hover:text-slate-900 font-semibold transition-all duration-300 hover:scale-105"
+            >
+              홈
+            </a>
+            <button
+              onClick={onRefresh}
+              disabled={refreshing}
+              className={`group relative overflow-hidden inline-flex items-center gap-3 px-6 py-3 rounded-2xl font-bold text-base transition-all duration-500 shadow-xl hover:shadow-2xl ${
+                needsRefresh 
+                  ? 'bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 text-white transform hover:scale-105' 
+                  : 'btn-gradient text-white transform hover:scale-105'
+              } disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
+            >
+              <RefreshCw className={`w-5 h-5 relative z-10 ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="relative z-10">
+                {refreshing ? '새로고침 중...' : needsRefresh ? '업데이트' : '새로고침'}
+              </span>
+              {!refreshing && <div className="absolute inset-0 shimmer-effect opacity-0 group-hover:opacity-100"></div>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
 // Filter controls component with refresh functionality
 const ModernFilterDropdown = ({ sortBy, setSortBy, refreshMessage }) => {
   return (
@@ -199,31 +262,33 @@ const ModernFilterDropdown = ({ sortBy, setSortBy, refreshMessage }) => {
       )}
       
       {/* Filter controls */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+      <div className="glass-morphism rounded-3xl shadow-2xl border border-white/20 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                <Filter className="w-5 h-5 text-white" />
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <Filter className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">정렬 기준</h3>
-                <p className="text-sm text-gray-500">원하는 기준으로 순위를 확인하세요</p>
+                <h3 className="text-xl font-black text-slate-800">정렬 기준</h3>
+                <p className="text-sm text-slate-500 font-medium">원하는 기준으로 순위를 확인하세요</p>
               </div>
             </div>
           </div>
           
           <div className="relative">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="appearance-none bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl px-6 py-4 pr-12 text-sm font-semibold text-gray-800 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all duration-300 min-w-[240px] cursor-pointer hover:from-blue-100 hover:to-indigo-100 shadow-sm hover:shadow-md"
-            >
-              <option value="total">🏆 종합 순위</option>
-              <option value="인적역량">👥 인적 역량</option>
-              <option value="AI기술역량">🤖 AI 기술 역량</option>
-              <option value="솔루션 역량">⚙️ 솔루션 역량</option>
-            </select>
+            <div className="gradient-border rounded-2xl p-0.5">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="appearance-none bg-white/80 backdrop-blur-sm border-0 rounded-2xl px-6 py-4 pr-12 text-base font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all duration-300 min-w-[240px] cursor-pointer hover:bg-white shadow-lg"
+              >
+                <option value="total">🏆 종합 순위</option>
+                <option value="인적역량">👥 인적 역량</option>
+                <option value="AI기술역량">🤖 AI 기술 역량</option>
+                <option value="솔루션 역량">⚙️ 솔루션 역량</option>
+              </select>
+            </div>
             
             {/* Custom dropdown arrow */}
             <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
@@ -240,27 +305,27 @@ const ModernFilterDropdown = ({ sortBy, setSortBy, refreshMessage }) => {
   );
 };
 
-const ModernHeader = ({ totalMSPs, refreshing, needsRefresh, onRefresh }) => {
+const ModernHeroSection = ({ totalMSPs }) => {
   return (
-    <div className="relative mb-12">
+    <div className="relative mb-20">
       {/* Enhanced Background Decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-3xl">
-        <div className="absolute -top-20 -right-20 w-96 h-96 bg-gradient-to-br from-emerald-400 to-teal-600 opacity-30 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-gradient-to-br from-blue-400 to-indigo-600 opacity-30 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
-        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-br from-purple-400 to-pink-500 opacity-20 rounded-full blur-2xl animate-pulse" style={{animationDelay: '4s'}}></div>
+        <div className="absolute -top-20 -right-20 w-96 h-96 bg-gradient-to-br from-emerald-400 to-teal-600 opacity-30 rounded-full blur-3xl animate-pulse floating"></div>
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-gradient-to-br from-blue-400 to-indigo-600 opacity-30 rounded-full blur-3xl animate-pulse floating" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-br from-purple-400 to-pink-500 opacity-20 rounded-full blur-2xl animate-pulse floating" style={{animationDelay: '4s'}}></div>
       </div>
 
       {/* Glass Morphism Container */}
-      <div className="relative bg-white bg-opacity-10 backdrop-blur-lg border border-white border-opacity-20 rounded-3xl shadow-2xl overflow-hidden">
+      <div className="relative glass-morphism rounded-3xl shadow-2xl overflow-hidden border border-white/20">
         {/* Gradient Border Effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 opacity-20 rounded-3xl"></div>
         <div className="absolute inset-1 bg-white bg-opacity-5 backdrop-blur-sm rounded-3xl"></div>
         
         {/* Content */}
         <div className="relative p-8 md:p-12">
-          <div className="max-w-4xl">
+          <div className="max-w-4xl text-center mx-auto">
             {/* Top badge with glassmorphism */}
-            <div className="inline-flex items-center gap-3 bg-white bg-opacity-10 backdrop-blur-lg border border-white border-opacity-20 px-6 py-3 rounded-full text-emerald-700 font-bold mb-8 shadow-xl">
+            <div className="inline-flex items-center gap-3 glass-card backdrop-blur-lg border border-white/20 px-6 py-3 rounded-full text-emerald-700 font-bold mb-8 shadow-xl">
               <div className="w-6 h-6 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
                 <Star className="w-4 h-4 text-white" />
               </div>
@@ -279,14 +344,14 @@ const ModernHeader = ({ totalMSPs, refreshing, needsRefresh, onRefresh }) => {
             </h1>
             
             {/* Subtitle */}
-            <p className="text-xl md:text-2xl text-slate-600 mb-12 max-w-3xl leading-relaxed font-medium">
+            <p className="text-xl md:text-2xl text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed font-medium">
               AI 시대를 선도하는 클라우드 전문가들의 
               <span className="font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent"> 역량 평가 결과</span>를 확인하세요
             </p>
             
             {/* Enhanced Stats row with glass cards */}
-            <div className="flex flex-wrap gap-6 md:gap-8 mb-12">
-              <div className="flex items-center gap-4 bg-white bg-opacity-10 backdrop-blur-sm border border-white border-opacity-20 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <div className="flex flex-wrap gap-6 md:gap-8 justify-center">
+              <div className="flex items-center gap-4 glass-card border border-white/20 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-xl">
                   <Users className="w-8 h-8 text-white" />
                 </div>
@@ -296,7 +361,7 @@ const ModernHeader = ({ totalMSPs, refreshing, needsRefresh, onRefresh }) => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 bg-white bg-opacity-10 backdrop-blur-sm border border-white border-opacity-20 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <div className="flex items-center gap-4 glass-card border border-white/20 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">
                   <Target className="w-8 h-8 text-white" />
                 </div>
@@ -306,7 +371,7 @@ const ModernHeader = ({ totalMSPs, refreshing, needsRefresh, onRefresh }) => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 bg-white bg-opacity-10 backdrop-blur-sm border border-white border-opacity-20 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <div className="flex items-center gap-4 glass-card border border-white/20 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-xl">
                   <Zap className="w-8 h-8 text-white" />
                 </div>
@@ -315,31 +380,6 @@ const ModernHeader = ({ totalMSPs, refreshing, needsRefresh, onRefresh }) => {
                   <div className="text-slate-600 text-sm font-semibold">업데이트</div>
                 </div>
               </div>
-            </div>
-            
-            {/* Enhanced Action button */}
-            <div className="flex flex-col sm:flex-row gap-4 items-start">
-              <button
-                onClick={onRefresh}
-                disabled={refreshing}
-                className={`group relative overflow-hidden inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-500 shadow-xl hover:shadow-2xl ${
-                  needsRefresh 
-                    ? 'bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 text-white transform hover:scale-105' 
-                    : 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-white transform hover:scale-105'
-                } disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
-              >
-                <RefreshCw className={`w-6 h-6 relative z-10 ${refreshing ? 'animate-spin' : ''}`} />
-                <span className="relative z-10">
-                  {refreshing ? '새로고침 중...' : needsRefresh ? '데이터 업데이트 필요' : '최신 데이터로 새로고침'}
-                </span>
-              </button>
-              
-              {needsRefresh && (
-                <div className="inline-flex items-center gap-3 bg-orange-100 border border-orange-200 rounded-2xl px-6 py-3 shadow-lg">
-                  <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
-                  <span className="text-orange-700 font-semibold">새로운 평가 데이터가 감지되었습니다</span>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -355,9 +395,9 @@ const ModernStatsGrid = ({ data }) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl p-6 border border-blue-200">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl p-6 border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="flex items-center justify-between mb-4">
-          <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
             <Users className="w-6 h-6 text-white" />
           </div>
           <div className="text-right">
@@ -368,9 +408,9 @@ const ModernStatsGrid = ({ data }) => {
         <div className="text-xs text-blue-600">전체 등록된 MSP 파트너</div>
       </div>
       
-      <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl p-6 border border-green-200">
+      <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl p-6 border border-green-200 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="flex items-center justify-between mb-4">
-          <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-lg">
             <TrendingUp className="w-6 h-6 text-white" />
           </div>
           <div className="text-right">
@@ -381,9 +421,9 @@ const ModernStatsGrid = ({ data }) => {
         <div className="text-xs text-green-600">전체 파트너사 평균</div>
       </div>
       
-      <div className="bg-gradient-to-br from-purple-50 to-violet-100 rounded-2xl p-6 border border-purple-200">
+      <div className="bg-gradient-to-br from-purple-50 to-violet-100 rounded-2xl p-6 border border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="flex items-center justify-between mb-4">
-          <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center shadow-lg">
             <Star className="w-6 h-6 text-white" />
           </div>
           <div className="text-right">
@@ -394,9 +434,9 @@ const ModernStatsGrid = ({ data }) => {
         <div className="text-xs text-purple-600">최우수 파트너사 점수</div>
       </div>
       
-      <div className="bg-gradient-to-br from-orange-50 to-amber-100 rounded-2xl p-6 border border-orange-200">
+      <div className="bg-gradient-to-br from-orange-50 to-amber-100 rounded-2xl p-6 border border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="flex items-center justify-between mb-4">
-          <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg">
             <Trophy className="w-6 h-6 text-white" />
           </div>
           <div className="text-right">
@@ -419,6 +459,12 @@ export default function LeaderboardPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshMessage, setRefreshMessage] = useState('');
   const [needsRefresh, setNeedsRefresh] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const loadLeaderboard = async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -490,8 +536,15 @@ export default function LeaderboardPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-8 relative overflow-hidden">
+        {/* Background decoration for loading state */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-emerald-400/30 to-teal-600/30 rounded-full blur-3xl floating"></div>
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-blue-400/30 to-indigo-600/30 rounded-full blur-3xl floating" style={{animationDelay: '2s'}}></div>
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(5,150,105,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(5,150,105,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center py-20">
             <div className="relative">
               <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
@@ -506,15 +559,29 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Modern Header */}
-        <ModernHeader 
-          totalMSPs={data.length}
-          refreshing={refreshing}
-          needsRefresh={needsRefresh}
-          onRefresh={handleRefresh}
-        />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
+      {/* Enhanced Background Decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-emerald-400/30 to-teal-600/30 rounded-full blur-3xl floating"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-blue-400/30 to-indigo-600/30 rounded-full blur-3xl floating" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-br from-purple-400/20 to-pink-500/20 rounded-full blur-2xl floating" style={{animationDelay: '4s'}}></div>
+        
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(5,150,105,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(5,150,105,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+      </div>
+
+      {/* Enhanced Header */}
+      <EnhancedHeader 
+        currentTime={currentTime.toLocaleTimeString('ko-KR')}
+        totalMSPs={data.length}
+        refreshing={refreshing}
+        needsRefresh={needsRefresh}
+        onRefresh={handleRefresh}
+      />
+
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 relative z-10">
+        {/* Modern Hero Section */}
+        <ModernHeroSection totalMSPs={data.length} />
 
         {/* Modern Filter Controls */}
         <ModernFilterDropdown 
@@ -543,6 +610,20 @@ export default function LeaderboardPage() {
           <MSPModal msp={selectedMSP} onClose={() => setSelectedMSP(null)} />
         )}
       </div>
+
+      {/* Enhanced Footer */}
+      <footer className="text-center py-16 text-slate-500 relative z-10 animate-fade-in-up">
+        <div className="max-w-3xl mx-auto">
+          <div className="glass-card rounded-3xl p-8 shadow-xl">
+            <p className="text-2xl font-bold mb-4 gradient-text">ⓒ 2025 Naver Cloud MSP 순위표</p>
+            <div className="flex justify-center space-x-4 mt-6">
+              <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+              <div className="w-3 h-3 bg-teal-500 rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></div>
+              <div className="w-3 h-3 bg-cyan-500 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
