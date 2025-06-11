@@ -500,7 +500,7 @@
                 </div>
                 <button
                   onClick={() => setShowSamples(!showSamples)}
-                  className="flex items-center space-x-4 px-8 py-4 glass-card rounded-2xl hover:shadow-xl transition-all duration-300 font-bold text-lg hover-lift"
+                  className="flex items-center space-x-4 px-8 py-4 glass-card rounded-2xl hover:shadow-xl transition-all duration-300 font-bold text-lg"
                 >
                   <span>✨ 예시 질문</span>
                   {showSamples ? <ChevronUpIcon className="w-6 h-6" /> : <ChevronDownIcon className="w-6 h-6" />}
@@ -542,7 +542,7 @@
                 <button
                   onClick={() => handleSearch()}
                   disabled={isLoading}
-                  className="flex-1 relative overflow-hidden group flex items-center justify-center space-x-4 px-10 py-8 btn-gradient text-white rounded-3xl font-black text-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-xl"
+                  className="flex-1 relative overflow-hidden group flex items-center justify-center space-x-4 px-10 py-8 btn-gradient text-white rounded-3xl font-black text-xl hover:shadow-2xl transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-xl"
                 >
                   <div className="absolute inset-0 shimmer-effect opacity-0 group-hover:opacity-100"></div>
                   {isLoading ? (
@@ -561,7 +561,7 @@
                 <button
                   onClick={() => handleSearch('/query/advanced_naver')}
                   disabled={isLoading}
-                  className="flex-1 relative overflow-hidden group flex items-center justify-center space-x-4 px-10 py-8 glass-card border-3 border-emerald-500 text-emerald-600 rounded-3xl font-black text-xl hover:bg-emerald-50 transition-all duration-500 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl hover:shadow-2xl"
+                  className="flex-1 relative overflow-hidden group flex items-center justify-center space-x-4 px-10 py-8 glass-card border-3 border-emerald-500 text-emerald-600 rounded-3xl font-black text-xl hover:bg-emerald-50 transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl hover:shadow-2xl"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   <GlobeIcon className="w-8 h-8 relative z-10" />
@@ -579,7 +579,7 @@
 
             {/* Enhanced Results Section */}
             {results && (
-              <div className="glass-morphism rounded-3xl shadow-2xl p-10 hover-lift animate-fade-in-up">
+              <div className="glass-morphism rounded-3xl shadow-2xl p-10 animate-fade-in-up">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-10">
                   <h2 className="text-4xl font-black text-slate-800 mb-6 lg:mb-0 gradient-text">검색 결과</h2>
                   {(results.advanced || searchType === 'naver') && (
