@@ -240,94 +240,118 @@ const ModernFilterDropdown = ({ sortBy, setSortBy, refreshMessage }) => {
   );
 };
 
+import React from 'react';
+import { RefreshCw, Users, Target, Star, Zap } from 'lucide-react';
+
 const ModernHeader = ({ totalMSPs, refreshing, needsRefresh, onRefresh }) => {
   return (
     <div className="relative mb-12">
-      {/* Background with gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 rounded-3xl"></div>
-      <div className="absolute inset-0 bg-black bg-opacity-20 rounded-3xl"></div>
-      
-      {/* Content */}
-      <div className="relative p-8 md:p-12 text-white">
-        <div className="max-w-4xl">
-          {/* Top badge */}
-          <div className="inline-flex items-center gap-2 bg-white bg-opacity-20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <Star className="w-4 h-4 text-yellow-300" />
-            Naver Cloud Platform
-          </div>
-          
-          {/* Main title */}
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight">
-            MSP 파트너
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-300">
-              순위표
-            </span>
-          </h1>
-          
-          {/* Subtitle */}
-          <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-2xl leading-relaxed">
-            AI 시대를 선도하는 클라우드 전문가들의 
-            <span className="text-yellow-300 font-semibold"> 역량 평가 결과</span>를 확인하세요
-          </p>
-          
-          {/* Stats row */}
-          <div className="flex flex-wrap gap-6 md:gap-8 mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-yellow-300" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{totalMSPs}</div>
-                <div className="text-blue-200 text-sm">참여 파트너사</div>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <Target className="w-6 h-6 text-green-300" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">3</div>
-                <div className="text-blue-200 text-sm">평가 영역</div>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <Zap className="w-6 h-6 text-purple-300" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">실시간</div>
-                <div className="text-blue-200 text-sm">업데이트</div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Action button */}
-          <button
-            onClick={onRefresh}
-            disabled={refreshing}
-            className={`inline-flex items-center gap-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-              needsRefresh 
-                ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg hover:shadow-xl text-white' 
-                : 'bg-white bg-opacity-20 backdrop-blur-sm hover:bg-opacity-30 text-white border border-white border-opacity-30'
-            } disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105`}
-          >
-            <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? '새로고침 중...' : needsRefresh ? '데이터 업데이트 필요' : '최신 데이터로 새로고침'}
-          </button>
-          
-          {needsRefresh && (
-            <div className="mt-4 inline-flex items-center gap-2 text-orange-300 text-sm">
-              <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
-              새로운 평가 데이터가 감지되었습니다
-            </div>
-          )}
-        </div>
+      {/* Enhanced Background Decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-3xl">
+        <div className="absolute -top-20 -right-20 w-96 h-96 bg-gradient-to-br from-emerald-400/30 to-teal-600/30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-gradient-to-br from-blue-400/30 to-indigo-600/30 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-br from-purple-400/20 to-pink-500/20 rounded-full blur-2xl animate-pulse" style={{animationDelay: '4s'}}></div>
         
-        {/* Decorative elements */}
-        <div className="absolute top-8 right-8 w-32 h-32 bg-white bg-opacity-10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-8 right-16 w-24 h-24 bg-yellow-300 bg-opacity-20 rounded-full blur-2xl"></div>
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(5,150,105,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(5,150,105,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+      </div>
+
+      {/* Glass Morphism Container */}
+      <div className="relative backdrop-blur-20 bg-white/10 border border-white/20 rounded-3xl shadow-2xl overflow-hidden">
+        {/* Gradient Border Effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 rounded-3xl"></div>
+        <div className="absolute inset-[1px] bg-white/5 backdrop-blur-15 rounded-3xl"></div>
+        
+        {/* Content */}
+        <div className="relative p-8 md:p-12">
+          <div className="max-w-4xl">
+            {/* Top badge with glassmorphism */}
+            <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-20 border border-white/20 px-6 py-3 rounded-full text-emerald-700 font-bold mb-8 shadow-xl">
+              <div className="w-6 h-6 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+                <Star className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-lg">Naver Cloud Platform</span>
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+            </div>
+            
+            {/* Main title with gradient text */}
+            <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight tracking-tight">
+              <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent animate-pulse">
+                MSP 파트너
+              </span>
+              <span className="block bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                순위표
+              </span>
+            </h1>
+            
+            {/* Subtitle */}
+            <p className="text-xl md:text-2xl text-slate-600 mb-12 max-w-3xl leading-relaxed font-medium">
+              AI 시대를 선도하는 클라우드 전문가들의 
+              <span className="font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent"> 역량 평가 결과</span>를 확인하세요
+            </p>
+            
+            {/* Enhanced Stats row with glass cards */}
+            <div className="flex flex-wrap gap-6 md:gap-8 mb-12">
+              <div className="flex items-center gap-4 bg-white/10 backdrop-blur-15 border border-white/20 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-xl">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <div className="text-3xl font-black text-slate-800">{totalMSPs}</div>
+                  <div className="text-slate-600 text-sm font-semibold">참여 파트너사</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-4 bg-white/10 backdrop-blur-15 border border-white/20 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">
+                  <Target className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <div className="text-3xl font-black text-slate-800">3</div>
+                  <div className="text-slate-600 text-sm font-semibold">평가 영역</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-4 bg-white/10 backdrop-blur-15 border border-white/20 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-xl">
+                  <Zap className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <div className="text-3xl font-black text-slate-800">실시간</div>
+                  <div className="text-slate-600 text-sm font-semibold">업데이트</div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Enhanced Action button */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start">
+              <button
+                onClick={onRefresh}
+                disabled={refreshing}
+                className={`group relative overflow-hidden inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-500 shadow-xl hover:shadow-2xl ${
+                  needsRefresh 
+                    ? 'bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 text-white transform hover:scale-105' 
+                    : 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-white transform hover:scale-105'
+                } disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
+              >
+                {/* Shimmer effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 group-hover:animate-pulse"></div>
+                
+                <RefreshCw className={`w-6 h-6 relative z-10 ${refreshing ? 'animate-spin' : ''}`} />
+                <span className="relative z-10">
+                  {refreshing ? '새로고침 중...' : needsRefresh ? '데이터 업데이트 필요' : '최신 데이터로 새로고침'}
+                </span>
+              </button>
+              
+              {needsRefresh && (
+                <div className="inline-flex items-center gap-3 bg-orange-100 border border-orange-200 rounded-2xl px-6 py-3 shadow-lg">
+                  <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
+                  <span className="text-orange-700 font-semibold">새로운 평가 데이터가 감지되었습니다</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
