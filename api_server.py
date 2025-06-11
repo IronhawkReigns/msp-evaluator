@@ -976,3 +976,7 @@ def serve_leaderboard():
 @app.get("/leaderboard/{path:path}")
 def serve_leaderboard_paths(path: str):
     return FileResponse("static/index.html")
+
+@app.get("/search")
+def serve_react_search():
+    return FileResponse("static/search.html")
