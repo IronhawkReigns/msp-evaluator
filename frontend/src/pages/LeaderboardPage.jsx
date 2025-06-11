@@ -190,22 +190,6 @@ const EnhancedHeader = ({ currentTime, totalMSPs, refreshing, needsRefresh, onRe
             </div>
           </div>
           
-          {/* Live Stats */}
-          <div className="hidden lg:flex items-center space-x-8">
-            <div className="text-center">
-              <div className="text-2xl font-black gradient-text">{totalMSPs}</div>
-              <div className="text-xs text-slate-500 font-medium">등록된 MSP</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-black gradient-text">3</div>
-              <div className="text-xs text-slate-500 font-medium">평가 영역</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-black gradient-text">실시간</div>
-              <div className="text-xs text-slate-500 font-medium">업데이트</div>
-            </div>
-          </div>
-          
           <div className="flex items-center space-x-4">
             <a 
               href="/" 
