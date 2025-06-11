@@ -29,75 +29,96 @@ def run_msp_recommendation(question: str, min_score: int):
     """
     Enhanced MSP recommendation using Claude instead of CLOVA
     """
-    try:
+    try:  # This line was missing proper indentation
         query_vector = query_embed(question)
         query_results = collection.query(
             query_embeddings=[query_vector],
-            n_results=10
+            n_results=15  # Get more results for Claude to analyze
         )
         grouped_chunks = defaultdict(list)
         for meta in query_results["metadatas"][0]:
             if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
                 continue
             if meta["score"] is not None and int(meta["score"]) >= min_score:
-                grouped_chunks[meta["msp_name"]].append(
-                    f"Q: {meta['question']}\nA: {meta['answer']} (점수: {meta['score']}/5)"
-                )
+                grouped_chunks[meta["msp_name"]].append({
+                    "question": meta['question'],
+                    "answer": meta['answer'],
+                    "score": meta['score'],
+                    "category": meta.get('category', '미분류')
+                })
 
         if not grouped_chunks:
             return {"answer": "해당 조건에 맞는 평가 데이터를 찾을 수 없습니다."}
 
+        # Build richer context for Claude
         context_blocks = []
+        company_summaries = []
+        
         for msp, qa_list in grouped_chunks.items():
-            context_blocks.append(f"[{msp}]\n" + "\n".join(qa_list))
+            # Calculate average score and category distribution
+            scores = [qa['score'] for qa in qa_list]
+            avg_score = sum(scores) / len(scores)
+            categories = list(set([qa['category'] for qa in qa_list if qa['category'] != '미분류']))
+            
+            company_summaries.append(f"• {msp}: {len(qa_list)}개 항목, 평균점수 {avg_score:.1f}/5, 주요영역 {', '.join(categories[:3])}")
+            
+            # Create detailed Q&A block
+            qa_details = []
+            for qa in qa_list[:5]:  # Top 5 most relevant per company
+                qa_details.append(f"Q: {qa['question']}\nA: {qa['answer']}\n평가점수: {qa['score']}/5 | 영역: {qa['category']}")
+            
+            context_blocks.append(f"=== {msp} ===\n" + "\n\n".join(qa_details))
 
         context = "\n\n".join(context_blocks)
+        company_overview = "\n".join(company_summaries)
         
-        # Enhanced prompt for Claude
-        prompt = f"""다음은 MSP 파트너사들의 평가 데이터입니다:
+        # Enhanced prompt giving Claude more freedom
+        prompt = f"""다음은 MSP 파트너사들의 상세 평가 데이터입니다:
 
+**회사별 요약**
+{company_overview}
+
+**상세 평가 데이터**
 {context}
 
-사용자 질문: "{question}"
+**사용자 질문**: "{question}"
 
-위 데이터를 바탕으로 이 질문에 가장 적합한 상위 2개 MSP를 추천해주세요.
+당신은 클라우드 MSP 선정 전문가입니다. 위 데이터를 종합적으로 분석하여 사용자의 질문에 가장 적합한 파트너사들을 추천해주세요.
 
-평가 기준:
-1. 질문과의 직접적 관련성
-2. 답변의 구체성과 상세함
-3. 해당 영역의 평가 점수
-4. 실제 경험과 역량 증명
+**분석 가이드라인:**
+- 질문의 핵심 요구사항을 파악하고 그에 맞는 회사들을 선별하세요
+- 단순히 점수가 높은 회사보다는, 질문과의 실질적 관련성을 우선하세요  
+- 답변의 구체성, 경험의 깊이, 실제 사례 유무를 중요하게 평가하세요
+- 필요하다면 2개 이상의 회사도 추천할 수 있습니다
+- 각 회사의 차별화된 강점과 적합한 상황을 명확히 설명하세요
 
-응답 형식:
-**1위 추천: [회사명]**
-- 추천 이유: [구체적 근거 2-3문장]
-- 핵심 강점: [주요 강점 요약]
-- 관련 점수: [해당 영역 점수들]
+**응답 형식:**
+**🏆 최고 추천: [회사명]**
+- **왜 이 회사인가**: [핵심 이유 2-3문장]
+- **차별화 강점**: [고유한 장점들]
 
-**2위 추천: [회사명]**
-- 추천 이유: [구체적 근거 2-3문장]  
-- 핵심 강점: [주요 강점 요약]
-- 관련 점수: [해당 영역 점수들]
+**🥈 강력 후보: [회사명]** (필요시)
+- **추천 이유**: [구체적 근거]
+- **보완적 강점**: [1순위와 다른 장점]
 
-주의사항:
-- 주어진 데이터에 없는 내용은 추론하지 말 것
-- 명확한 근거가 있는 경우에만 추천
-- 점수보다는 답변 내용의 구체성을 우선시할 것"""
+**주의사항:**
+- 주어진 데이터에 명확한 근거가 없으면 추측하지 마세요
+- 회사별 고유한 특성과 경험을 부각시키세요"""
 
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
 
-    # Claude API call
+    # Claude API call with enhanced parameters
     try:
         client = anthropic.Anthropic(
             api_key=os.getenv("ANTHROPIC_API_KEY")
         )
         
         response = client.messages.create(
-            model="claude-3-haiku-20240307", 
-            max_tokens=1000,
-            temperature=0.3,
+            model="claude-3-haiku-20240307",
+            max_tokens=1200,  # More tokens for detailed analysis
+            temperature=0.2,  # Lower temperature for more focused analysis
             messages=[
                 {
                     "role": "user",
@@ -107,14 +128,14 @@ def run_msp_recommendation(question: str, min_score: int):
         )
         
         answer = response.content[0].text.strip()
-        
-        # Clean up common issues
         answer = answer.replace("설루션", "솔루션")
         
         return {
             "answer": answer,
             "evidence": query_results["metadatas"][0],
-            "model_used": "claude-3-sonnet"
+            "model_used": "claude-3-haiku-enhanced",
+            "analysis_depth": "comprehensive",
+            "companies_analyzed": len(grouped_chunks)
         }
         
     except Exception as e:
