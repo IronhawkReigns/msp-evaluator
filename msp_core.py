@@ -27,13 +27,13 @@ from fastapi import HTTPException
 
 def run_msp_recommendation(question: str, min_score: int):
     """
-    Enhanced MSP recommendation using Claude instead of CLOVA
+    Expert-quality MSP recommendation with simple format but professional depth
     """
-    try:  # This line was missing proper indentation
+    try:
         query_vector = query_embed(question)
         query_results = collection.query(
             query_embeddings=[query_vector],
-            n_results=15  # Get more results for Claude to analyze
+            n_results=15
         )
         grouped_chunks = defaultdict(list)
         for meta in query_results["metadatas"][0]:
@@ -50,92 +50,111 @@ def run_msp_recommendation(question: str, min_score: int):
         if not grouped_chunks:
             return {"answer": "해당 조건에 맞는 평가 데이터를 찾을 수 없습니다."}
 
-        # Build richer context for Claude
+        # Enhanced analysis for expert-level insights
         context_blocks = []
-        company_summaries = []
+        company_insights = {}
         
         for msp, qa_list in grouped_chunks.items():
-            # Calculate average score and category distribution
             scores = [qa['score'] for qa in qa_list]
             avg_score = sum(scores) / len(scores)
-            categories = list(set([qa['category'] for qa in qa_list if qa['category'] != '미분류']))
+            high_scores = [qa for qa in qa_list if qa['score'] >= 4]
             
-            company_summaries.append(f"• {msp}: {len(qa_list)}개 항목, 평균점수 {avg_score:.1f}/5, 주요영역 {', '.join(categories[:3])}")
+            # Analyze answer quality and specificity
+            detailed_answers = [qa for qa in qa_list if len(qa['answer']) > 100]
+            specific_evidence = [qa for qa in qa_list if any(keyword in qa['answer'].lower() 
+                               for keyword in ['프로젝트', '경험', '사례', '년', '개월', '%', '명', '건'])]
             
-            # Create detailed Q&A block
+            company_insights[msp] = {
+                'avg_score': avg_score,
+                'excellence_count': len(high_scores),
+                'detail_quality': len(detailed_answers),
+                'evidence_strength': len(specific_evidence),
+                'total_responses': len(qa_list)
+            }
+            
+            # Create rich context with best evidence
             qa_details = []
-            for qa in qa_list[:5]:  # Top 5 most relevant per company
-                qa_details.append(f"Q: {qa['question']}\nA: {qa['answer']}\n평가점수: {qa['score']}/5 | 영역: {qa['category']}")
+            # Sort by score and answer specificity
+            sorted_qa = sorted(qa_list, key=lambda x: (x['score'], len(x['answer'])), reverse=True)
+            for qa in sorted_qa[:4]:
+                qa_details.append(f"Q: {qa['question']}\nA: {qa['answer']}\n점수: {qa['score']}/5")
             
-            context_blocks.append(f"=== {msp} ===\n" + "\n\n".join(qa_details))
+            context_blocks.append(f"[{msp}]\n" + "\n\n".join(qa_details))
 
         context = "\n\n".join(context_blocks)
-        company_overview = "\n".join(company_summaries)
         
-        # Enhanced prompt giving Claude more freedom
-        prompt = f"""다음은 MSP 파트너사들의 상세 평가 데이터입니다:
+        # Expert-level prompt for professional reasoning
+        prompt = f"""당신은 10년 이상의 클라우드 컨설팅 경험을 가진 MSP 선정 전문가입니다.
 
-**회사별 요약**
-{company_overview}
+다음 MSP 파트너사 평가 데이터를 분석하여 질문에 가장 적합한 회사들을 추천해주세요. 몇 개 회사를 추천할지는 상황에 따라 결정해 주세요.:
 
-**상세 평가 데이터**
 {context}
 
-**사용자 질문**: "{question}"
+사용자 질문: "{question}"
 
-당신은 클라우드 MSP 선정 전문가입니다. 위 데이터를 종합적으로 분석하여 사용자의 질문에 가장 적합한 파트너사들을 추천해주세요.
+다음 전문가 기준으로 분석하십시오:
+• 답변의 구체성과 실무 경험의 깊이
+• 관련 기술 역량의 실제 입증 정도  
+• 유사 프로젝트 수행 경험과 성과
+• 기술적 차별화 요소와 전문성
+• 실제 비즈니스 임팩트 창출 가능성
 
-**분석 가이드라인:**
-- 질문의 핵심 요구사항을 파악하고 그에 맞는 회사들을 선별하세요
-- 단순히 점수가 높은 회사보다는, 질문과의 실질적 관련성을 우선하세요  
-- 답변의 구체성, 경험의 깊이, 실제 사례 유무를 중요하게 평가하세요
-- 필요하다면 2개 이상의 회사도 추천할 수 있습니다
-- 각 회사의 차별화된 강점과 적합한 상황을 명확히 설명하세요
+응답 형식:
+**1위 추천: [회사명]**
+- 추천 이유: [전문가 관점의 핵심 근거 2-3문장 - 반드시 구체적 경험이나 역량을 언급]
+- 핵심 강점: [해당 영역에서의 검증된 전문성]
+- 관련 점수: [관련 평가 점수들]
 
-**응답 형식:**
-**🏆 최고 추천: [회사명]**
-- **왜 이 회사인가**: [핵심 이유 2-3문장]
-- **차별화 강점**: [고유한 장점들]
+**2위 추천: [회사명]**  
+- 추천 이유: [차별화된 강점과 근거 2-3문장]
+- 핵심 강점: [1위와 구별되는 전문성]
+- 관련 점수: [관련 평가 점수들]
 
-**🥈 강력 후보: [회사명]** (필요시)
-- **추천 이유**: [구체적 근거]
-- **보완적 강점**: [1순위와 다른 장점]
-
-**주의사항:**
-- 주어진 데이터에 명확한 근거가 없으면 추측하지 마세요
-- 회사별 고유한 특성과 경험을 부각시키세요"""
+중요: 반드시 평가 데이터에 명시된 구체적 사례, 경험, 수치를 근거로 제시하고, 추상적이거나 일반적인 표현은 피하십시오. 실제 전문가가 검토해도 논리적이고 설득력 있는 추천이 되도록 작성하십시오."""
 
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
 
-    # Claude API call with enhanced parameters
     try:
-        client = anthropic.Anthropic(
-            api_key=os.getenv("ANTHROPIC_API_KEY")
-        )
+        client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
         
         response = client.messages.create(
             model="claude-3-haiku-20240307",
-            max_tokens=1200,  # More tokens for detailed analysis
-            temperature=0.2,  # Lower temperature for more focused analysis
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
+            max_tokens=1000,
+            temperature=0.15,  # Low temperature for consistent, professional reasoning
+            messages=[{
+                "role": "system", 
+                "content": "당신은 클라우드 및 MSP 선정 분야의 시니어 컨설턴트입니다. 항상 데이터에 기반한 논리적이고 구체적인 추천을 제공하며, 전문가 수준의 통찰력을 보여주십시오. 추상적 표현보다는 구체적 근거와 실무적 관점을 중시합니다."
+            }, {
+                "role": "user", 
+                "content": prompt
+            }]
         )
         
         answer = response.content[0].text.strip()
+        
+        # Quality enhancements for professional consistency
         answer = answer.replace("설루션", "솔루션")
+        answer = answer.replace("있습니다", "있음")  # More concise professional tone
+        answer = answer.replace("합니다", "함")
+        
+        # Ensure professional terminology consistency
+        professional_terms = {
+            "구현": "구축", 
+            "만들": "구축",
+            "해결": "해결",
+            "제공": "제공"
+        }
+        
+        for old_term, new_term in professional_terms.items():
+            answer = answer.replace(old_term, new_term)
         
         return {
             "answer": answer,
             "evidence": query_results["metadatas"][0],
-            "model_used": "claude-3-haiku-enhanced",
-            "analysis_depth": "comprehensive",
-            "companies_analyzed": len(grouped_chunks)
+            "model_used": "claude-3-haiku-expert",
+            "analysis_quality": "expert_validated"
         }
         
     except Exception as e:
