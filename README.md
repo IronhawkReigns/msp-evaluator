@@ -23,15 +23,15 @@ An enterprise-grade AI platform that revolutionizes cloud MSP partner evaluation
 
 ```mermaid
 graph TB
-    A[React Frontend] --> B[FastAPI Backend]
-    B --> C[ChromaDB<br/>Vector Store]
-    B --> D[HyperCLOVA<br/>API]
-    B --> E[Claude API]
-    B --> F[Perplexity<br/>API]
-    B --> G[NAVER<br/>Search API]
-    C --> H[1024D<br/>Embeddings]
-    I[Admin<br/>Dashboard] --> B
-    J[Excel<br/>Upload] --> B
+    A[React UI] --> B[FastAPI<br/>Backend]
+    I[Admin UI] --> B
+    J[Excel Upload] --> B
+    B --> C[ChromaDB<br/>Store]
+    B --> D[HyperCLOVA]
+    B --> E[Claude]
+    B --> F[Perplexity]
+    B --> G[NAVER Search]
+    C --> H[1024D<br/>Embedding]
 ```
 
 ### Core Technology Stack
