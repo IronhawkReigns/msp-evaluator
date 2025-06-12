@@ -600,8 +600,7 @@ def run_msp_news_summary_clova(question: str):
 
 def run_msp_news_summary_claude(question: str):
     """
-    Naver search-based MSP information summary using Claude for response generation
-    and CLOVA for MSP name extraction (best of both worlds)
+    Enhanced version with more data for Claude
     """
     import urllib.parse
     import urllib.request
@@ -609,42 +608,28 @@ def run_msp_news_summary_claude(question: str):
     import anthropic
     import os
 
-    # Use CLOVA for MSP name extraction (it might be better tuned for Korean company names)
     msp_name = extract_msp_name(question)
     if not msp_name:
         return {"answer": "회사명을 인식하지 못했습니다. 다시 시도해 주세요.", "advanced": True}
 
-    print(f"🏢 Extracted company name: '{msp_name}'")
-
-    # Get vector DB information for the MSP first (this is our most reliable source)
-    db_context = ""
+    # Enhanced vector DB search - get more relevant data for Claude
     try:
         query_vector = query_embed(question)
         query_results = collection.query(
             query_embeddings=[query_vector],
-            n_results=10
+            n_results=15
         )
         db_chunks = [
-            f"Q: {chunk['question']}\nA: {chunk['answer']}"
+            f"Q: {chunk['question']}\nA: {chunk['answer']} (점수: {chunk.get('score', 'N/A')}/5)"
             for chunk in query_results["metadatas"][0]
             if chunk.get("msp_name") == msp_name and chunk.get("question") and chunk.get("answer")
-        ][:5]
+        ][:8]
         db_context = "\n\n".join(db_chunks)
-        print(f"📊 Found {len(db_chunks)} relevant Q&A pairs from internal database")
     except Exception as e:
-        print(f"⚠️ Vector DB search failed: {e}")
         db_context = ""
 
-    # If we have good internal data, we can proceed even without external APIs
-    if db_context and len(db_chunks) >= 3:
-        print("✅ Sufficient internal data found - proceeding with limited external search")
-        use_fallback_mode = True
-    else:
-        print("📡 Need external data - attempting full API search")
-        use_fallback_mode = False
-
     try:
-        # Increase data collection since Claude can handle more intelligently
+        # Enhanced API calls - get more comprehensive data
         query = urllib.parse.quote(msp_name)
         
         # Get more news articles for better coverage
@@ -659,155 +644,82 @@ def run_msp_news_summary_claude(question: str):
                 raise Exception(f"Naver API Error: {response.status}")
             news_data = json.loads(response.read().decode("utf-8"))
 
-        # Get more web results for comprehensive coverage
+        # Get more web documents for comprehensive view
         url_web = f"https://openapi.naver.com/v1/search/webkr.json?query={query}&display=7&sort=sim"
         req_web = urllib.request.Request(url_web, headers=headers)
         with urllib.request.urlopen(req_web) as response_web:
             if response_web.status != 200:
                 raise Exception(f"Naver Web API Error: {response_web.status}")
-            web_data = json.loads(response.read().decode("utf-8"))
+            web_data = json.loads(response_web.read().decode("utf-8"))
 
-        # Validate final results
-        total_external_items = len(news_data.get("items", [])) + len(web_data.get("items", []))
-        print(f"📊 Total external items found: {total_external_items}")
-        
-        if total_external_items == 0:
-            print("📭 No external search results found")
-            if db_context:
-                print("✅ Using internal database data only")
-                return generate_response_from_internal_data_only(question, msp_name, db_context)
-            else:
-                return {"answer": f"{msp_name}에 대한 검색 결과를 찾을 수 없습니다. 해당 회사가 데이터베이스에 등록되어 있는지 확인해주세요.", "advanced": True}
+        if "items" not in news_data or not news_data["items"]:
+            return {"answer": f"{msp_name}에 대한 뉴스 기사를 찾을 수 없습니다.", "advanced": True}
 
-        # Smart filtering and prioritization for Claude
+        # Enhanced data cleaning and formatting for Claude
         def clean_text(text):
-            if not text:
-                return ""
             return text.replace('<b>', '').replace('</b>', '').replace('&quot;', '"').replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
-        
-        def calculate_relevance_score(item, company_name):
-            """Calculate relevance score based on company name mentions and content quality"""
-            if not item or not company_name:
-                return 0
-                
-            title = clean_text(item.get('title', '')).lower()
-            desc = clean_text(item.get('description', '')).lower()
-            company_lower = company_name.lower()
-            
-            score = 0
-            # Title mentions get higher score
-            if company_lower in title:
-                score += 3
-            # Description mentions
-            if company_lower in desc:
-                score += 2
-            # Longer descriptions usually have more content
-            if len(desc) > 100:
-                score += 1
-            # Recent articles (if pubDate exists)
-            if item.get('pubDate'):
-                score += 1
-            
-            return score
 
-        # Filter and rank news articles by relevance
-        news_items = news_data.get("items", [])
-        if news_items:
-            scored_news = [(item, calculate_relevance_score(item, msp_name)) for item in news_items if item]
-            scored_news.sort(key=lambda x: x[1], reverse=True)
-            # Take top 12 most relevant news articles
-            top_news = [item[0] for item in scored_news[:12]]
-            print(f"📊 Selected top {len(top_news)} relevant news articles")
-        else:
-            top_news = []
-            print("📭 No news articles to process")
-        
-        # Filter and rank web results
-        web_items = web_data.get("items", [])
-        if web_items:
-            scored_web = [(item, calculate_relevance_score(item, msp_name)) for item in web_items if item]
-            scored_web.sort(key=lambda x: x[1], reverse=True)
-            # Take top 5 most relevant web results
-            top_web = [item[0] for item in scored_web[:5]]
-            print(f"📊 Selected top {len(top_web)} relevant web documents")
-        else:
-            top_web = []
-            print("📭 No web documents to process")
-
-        # Enhanced formatting with more structured information
-        article_summaries = []
-        for i, item in enumerate(top_news, 1):
-            if not item:
-                continue
+        # Structured news formatting with more metadata
+        news_items = []
+        for i, item in enumerate(news_data["items"][:12], 1):  # Top 12 most relevant
             title = clean_text(item.get('title', ''))
             desc = clean_text(item.get('description', ''))
-            pub_date = item.get('pubDate', '')
+            pub_date = item.get('pubDate', '')[:10] if item.get('pubDate') else 'N/A'
             
-            if title or desc:  # Only include if we have some content
-                article_summaries.append(
-                    f"{i}. 제목: {title}\n"
-                    f"   내용: {desc}\n"
-                    f"   날짜: {pub_date[:10] if pub_date else 'N/A'}"
-                )
+            if title and desc:  # Only include substantial content
+                news_items.append(f"{i}. [{pub_date}] {title}\n   세부내용: {desc}")
 
-        web_summaries = []
-        for i, item in enumerate(top_web, 1):
-            if not item:
-                continue
+        # Structured web formatting with quality filtering
+        web_items = []
+        for i, item in enumerate(web_data.get("items", [])[:5], 1):  # Top 5 web docs
             title = clean_text(item.get('title', ''))
             desc = clean_text(item.get('description', ''))
             
-            if title or desc:  # Only include if we have some content
-                web_summaries.append(
-                    f"{i}. 제목: {title}\n"
-                    f"   내용: {desc}"
-                )
+            if title and desc and len(desc) > 50:  # Filter for substantial content
+                web_items.append(f"{i}. {title}\n   요약: {desc}")
 
-        article_text = "\n\n".join(article_summaries) if article_summaries else "관련 뉴스 기사를 찾을 수 없습니다."
-        web_text = "\n\n".join(web_summaries) if web_summaries else "관련 웹 문서를 찾을 수 없습니다."
-        
-        print(f"📄 Prepared {len(article_summaries)} news summaries and {len(web_summaries)} web summaries")
+        article_text = "\n\n".join(news_items)
+        web_text = "\n\n".join(web_items)
 
-        # Enhanced prompt for Claude with better data organization
-        prompt = f"""다음은 클라우드 MSP 기업 '{msp_name}'에 대한 종합 정보입니다. 이 풍부한 데이터를 바탕으로 사용자 질문에 전문적이고 통찰력 있는 답변을 제공해주세요.
+        # Enhanced prompt designed for Claude's analytical capabilities
+        prompt = f"""다음은 클라우드 MSP 파트너사 '{msp_name}'에 대한 종합 정보입니다. 이 다양한 정보원을 분석하여 사용자 질문에 전문적이고 통찰력 있는 답변을 제공해주세요.
 
 사용자 질문: "{question}"
 
-[내부 평가 데이터 - 신뢰도: 최고]
+=== 내부 평가 데이터 (가장 신뢰도 높음) ===
 {db_context}
 
-[뉴스 기사 정보 - {len(top_news)}개 선별된 관련 기사]
+=== 뉴스 기사 정보 ({len(news_items)}개 최신 기사) ===
 {article_text}
 
-[웹 문서 정보 - {len(top_web)}개 선별된 관련 문서]
+=== 웹 문서 정보 ({len(web_items)}개 관련 문서) ===
 {web_text}
 
-[전문가 수준 응답 지침]
-1. **정보 통합**: 내부 평가 데이터를 기반으로 하되, 뉴스와 웹 정보로 보완하여 종합적 시각을 제공하세요.
+=== 전문가 수준 분석 지침 ===
+1. **정보 통합 분석**: 내부 평가, 뉴스, 웹 정보를 종합하여 균형잡힌 시각 제공
+2. **신뢰도 우선순위**: 내부 평가 데이터 → 공식 뉴스 → 웹 문서 순으로 가중치 적용
+3. **구체적 근거 제시**: 
+   - 평가 점수나 구체적 수치 우선 언급
+   - 시기별 변화나 최근 동향 파악
+   - 경쟁사 대비 차별화 요소 식별
+4. **실무적 관점**: 실제 고객/파트너 관점에서 의미있는 정보 우선 정리
+5. **객관적 균형**: 강점과 개선영역을 모두 고려한 공정한 평가
 
-2. **신뢰도 우선순위**: 내부 평가 데이터 > 공식 뉴스 > 웹 문서 순으로 신뢰도를 고려하세요.
+응답 형식: 자연스럽고 전문적인 한국어로 작성하되, 마케팅 표현보다는 팩트와 데이터 중심으로 서술해주세요."""
 
-3. **구체성 강조**: 
-   - 구체적 수치, 프로젝트명, 파트너십 정보 우선 언급
-   - 모호한 표현보다는 팩트 기반 서술
-   - 시기별 변화나 발전 과정이 있다면 시계열로 정리
+    except Exception as e:
+        traceback.print_exc()
+        return {"answer": f"뉴스 기반 요약에 실패했습니다: {str(e)}", "advanced": True}
 
-4. **차별화 요소**: 다른 MSP와 구별되는 고유 강점이나 특성을 부각하세요.
-
-5. **균형잡힌 시각**: 강점뿐만 아니라 개선점이나 과제도 언급하여 객관성을 유지하세요.
-
-6. **실무적 관점**: 실제 고객이나 파트너 입장에서 유용한 정보를 중심으로 정리하세요.
-
-응답은 자연스럽고 전문적인 한국어로 작성하되, 과도한 마케팅 표현은 피하고 팩트 중심으로 서술해주세요."""
-
-        # Call Claude API with increased token limit for richer responses
+    # Enhanced Claude API call with optimized parameters
+    try:
         client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
         
         response = client.messages.create(
             model="claude-3-haiku-20240307",
-            max_tokens=800,  # Increased from 600 to handle more comprehensive responses
-            temperature=0.2,  # Slightly lower for more factual, less creative responses
-            system="당신은 10년 이상 경력의 클라우드 및 MSP 선정 전문가입니다. 다양한 정보원을 종합하여 균형잡히고 실무적인 통찰을 제공하며, 팩트에 기반한 정확한 분석을 중시합니다. 과장보다는 구체적 근거와 실질적 가치에 집중합니다.",
+            max_tokens=800,  # Increased for more comprehensive responses
+            temperature=0.2,  # Lower for more factual, analytical responses
+            system="당신은 10년 이상 경력의 클라우드 및 MSP 전문 컨설턴트입니다. 다양한 정보원을 종합 분석하여 객관적이고 실용적인 통찰을 제공하며, 구체적 근거와 데이터에 기반한 전문가 수준의 평가를 중시합니다.",
             messages=[{
                 "role": "user", 
                 "content": prompt
@@ -816,43 +728,24 @@ def run_msp_news_summary_claude(question: str):
         
         answer = response.content[0].text.strip()
         
-        # Enhanced post-processing for professional terminology
-        terminology_fixes = {
-            "설루션": "솔루션",
-            "클라우드 서비스": "클라우드 솔루션",
-            "AI 기술": "AI 솔루션",
-            "빅데이터": "빅데이터",
-            "머신러닝": "머신러닝",
-            "딥러닝": "딥러닝"
-        }
-        
-        for old_term, new_term in terminology_fixes.items():
-            answer = answer.replace(old_term, new_term)
+        # Enhanced post-processing for professional consistency
+        answer = answer.replace("설루션", "솔루션")
+        answer = answer.replace("클라우드 서비스", "클라우드 솔루션")
         
         return {
             "answer": answer, 
             "advanced": True, 
-            "evidence": top_news,  # Return the filtered/ranked results
-            "web_evidence": top_web,
-            "model_used": "claude-3-haiku",
-            "data_processed": {
-                "news_articles": len(top_news),
-                "web_documents": len(top_web), 
-                "db_qa_pairs": len(db_context.split('\n\n')) if db_context else 0,
-                "total_sources": len(top_news) + len(top_web) + (len(db_context.split('\n\n')) if db_context else 0)
+            "evidence": news_data["items"][:12], 
+            "web_evidence": web_data.get("items", [])[:5],
+            "model_used": "claude-3-haiku-enhanced",
+            "data_summary": {
+                "news_articles": len(news_items),
+                "web_documents": len(web_items),
+                "internal_qa_pairs": len(db_chunks),
+                "total_sources": len(news_items) + len(web_items) + len(db_chunks)
             }
         }
         
     except Exception as e:
         traceback.print_exc()
-        
-        # Enhanced error handling with specific error types
-        error_msg = str(e)
-        if "Expecting value: line 1 column 1" in error_msg:
-            return {"answer": f"{msp_name}에 대한 검색 API 응답이 비어있습니다. Naver API 설정을 확인해주세요.", "advanced": True}
-        elif "Invalid JSON" in error_msg:
-            return {"answer": f"{msp_name}에 대한 검색 API 응답 형식에 오류가 있습니다.", "advanced": True}
-        elif "API Error" in error_msg:
-            return {"answer": f"Naver 검색 API 호출 중 오류가 발생했습니다: {error_msg}", "advanced": True}
-        else:
-            return {"answer": f"뉴스 기반 요약에 실패했습니다: {error_msg}", "advanced": True}
+        raise HTTPException(status_code=500, detail=f"Claude API error: {str(e)}")
