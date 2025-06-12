@@ -1,4 +1,4 @@
-# MSP Evaluator
+# MSP EvaluatorAdd commentMore actions
 
 > **AI-Powered Cloud MSP Partner Evaluation & Recommendation Platform**
 
@@ -28,7 +28,7 @@ The MSP Evaluator platform is built around a modular, full-stack architecture ce
 - **Vector Search Engine**: All MSP evaluation responses are embedded into 1024-dimensional vectors and stored in ChromaDB for semantic retrieval.
 - **Automation Layer**: The system ingests data from Excel uploads or Google Sheets triggers and processes it asynchronously to support scalable, real-time scoring and retrieval.
 - **Deployment**: Hosted on a Naver Cloud VM using DuckDNS and Nginx, secured via Let’s Encrypt SSL with admin routes protected by JWT authentication.
-      
+
 ### Core Technology Stack
 
 | Layer | Technology | Purpose |
@@ -149,8 +149,9 @@ Category Analysis → Score Calculation → Similarity Indexing → Real-time Se
 | **System Uptime** | 99.5%+ availability |
 | **Concurrent Users** | 50+ simultaneous operations |
 
-<details>
-<summary><strong>Advanced Implementation Details</strong></summary>
+---
+
+## Advanced Implementation Details
 
 ### Custom Vector Search Algorithm
 ```python
@@ -185,7 +186,7 @@ def run_msp_recommendation(question: str, min_score: int):
 - **API Key Management**: Environment-based configuration with rotation support
 - **Audit Logging**: Complete operation tracking for compliance
 
-</details>
+---
 
 ## UI/UX Innovation
 
