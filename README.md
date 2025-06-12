@@ -24,14 +24,14 @@ An enterprise-grade AI platform that revolutionizes cloud MSP partner evaluation
 ```mermaid
 graph TB
     A[React Frontend] --> B[FastAPI Backend]
-    B --> C[ChromaDB Vector Store]
-    B --> D[HyperCLOVA API]
+    B --> C[ChromaDB<br/>Vector Store]
+    B --> D[HyperCLOVA<br/>API]
     B --> E[Claude API]
-    B --> F[Perplexity API]
-    B --> G[NAVER Search API]
-    C --> H[1024D Embeddings]
-    I[Admin Dashboard] --> B
-    J[Excel Upload] --> B
+    B --> F[Perplexity<br/>API]
+    B --> G[NAVER<br/>Search API]
+    C --> H[1024D<br/>Embeddings]
+    I[Admin<br/>Dashboard] --> B
+    J[Excel<br/>Upload] --> B
 ```
 
 ### Core Technology Stack
@@ -66,12 +66,47 @@ def evaluate_answer(question: str, answer: str) -> int:
 - **Domain Classification**: Automatic routing between recommendation and information modes
 - **Hybrid AI Responses**: Combines retrieval-augmented generation with real-time web data
 
-### 3. Enterprise Admin Dashboard
+### 3. Advanced Vector Database Implementation
+```python
+# Sophisticated document processing and embedding pipeline
+def chunk_text(text: str):
+    """
+    CLOVA Studio-powered intelligent text segmentation:
+    - Topic-based segmentation using CLOVA API
+    - Configurable chunk size (300-1000 characters)
+    - Semantic boundary preservation
+    - Automatic handling of empty/invalid text
+    """
+    completion_request = {
+        "postProcessMaxSize": 1000,      # Maximum chunk size
+        "alpha": 0.0,                    # Segmentation sensitivity
+        "segCnt": -1,                    # Auto-determine segment count
+        "postProcessMinSize": 300,       # Minimum chunk size
+        "text": text,
+        "postProcess": False             # Raw segmentation output
+    }
+    
+    # CLOVA Studio segmentation API call
+    response = clova_api_call('/serviceapp/v1/api-tools/segmentation', completion_request)
+    return [' '.join(segment) for segment in response["result"]["topicSeg"]]
+
+def clova_embedding(text: str):
+    """
+    Generate 1024-dimensional embeddings using CLOVA:
+    - High-quality semantic vectors
+    - Optimized for Korean/English mixed content
+    - Cosine similarity optimized
+    """
+    response = clova_api_call('/serviceapp/v1/api-tools/embedding/v2', {"text": text})
+    return response["result"]["embedding"]  # Returns 1024D vector
+```
+
+### 4. Enterprise Admin Dashboard
 - **Real-time Monitoring**: Live system metrics and performance analytics
 - **Data Management**: Bulk operations, duplicate detection, and quality control
 - **Vector Database Viewer**: Direct database inspection and maintenance tools
 
-### 4. Advanced Analytics & Visualization
+### 5. Advanced Analytics & Visualization
 - **Interactive Leaderboards**: Real-time partner rankings with drill-down capabilities
 - **Radar Charts**: Multi-dimensional capability visualization
 - **Performance Tracking**: Historical trends and comparative analysis
@@ -87,6 +122,13 @@ Excel Upload → Text Parsing → AI Evaluation → Vector Embedding → Databas
      ↓              ↓             ↓              ↓              ↓
 Category Analysis → Score Calculation → Similarity Indexing → Real-time Search
 ```
+
+### Vector Database Expertise
+- **CLOVA-Powered Chunking**: Intelligent text segmentation using CLOVA Studio API
+- **1024D Semantic Embeddings**: High-quality vector representations via CLOVA embedding API
+- **Topic-Based Segmentation**: Automatic content boundary detection with configurable parameters
+- **Cosine Similarity Search**: Optimized distance metrics for Korean/English content
+- **Metadata-Rich Storage**: Comprehensive document metadata with hierarchical organization
 
 ### Performance Optimizations
 - **Async Processing**: Concurrent API calls reducing response time by 60%
@@ -248,12 +290,28 @@ sudo certbot --nginx -d your-domain.com
 
 ### Core Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/query/router` | POST | Intelligent search with AI routing |
-| `/api/upload_excel` | POST | Automated evaluation pipeline |
-| `/api/leaderboard` | GET | Real-time partner rankings |
-| `/admin/dashboard` | GET | Administrative interface |
+| Endpoint | Method | Description | Auth Required |
+|----------|--------|-------------|---------------|
+| `/query/router` | POST | Intelligent search with AI routing and domain classification | No |
+| `/query/ask` | POST | Direct MSP recommendation queries | No |
+| `/query/advanced_naver` | POST | NAVER search-enhanced analysis | No |
+| `/api/upload_excel` | POST | Automated Excel evaluation pipeline | No |
+| `/api/add_to_vector_db` | POST | Store evaluation results in ChromaDB | No |
+| `/api/leaderboard` | GET | Real-time MSP partner rankings | No |
+| `/api/get_summary` | POST | Generate category summaries from evaluations | No |
+| `/api/get_radar_data` | GET | Radar chart data for visualizations | No |
+| `/api/debug_msp/{msp_name}` | GET | Debug individual MSP score calculations | No |
+| `/api/debug_groups` | GET | Inspect data structure and categories | No |
+| `/api/fix_existing_data` | POST | Repair encoding and categorization issues | No |
+| `/api/refresh_leaderboard_public` | POST | Update leaderboard with latest data | No |
+| `/run/{msp_name}` | POST | Trigger vector DB pipeline for specific MSP | No |
+| `/ui/data` | GET | Filtered vector database contents | No |
+| `/ui` | GET | Vector database viewer interface | Yes |
+| `/admin` | GET | Administrative dashboard | Yes |
+| `/upload` | GET | Excel upload interface | No |
+| `/` | GET | Main landing page | No |
+| `/leaderboard` | GET | React-based leaderboard interface | No |
+| `/search` | GET | React-based search interface | No |
 
 ### Example Usage
 ```javascript
