@@ -6,6 +6,7 @@
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-FF6B6B?style=for-the-badge)](https://www.trychroma.com/)
 [![NAVER Cloud](https://img.shields.io/badge/NAVER_Cloud-03C75A?style=for-the-badge)](https://www.ncloud.com/)
+![CI](https://github.com/IronHawkReigns/msp-evaluator/actions/workflows/main.yml/badge.svg)
 
 An enterprise-grade AI platform that revolutionizes cloud MSP partner evaluation through automated assessment, intelligent search, and data-driven recommendations. Built for NAVER Cloud Platform's internal operations.
 
