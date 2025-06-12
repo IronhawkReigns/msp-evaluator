@@ -659,7 +659,7 @@ def run_msp_information_summary_claude(question: str):
         
         response = client.messages.create(
             model="claude-3-haiku-20240307",
-            max_tokens=1000,  # Increased for comprehensive analysis
+            max_tokens=1500,  # Increased for comprehensive analysis
             temperature=0.2,  # Lower for more analytical responses
             system="당신은 클라우드 및 MSP 산업의 시니어 애널리스트로서, 15년간의 시장 분석과 기업 평가 경험을 보유하고 있습니다. 데이터 기반의 객관적 분석과 실무적 통찰력을 결합하여, 고객이 정확한 의사결정을 할 수 있도록 균형잡히고 실행 가능한 정보를 제공합니다.",
             messages=[{
@@ -1030,7 +1030,7 @@ def run_msp_news_summary_claude(question: str):
         
         response = client.messages.create(
             model="claude-3-haiku-20240307",
-            max_tokens=1000,
+            max_tokens=1500,
             temperature=0.2,  # Lower for more factual, analytical responses
             system="당신은 10년 이상 경력의 클라우드 및 MSP 전문 컨설턴트입니다. 다양한 정보원을 종합 분석하여 객관적이고 실용적인 통찰을 제공하며, 구체적 근거와 데이터에 기반한 전문가 수준의 평가를 중시합니다.",
             messages=[{
