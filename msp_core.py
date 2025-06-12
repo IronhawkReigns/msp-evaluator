@@ -614,7 +614,10 @@ def run_msp_news_summary_claude(question: str):
     if not msp_name:
         return {"answer": "회사명을 인식하지 못했습니다. 다시 시도해 주세요.", "advanced": True}
 
-    # Get vector DB information for the MSP
+    print(f"🏢 Extracted company name: '{msp_name}'")
+
+    # Get vector DB information for the MSP first (this is our most reliable source)
+    db_context = ""
     try:
         query_vector = query_embed(question)
         query_results = collection.query(
@@ -627,8 +630,18 @@ def run_msp_news_summary_claude(question: str):
             if chunk.get("msp_name") == msp_name and chunk.get("question") and chunk.get("answer")
         ][:5]
         db_context = "\n\n".join(db_chunks)
+        print(f"📊 Found {len(db_chunks)} relevant Q&A pairs from internal database")
     except Exception as e:
+        print(f"⚠️ Vector DB search failed: {e}")
         db_context = ""
+
+    # If we have good internal data, we can proceed even without external APIs
+    if db_context and len(db_chunks) >= 3:
+        print("✅ Sufficient internal data found - proceeding with limited external search")
+        use_fallback_mode = True
+    else:
+        print("📡 Need external data - attempting full API search")
+        use_fallback_mode = False
 
     try:
         # Increase data collection since Claude can handle more intelligently
@@ -654,21 +667,17 @@ def run_msp_news_summary_claude(question: str):
                 raise Exception(f"Naver Web API Error: {response_web.status}")
             web_data = json.loads(response.read().decode("utf-8"))
 
-        # Validate API responses and handle edge cases
-        if "items" not in news_data:
-            print(f"⚠️ No 'items' key in news_data: {news_data}")
-            if "errorMessage" in news_data:
-                raise Exception(f"Naver News API Error: {news_data['errorMessage']}")
-            news_data["items"] = []
+        # Validate final results
+        total_external_items = len(news_data.get("items", [])) + len(web_data.get("items", []))
+        print(f"📊 Total external items found: {total_external_items}")
         
-        if not news_data["items"]:
-            print(f"📭 No news articles found for {msp_name}")
-            # Still try to proceed with web data and internal DB data
-            if not web_data.get("items") and not db_context:
-                return {"answer": f"{msp_name}에 대한 검색 결과를 찾을 수 없습니다.", "advanced": True}
-        
-        print(f"📰 Found {len(news_data['items'])} news articles")
-        print(f"🌐 Found {len(web_data.get('items', []))} web documents")
+        if total_external_items == 0:
+            print("📭 No external search results found")
+            if db_context:
+                print("✅ Using internal database data only")
+                return generate_response_from_internal_data_only(question, msp_name, db_context)
+            else:
+                return {"answer": f"{msp_name}에 대한 검색 결과를 찾을 수 없습니다. 해당 회사가 데이터베이스에 등록되어 있는지 확인해주세요.", "advanced": True}
 
         # Smart filtering and prioritization for Claude
         def clean_text(text):
