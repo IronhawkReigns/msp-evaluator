@@ -19,43 +19,6 @@ An enterprise-grade AI platform that revolutionizes cloud MSP partner evaluation
 
 ---
 
-## System Architecture
-
-```mermaid
-graph TB
-    subgraph "Frontend"
-        A[React]
-        I[Admin]
-        J[Excel]
-    end
-    
-    subgraph "Backend"
-        B[FastAPI]
-    end
-    
-    subgraph "AI"
-        D[HyperCLOVA]
-        E[Claude]
-        F[Perplexity]
-        G[NAVER]
-    end
-    
-    subgraph "Data"
-        C[ChromaDB]
-        H[1024D]
-    end
-    
-    A --> B
-    I --> B
-    J --> B
-    B --> C
-    B --> D
-    B --> E
-    B --> F
-    B --> G
-    C --> H
-```
-
 ### Core Technology Stack
 
 | Layer | Technology | Purpose |
