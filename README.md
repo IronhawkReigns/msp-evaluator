@@ -152,7 +152,7 @@ Category Analysis → Score Calculation → Similarity Indexing → Real-time Se
 ---
 
 <details>
-<summary>## Advanced Implementation Details</summary>
+<summary><strong>Advanced Implementation Details</strong></summary>
 
 ### Custom Vector Search Algorithm
 ```python
