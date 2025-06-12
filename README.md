@@ -23,13 +23,13 @@ An enterprise-grade AI platform that revolutionizes cloud MSP partner evaluation
 
 ```mermaid
 graph TB
-    subgraph "Frontend Layer"
+    subgraph "Frontend"
         A[React Frontend]
         I[Admin Dashboard]
         J[Excel Upload]
     end
     
-    subgraph "Backend Services"
+    subgraph "Backend"
         B[FastAPI Backend]
     end
     
