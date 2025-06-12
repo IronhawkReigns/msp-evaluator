@@ -597,3 +597,124 @@ def run_msp_news_summary_clova(question: str):
     except Exception as e:
         traceback.print_exc()
         return {"answer": f"뉴스 기반 요약에 실패했습니다: {str(e)}", "advanced": True}
+
+def run_msp_news_summary_claude(question: str):
+    """
+    Naver search-based MSP information summary using Claude for response generation
+    and CLOVA for MSP name extraction (best of both worlds)
+    """
+    import urllib.parse
+    import urllib.request
+    import traceback
+    import anthropic
+    import os
+
+    # Use CLOVA for MSP name extraction (it might be better tuned for Korean company names)
+    msp_name = extract_msp_name(question)
+    if not msp_name:
+        return {"answer": "회사명을 인식하지 못했습니다. 다시 시도해 주세요.", "advanced": True}
+
+    # Get vector DB information for the MSP
+    try:
+        query_vector = query_embed(question)
+        query_results = collection.query(
+            query_embeddings=[query_vector],
+            n_results=10
+        )
+        db_chunks = [
+            f"Q: {chunk['question']}\nA: {chunk['answer']}"
+            for chunk in query_results["metadatas"][0]
+            if chunk.get("msp_name") == msp_name and chunk.get("question") and chunk.get("answer")
+        ][:5]
+        db_context = "\n\n".join(db_chunks)
+    except Exception as e:
+        db_context = ""
+
+    try:
+        # Naver News API search
+        query = urllib.parse.quote(msp_name)
+        url = f"https://openapi.naver.com/v1/search/news.json?query={query}&display=10&sort=sim"
+        headers = {
+            "X-Naver-Client-Id": os.getenv("NAVER_CLIENT_ID"),
+            "X-Naver-Client-Secret": os.getenv("NAVER_CLIENT_SECRET")
+        }
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req) as response:
+            if response.status != 200:
+                raise Exception(f"Naver API Error: {response.status}")
+            news_data = json.loads(response.read().decode("utf-8"))
+
+        # Naver Web search
+        url_web = f"https://openapi.naver.com/v1/search/webkr.json?query={query}&display=3&sort=sim"
+        req_web = urllib.request.Request(url_web, headers=headers)
+        with urllib.request.urlopen(req_web) as response_web:
+            if response_web.status != 200:
+                raise Exception(f"Naver Web API Error: {response_web.status}")
+            web_data = json.loads(response_web.read().decode("utf-8"))
+
+        if "items" not in news_data or not news_data["items"]:
+            return {"answer": f"{msp_name}에 대한 뉴스 기사를 찾을 수 없습니다.", "advanced": True}
+
+        # Clean and format news articles
+        article_summaries = "\n".join(
+            f"- 제목: {item['title'].replace('<b>', '').replace('</b>', '')}\n  요약: {item['description'].replace('<b>', '').replace('</b>', '')}"
+            for item in news_data["items"]
+        )
+
+        # Clean and format web documents
+        web_summaries = "\n".join(
+            f"- 제목: {item['title'].replace('<b>', '').replace('</b>', '')}\n  요약: {item['description'].replace('<b>', '').replace('</b>', '')}"
+            for item in web_data.get("items", [])
+        )
+
+        # Create comprehensive prompt for Claude
+        prompt = f"""다음은 클라우드 MSP 기업 '{msp_name}'에 대한 뉴스 기사, 웹 문서, 인터뷰 Q&A 요약입니다. 이 내용을 바탕으로 사용자의 질문에 응답해 주세요.
+
+사용자 질문: "{question}"
+
+[DB 기반 정보]
+{db_context}
+
+[뉴스 기사 요약]
+{article_summaries}
+
+[웹 문서 요약]  
+{web_summaries}
+
+[응답 지침]
+- 기사, 웹 문서, 인터뷰 Q&A 내용을 기반으로 응답을 생성하세요.
+- 없는 정보를 꾸며내거나 추론하지 마세요.
+- 기업의 수상 실적, 협업, 투자, 인력 구성 등 핵심 정보를 간결하게 요약해 주세요.
+- 자연스럽고 신뢰감 있는 문장으로 작성해 주세요.
+- 중요한 정보는 구체적 수치나 사례와 함께 제시하세요."""
+
+        # Call Claude API
+        client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        
+        response = client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=600,
+            temperature=0.3,
+            system="당신은 클라우드 및 MSP 전문가입니다. 정확하고 신뢰할 수 있는 정보를 바탕으로 자연스럽고 간결한 응답을 제공해주세요. 추상적 표현보다는 구체적 사실과 수치를 중시합니다.",
+            messages=[{
+                "role": "user", 
+                "content": prompt
+            }]
+        )
+        
+        answer = response.content[0].text.strip()
+        
+        # Clean up common typos and ensure consistent terminology
+        answer = answer.replace("설루션", "솔루션")
+        
+        return {
+            "answer": answer, 
+            "advanced": True, 
+            "evidence": news_data["items"], 
+            "web_evidence": web_data.get("items", []),
+            "model_used": "claude-3-haiku"
+        }
+        
+    except Exception as e:
+        traceback.print_exc()
+        return {"answer": f"뉴스 기반 요약에 실패했습니다: {str(e)}", "advanced": True}
