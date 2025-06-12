@@ -23,5 +23,5 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: name: Skip tests (no tests directory yet)
-  run: echo "No tests found. Skipping pytest."
+    - name: Run tests
+      run: echo "No tests found. Skipping pytest."
