@@ -717,7 +717,7 @@ def run_msp_news_summary_claude(question: str):
         
         response = client.messages.create(
             model="claude-3-haiku-20240307",
-            max_tokens=800,  # Increased for more comprehensive responses
+            max_tokens=1000
             temperature=0.2,  # Lower for more factual, analytical responses
             system="당신은 10년 이상 경력의 클라우드 및 MSP 전문 컨설턴트입니다. 다양한 정보원을 종합 분석하여 객관적이고 실용적인 통찰을 제공하며, 구체적 근거와 데이터에 기반한 전문가 수준의 평가를 중시합니다.",
             messages=[{
