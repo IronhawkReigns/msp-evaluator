@@ -21,23 +21,13 @@ An enterprise-grade AI platform that revolutionizes cloud MSP partner evaluation
 
 ## System Architecture
 
-[React UI]
-[Admin Dashboard]
-[Excel Upload]
-       │
-       ▼
-[FastAPI Backend]
-  ├── AI Models
-  │   ├─ HyperCLOVA API
-  │   ├─ Claude API
-  │   ├─ Perplexity API
-  │   └─ NAVER Search API
-  ├── Vector DB
-  │   └─ ChromaDB (1024D Embeddings)
-  └── Internal Logic
-      ├─ Scoring Engine
-      ├─ Query Router
-      └─ Database Writer
+The MSP Evaluator platform is built around a modular, full-stack architecture centered on a FastAPI backend.
+- **Frontend**: Built with React and Tailwind CSS, the UI includes an interactive MSP leaderboard, semantic search interface, Excel upload portal, and admin dashboard.
+- **Backend**: A FastAPI application orchestrates all logic — from receiving input data to running AI evaluations, managing state, and routing user queries.
+- **AI Integration**: The backend connects to multiple LLM APIs — including HyperCLOVA, Claude, Perplexity, and NAVER Search — to perform rubric-based scoring, recommendations, and real-time web reasoning.
+- **Vector Search Engine**: All MSP evaluation responses are embedded into 1024-dimensional vectors and stored in ChromaDB for semantic retrieval.
+- **Automation Layer**: The system ingests data from Excel uploads or Google Sheets triggers and processes it asynchronously to support scalable, real-time scoring and retrieval.
+- **Deployment**: Hosted on a Naver Cloud VM using DuckDNS and Nginx, secured via Let’s Encrypt SSL with admin routes protected by JWT authentication.
       
 ### Core Technology Stack
 
