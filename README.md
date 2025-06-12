@@ -151,6 +151,8 @@ Category Analysis → Score Calculation → Similarity Indexing → Real-time Se
 
 ---
 
+<details>
+<summary>Advanced Implementation Details</summary>
 ## Advanced Implementation Details
 
 ### Custom Vector Search Algorithm
@@ -185,6 +187,8 @@ def run_msp_recommendation(question: str, min_score: int):
 - **Input Validation**: Comprehensive Excel file sanitization and validation
 - **API Key Management**: Environment-based configuration with rotation support
 - **Audit Logging**: Complete operation tracking for compliance
+
+</details>
 
 ---
 
