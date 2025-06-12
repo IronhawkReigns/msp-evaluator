@@ -654,17 +654,35 @@ def run_msp_news_summary_claude(question: str):
                 raise Exception(f"Naver Web API Error: {response_web.status}")
             web_data = json.loads(response.read().decode("utf-8"))
 
-        if "items" not in news_data or not news_data["items"]:
-            return {"answer": f"{msp_name}에 대한 뉴스 기사를 찾을 수 없습니다.", "advanced": True}
+        # Validate API responses and handle edge cases
+        if "items" not in news_data:
+            print(f"⚠️ No 'items' key in news_data: {news_data}")
+            if "errorMessage" in news_data:
+                raise Exception(f"Naver News API Error: {news_data['errorMessage']}")
+            news_data["items"] = []
+        
+        if not news_data["items"]:
+            print(f"📭 No news articles found for {msp_name}")
+            # Still try to proceed with web data and internal DB data
+            if not web_data.get("items") and not db_context:
+                return {"answer": f"{msp_name}에 대한 검색 결과를 찾을 수 없습니다.", "advanced": True}
+        
+        print(f"📰 Found {len(news_data['items'])} news articles")
+        print(f"🌐 Found {len(web_data.get('items', []))} web documents")
 
         # Smart filtering and prioritization for Claude
         def clean_text(text):
-            return text.replace('<b>', '').replace('</b>', '').replace('&quot;', '"').replace('&amp;', '&')
+            if not text:
+                return ""
+            return text.replace('<b>', '').replace('</b>', '').replace('&quot;', '"').replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
         
         def calculate_relevance_score(item, company_name):
             """Calculate relevance score based on company name mentions and content quality"""
-            title = clean_text(item['title']).lower()
-            desc = clean_text(item['description']).lower()
+            if not item or not company_name:
+                return 0
+                
+            title = clean_text(item.get('title', '')).lower()
+            desc = clean_text(item.get('description', '')).lower()
             company_lower = company_name.lower()
             
             score = 0
@@ -678,52 +696,68 @@ def run_msp_news_summary_claude(question: str):
             if len(desc) > 100:
                 score += 1
             # Recent articles (if pubDate exists)
-            if 'pubDate' in item:
+            if item.get('pubDate'):
                 score += 1
             
             return score
 
         # Filter and rank news articles by relevance
         news_items = news_data.get("items", [])
-        scored_news = [(item, calculate_relevance_score(item, msp_name)) for item in news_items]
-        scored_news.sort(key=lambda x: x[1], reverse=True)
-        
-        # Take top 12 most relevant news articles
-        top_news = [item[0] for item in scored_news[:12]]
+        if news_items:
+            scored_news = [(item, calculate_relevance_score(item, msp_name)) for item in news_items if item]
+            scored_news.sort(key=lambda x: x[1], reverse=True)
+            # Take top 12 most relevant news articles
+            top_news = [item[0] for item in scored_news[:12]]
+            print(f"📊 Selected top {len(top_news)} relevant news articles")
+        else:
+            top_news = []
+            print("📭 No news articles to process")
         
         # Filter and rank web results
         web_items = web_data.get("items", [])
-        scored_web = [(item, calculate_relevance_score(item, msp_name)) for item in web_items]
-        scored_web.sort(key=lambda x: x[1], reverse=True)
-        
-        # Take top 5 most relevant web results
-        top_web = [item[0] for item in scored_web[:5]]
+        if web_items:
+            scored_web = [(item, calculate_relevance_score(item, msp_name)) for item in web_items if item]
+            scored_web.sort(key=lambda x: x[1], reverse=True)
+            # Take top 5 most relevant web results
+            top_web = [item[0] for item in scored_web[:5]]
+            print(f"📊 Selected top {len(top_web)} relevant web documents")
+        else:
+            top_web = []
+            print("📭 No web documents to process")
 
         # Enhanced formatting with more structured information
         article_summaries = []
         for i, item in enumerate(top_news, 1):
-            title = clean_text(item['title'])
-            desc = clean_text(item['description'])
+            if not item:
+                continue
+            title = clean_text(item.get('title', ''))
+            desc = clean_text(item.get('description', ''))
             pub_date = item.get('pubDate', '')
             
-            article_summaries.append(
-                f"{i}. 제목: {title}\n"
-                f"   내용: {desc}\n"
-                f"   날짜: {pub_date[:10] if pub_date else 'N/A'}"
-            )
+            if title or desc:  # Only include if we have some content
+                article_summaries.append(
+                    f"{i}. 제목: {title}\n"
+                    f"   내용: {desc}\n"
+                    f"   날짜: {pub_date[:10] if pub_date else 'N/A'}"
+                )
 
         web_summaries = []
         for i, item in enumerate(top_web, 1):
-            title = clean_text(item['title'])
-            desc = clean_text(item['description'])
+            if not item:
+                continue
+            title = clean_text(item.get('title', ''))
+            desc = clean_text(item.get('description', ''))
             
-            web_summaries.append(
-                f"{i}. 제목: {title}\n"
-                f"   내용: {desc}"
-            )
+            if title or desc:  # Only include if we have some content
+                web_summaries.append(
+                    f"{i}. 제목: {title}\n"
+                    f"   내용: {desc}"
+                )
 
-        article_text = "\n\n".join(article_summaries)
-        web_text = "\n\n".join(web_summaries)
+        article_text = "\n\n".join(article_summaries) if article_summaries else "관련 뉴스 기사를 찾을 수 없습니다."
+        web_text = "\n\n".join(web_summaries) if web_summaries else "관련 웹 문서를 찾을 수 없습니다."
+        
+        print(f"📄 Prepared {len(article_summaries)} news summaries and {len(web_summaries)} web summaries")
 
         # Enhanced prompt for Claude with better data organization
         prompt = f"""다음은 클라우드 MSP 기업 '{msp_name}'에 대한 종합 정보입니다. 이 풍부한 데이터를 바탕으로 사용자 질문에 전문적이고 통찰력 있는 답변을 제공해주세요.
@@ -802,4 +836,14 @@ def run_msp_news_summary_claude(question: str):
         
     except Exception as e:
         traceback.print_exc()
-        return {"answer": f"뉴스 기반 요약에 실패했습니다: {str(e)}", "advanced": True}
+        
+        # Enhanced error handling with specific error types
+        error_msg = str(e)
+        if "Expecting value: line 1 column 1" in error_msg:
+            return {"answer": f"{msp_name}에 대한 검색 API 응답이 비어있습니다. Naver API 설정을 확인해주세요.", "advanced": True}
+        elif "Invalid JSON" in error_msg:
+            return {"answer": f"{msp_name}에 대한 검색 API 응답 형식에 오류가 있습니다.", "advanced": True}
+        elif "API Error" in error_msg:
+            return {"answer": f"Naver 검색 API 호출 중 오류가 발생했습니다: {error_msg}", "advanced": True}
+        else:
+            return {"answer": f"뉴스 기반 요약에 실패했습니다: {error_msg}", "advanced": True}
