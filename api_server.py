@@ -6,7 +6,8 @@ from msp_core import (
     extract_msp_name,
     query_embed,
     collection,
-    run_msp_news_summary_clova
+    run_msp_news_summary_clova,
+    run_msp_news_summary_claude
 )
 from utils import fix_korean_encoding, map_group_to_category
 from fastapi import File, UploadFile
@@ -321,7 +322,7 @@ async def query_router(data: RouterQuery):
 # Advanced Naver route
 @app.post("/query/advanced_naver")
 async def query_advanced_naver(data: RouterQuery):
-    return run_msp_news_summary_clova(data.query)
+    return run_msp_news_summary_claude(data.query)
 
 # Add protected /admin route using same login logic as /ui
 @app.get("/admin")
