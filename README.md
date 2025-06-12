@@ -34,15 +34,15 @@ graph TB
     end
     
     subgraph "AI Services"
-        D[HyperCLOVA API]
-        E[Claude API]
-        F[Perplexity API]
-        G[NAVER Search API]
+        D[HyperCLOVA]
+        E[Claude]
+        F[Perplexity]
+        G[NAVER Search]
     end
     
     subgraph "Data Layer"
-        C[ChromaDB Vector Store]
-        H[1024D Embeddings]
+        C[ChromaDB Vector]
+        H[1024D Embed]
     end
     
     A --> B
