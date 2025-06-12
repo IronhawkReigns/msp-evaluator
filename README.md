@@ -24,25 +24,25 @@ An enterprise-grade AI platform that revolutionizes cloud MSP partner evaluation
 ```mermaid
 graph TB
     subgraph "Frontend"
-        A[React Frontend]
-        I[Admin Dashboard]
-        J[Excel Upload]
+        A[React]
+        I[Admin]
+        J[Excel]
     end
     
     subgraph "Backend"
-        B[FastAPI Backend]
+        B[FastAPI]
     end
     
-    subgraph "AI Services"
+    subgraph "AI"
         D[HyperCLOVA]
         E[Claude]
         F[Perplexity]
-        G[NAVER Search]
+        G[NAVER]
     end
     
-    subgraph "Data Layer"
-        C[ChromaDB Vector]
-        H[1024D Embed]
+    subgraph "Data"
+        C[ChromaDB]
+        H[1024D]
     end
     
     A --> B
