@@ -461,8 +461,13 @@ def run_msp_information_summary(question: str):
         raise HTTPException(status_code=500, detail=f"HyperCLOVA error: {str(e)}")
     
 def run_msp_information_summary_claude(question: str):
-    """Direct Claude version without Perplexity"""
+    """
+    Enhanced information summary leveraging Claude's analytical depth
+    """
     import traceback
+    import anthropic
+    import os
+    from collections import defaultdict
     
     query = question
     msp_name = extract_msp_name(question)
@@ -476,43 +481,217 @@ def run_msp_information_summary_claude(question: str):
     best_match = matches[0]
 
     try:
+        # Enhanced data collection - get comprehensive company profile
         query_vector = query_embed(question)
         query_results = collection.query(
             query_embeddings=[query_vector],
-            n_results=8
+            n_results=15  # Increased for more comprehensive analysis
         )
-        filtered_chunks = [c for c in query_results["metadatas"][0] if c.get("answer") and c.get("question") and c.get("msp_name") == best_match]
-        if not filtered_chunks:
+        
+        # Get ALL data for this company for complete profile
+        all_company_data = collection.get(
+            where={"msp_name": best_match},
+            include=["metadatas"]
+        )
+        
+        # Organize data by category and relevance
+        relevant_chunks = []
+        all_company_chunks = []
+        category_data = defaultdict(list)
+        
+        # Process query-relevant data
+        for chunk in query_results["metadatas"][0]:
+            if chunk.get("msp_name") == best_match and chunk.get("answer") and chunk.get("question"):
+                relevant_chunks.append({
+                    "question": chunk['question'],
+                    "answer": chunk['answer'],
+                    "score": chunk.get('score', 0),
+                    "category": chunk.get('category', '미분류'),
+                    "group": chunk.get('group', '기타'),
+                    "relevance": "high"  # Query-matched
+                })
+        
+        # Process all company data for comprehensive profile
+        for chunk in all_company_data["metadatas"]:
+            if chunk.get("answer") and chunk.get("question"):
+                category = chunk.get('category', '미분류')
+                qa_item = {
+                    "question": chunk['question'],
+                    "answer": chunk['answer'],
+                    "score": chunk.get('score', 0),
+                    "group": chunk.get('group', '기타')
+                }
+                category_data[category].append(qa_item)
+                
+                # Add to all_company_chunks if not already in relevant_chunks
+                if not any(existing['question'] == chunk['question'] for existing in relevant_chunks):
+                    all_company_chunks.append({
+                        "question": chunk['question'],
+                        "answer": chunk['answer'],
+                        "score": chunk.get('score', 0),
+                        "category": chunk.get('category', '미분류'),
+                        "group": chunk.get('group', '기타'),
+                        "relevance": "supplementary"
+                    })
+
+        if not relevant_chunks and not all_company_chunks:
             return {"answer": "관련된 정보를 찾을 수 없습니다.", "advanced": False}
 
-        answer_blocks = []
-        for chunk in filtered_chunks:
-            if not chunk.get("answer") or not chunk.get("question"):
-                continue
-            answer_blocks.append(f"Q: {chunk['question']}\nA: {chunk['answer']}")
+        # Calculate comprehensive analytics
+        all_scores = [item['score'] for item in relevant_chunks + all_company_chunks if item['score']]
+        category_analytics = {}
+        
+        for category, items in category_data.items():
+            if items:
+                scores = [item['score'] for item in items if item['score']]
+                category_analytics[category] = {
+                    'avg_score': round(sum(scores) / len(scores), 2) if scores else 0,
+                    'count': len(items),
+                    'excellence_areas': [item for item in items if item['score'] >= 4],
+                    'improvement_areas': [item for item in items if item['score'] <= 2]
+                }
 
-        context = "\n\n".join(answer_blocks)
-        prompt = f"""다음은 {best_match}에 대한 인터뷰 Q&A입니다:
+        overall_avg = round(sum(all_scores) / len(all_scores), 2) if all_scores else 0
+        
+        # Create rich context for Claude's analysis
+        # 1. Query-relevant information (prioritized)
+        relevant_context = []
+        for chunk in relevant_chunks[:8]:  # Top 8 most relevant
+            relevant_context.append(
+                f"[관련도: 높음] Q: {chunk['question']}\n"
+                f"A: {chunk['answer']}\n"
+                f"평가: {chunk['score']}/5점 | 분야: {chunk['category']}"
+            )
+        
+        # 2. Supplementary company information by category
+        category_context = []
+        for category, analytics in category_analytics.items():
+            if analytics['count'] > 0:
+                # Select best examples from each category
+                top_items = sorted(category_data[category], key=lambda x: x['score'], reverse=True)[:3]
+                
+                category_block = f"\n=== {category} (평균: {analytics['avg_score']}/5점, {analytics['count']}개 항목) ===\n"
+                for item in top_items:
+                    category_block += f"• Q: {item['question'][:80]}{'...' if len(item['question']) > 80 else ''}\n"
+                    category_block += f"  A: {item['answer'][:150]}{'...' if len(item['answer']) > 150 else ''} ({item['score']}/5점)\n\n"
+                
+                category_context.append(category_block)
 
-{context}
+        # 3. Company strength/weakness analysis
+        strengths = []
+        improvements = []
+        for category, analytics in category_analytics.items():
+            if analytics['avg_score'] >= 4.0:
+                strengths.append(f"{category} ({analytics['avg_score']}/5점)")
+            elif analytics['avg_score'] <= 3.0:
+                improvements.append(f"{category} ({analytics['avg_score']}/5점)")
+
+        # Create sophisticated prompt for Claude
+        prompt = f"""당신은 클라우드 및 MSP 분야의 시니어 애널리스트입니다. {best_match}에 대한 종합적인 평가 데이터를 분석하여 사용자 질문에 전문적이고 통찰력 있는 답변을 제공해주세요.
 
 사용자 질문: "{question}"
 
-위 정보를 바탕으로 질문에 대해 정확하고 자연스럽게 답변해주세요. 주어진 정보에 없는 내용은 추론하지 마세요."""
+=== 회사 개요: {best_match} ===
+전체 평가 평균: {overall_avg}/5점
+평가 카테고리 수: {len(category_analytics)}개
+총 평가 항목: {len(all_scores)}개
+
+주요 강점 분야: {', '.join(strengths) if strengths else '특이사항 없음'}
+개선 필요 분야: {', '.join(improvements) if improvements else '특이사항 없음'}
+
+=== 질문 관련성 높은 정보 ===
+{chr(10).join(relevant_context)}
+
+=== 카테고리별 상세 역량 ===
+{''.join(category_context)}
+
+=== 전문가 분석 지침 ===
+
+1. **정보 통합 및 맥락화**
+   - 사용자 질문에 직접 답하되, 회사의 전반적 맥락에서 해석
+   - 단편적 정보가 아닌 종합적 관점에서 분석
+   - 평가 점수와 구체적 답변 내용을 균형있게 활용
+
+2. **깊이 있는 통찰 제공**
+   - 표면적 정보를 넘어 의미와 시사점 분석
+   - 강점과 약점의 원인과 배경 파악
+   - 경쟁사 대비 위치나 시장에서의 차별화 요소 식별
+
+3. **실무적 관점 적용**
+   - 잠재 고객이나 파트너 관점에서 유의미한 정보 우선 정리
+   - 비즈니스 임팩트나 협업 시 고려사항 포함
+   - 구체적 수치, 사례, 프로젝트명 등 검증 가능한 정보 강조
+
+4. **균형잡힌 평가**
+   - 긍정적 측면과 제한사항을 모두 고려
+   - 과대포장 없이 사실에 기반한 객관적 서술
+   - 불확실하거나 부족한 정보는 솔직하게 언급
+
+5. **구조화된 정보 제공**
+   - 핵심 내용을 명확하고 논리적으로 구성
+   - 중요도에 따른 정보 우선순위 적용
+   - 실행 가능한 인사이트나 권장사항 포함
+
+=== 응답 형식 ===
+
+**핵심 답변**
+[사용자 질문에 대한 직접적이고 구체적인 답변 - 2-3문장]
+
+**상세 분석**
+[관련 평가 데이터를 바탕으로 한 심화 분석 - 구체적 점수, 사례, 프로젝트 포함]
+
+**회사 맥락**
+[해당 답변이 회사 전체 역량과 포지셔닝에서 갖는 의미]
+
+**실무적 시사점**
+[파트너십이나 프로젝트 관점에서의 고려사항 및 기대효과]
+
+**종합 평가**
+[객관적 강점과 제한사항을 포함한 균형잡힌 종합 의견]
+
+=== 주의사항 ===
+- 평가 데이터에 없는 정보는 추론하거나 일반화하지 마세요
+- 구체적 근거 없는 마케팅성 표현은 피하세요
+- 점수가 낮은 영역도 맥락을 고려하여 해석하세요
+- 불충분한 정보 영역은 솔직하게 언급하세요"""
 
         client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
         
         response = client.messages.create(
             model="claude-3-haiku-20240307",
-            max_tokens=500,
-            temperature=0.3,
-            messages=[{"role": "user", "content": prompt}]
+            max_tokens=1000,  # Increased for comprehensive analysis
+            temperature=0.2,  # Lower for more analytical responses
+            system="당신은 클라우드 및 MSP 산업의 시니어 애널리스트로서, 15년간의 시장 분석과 기업 평가 경험을 보유하고 있습니다. 데이터 기반의 객관적 분석과 실무적 통찰력을 결합하여, 고객이 정확한 의사결정을 할 수 있도록 균형잡히고 실행 가능한 정보를 제공합니다.",
+            messages=[{
+                "role": "user", 
+                "content": prompt
+            }]
         )
         
         answer = response.content[0].text.strip()
-        answer = answer.replace("설루션", "솔루션")
         
-        return {"answer": answer, "advanced": False, "evidence": filtered_chunks}
+        # Enhanced post-processing
+        answer = answer.replace("설루션", "솔루션")
+        answer = answer.replace("클라우드 서비스", "클라우드 솔루션")
+        
+        return {
+            "answer": answer, 
+            "advanced": False, 
+            "evidence": relevant_chunks,
+            "model_used": "claude-3-haiku-enhanced-analyst",
+            "company_analytics": {
+                "overall_average": overall_avg,
+                "total_evaluations": len(all_scores),
+                "category_performance": category_analytics,
+                "strengths": strengths,
+                "improvement_areas": improvements
+            },
+            "data_coverage": {
+                "query_relevant_items": len(relevant_chunks),
+                "total_company_items": len(all_company_chunks) + len(relevant_chunks),
+                "categories_covered": len(category_analytics)
+            }
+        }
         
     except Exception as e:
         traceback.print_exc()
