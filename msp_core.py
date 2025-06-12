@@ -774,8 +774,94 @@ def run_msp_information_summary_pplx(question: str):
         
         internal_context = "\n\n".join(internal_context_blocks) if internal_context_blocks else "내부 평가 데이터 없음"
         
-        # Enhanced prompt with focused quality improvements
-        prompt = f"""당신은 클라우드 및 MSP 산업의 시니어 리서치 애널리스트입니다. '{best_match}'에 대한 질문 "{question}"에 답변하기 위해, 내부 평가 데이터와 최신 웹 정보를 종합하여 전문적인 분석을 제공해주세요.
+        # Adaptive prompt based on question complexity
+        def detect_question_complexity(question: str):
+            """Detect if question needs simple or complex analysis"""
+            question_lower = question.lower()
+            
+            # Complex analysis indicators
+            complex_indicators = [
+                # Comparative terms
+                "대비", "비교", "vs", "versus", "강점", "약점", "차이", "우위", "경쟁",
+                # Alternative requests  
+                "더 좋은", "대안", "옵션", "선택지", "추천", "어떤 회사",
+                # Multiple requirements
+                "그리고", "또한", "동시에", "함께",
+                # Evaluation requests
+                "평가", "분석", "검토", "판단"
+            ]
+            
+            # Technical requirement indicators
+            technical_indicators = [
+                "멀티에이전트", "multi-agent", "rag", "text2sql", "mlops", 
+                "챗봇", "chatbot", "파이프라인", "모니터링", "아키텍처"
+            ]
+            
+            # Government/scale indicators  
+            scale_indicators = [
+                "정부", "공공", "대규모", "멀티사이트", "10곳", "여러", "다수"
+            ]
+            
+            has_complex = any(indicator in question_lower for indicator in complex_indicators)
+            has_technical = any(indicator in question_lower for indicator in technical_indicators) 
+            has_scale = any(indicator in question_lower for indicator in scale_indicators)
+            
+            # Multiple conditions or specific complexity indicators = complex analysis
+            complexity_score = sum([has_complex, has_technical, has_scale])
+            
+            if complexity_score >= 2 or has_complex:
+                return "complex"
+            elif has_technical or has_scale:
+                return "moderate" 
+            else:
+                return "simple"
+        
+        complexity = detect_question_complexity(question)
+        print(f"🧠 Question complexity detected: {complexity}")
+        
+        if complexity == "simple":
+            # Simple, focused response for straightforward questions
+            prompt = f"""당신은 MSP 전문가입니다. '{best_match}'에 대한 질문 "{question}"에 간결하고 정확하게 답변해주세요.
+
+=== 내부 평가 정보 ===
+회사: {best_match} (평가 평균: {internal_avg}/5점)
+관련 평가 내용:
+{internal_context}
+
+=== 응답 지침 ===
+- 질문에 직접 답하는 것에 집중하세요
+- 내부 평가 데이터를 주요 근거로 활용하세요
+- 최신 웹 정보로 보완하되, 과도하게 복잡하게 만들지 마세요
+- 불필요한 비교나 분석은 피하고 핵심만 전달하세요
+- 2-3개 문단으로 간결하게 정리하세요
+
+웹에서 최신 정보를 확인하여 답변을 보완해주세요."""
+
+        elif complexity == "moderate":
+            # Moderate depth for technical or specific questions
+            prompt = f"""당신은 MSP 기술 전문가입니다. '{best_match}'에 대한 질문 "{question}"에 전문적으로 답변해주세요.
+
+=== 내부 평가 정보 ===
+회사: {best_match} (평가 평균: {internal_avg}/5점)
+관련 평가 내용:
+{internal_context}
+
+=== 분석 포인트 ===
+- 질문에서 언급된 기술이나 요구사항에 대한 구체적 역량 평가
+- 해당 분야에서의 실제 프로젝트 경험과 사례
+- 기술적 강점과 제약사항의 균형잡힌 평가
+- 실무적 관점에서의 적합성과 고려사항
+
+=== 응답 구조 ===
+**핵심 답변**: [질문에 대한 명확한 결론]
+**역량 분석**: [구체적 기술 역량과 경험]  
+**실무 고려사항**: [협업 시 유의점이나 권장사항]
+
+웹에서 관련 기술 동향과 프로젝트 사례를 조사하여 포함해주세요."""
+
+        else:  # complex
+            # Full comprehensive analysis for complex questions
+            prompt = f"""당신은 클라우드 및 MSP 산업의 시니어 리서치 애널리스트입니다. '{best_match}'에 대한 복합 질문 "{question}"에 답변하기 위해, 내부 평가 데이터와 최신 웹 정보를 종합하여 전문적인 분석을 제공해주세요.
 
 === 내부 평가 데이터 (기준점) ===
 회사명: {best_match}
@@ -785,7 +871,7 @@ def run_msp_information_summary_pplx(question: str):
 주요 내부 평가 내용:
 {internal_context}
 
-=== 핵심 분석 지침 ===
+=== 종합 분석 지침 ===
 
 1. **질문 유형별 필수 요소**
    - 비교/경쟁 질문 ("대비", "강점", "약점", "vs") → 반드시 경쟁사 분석과 순위 비교 포함
@@ -798,12 +884,6 @@ def run_msp_information_summary_pplx(question: str):
    - 일반적 AI 역량을 특수 기술 전문성으로 확대 해석 금지
    - 점수만으로 판단하지 말고 답변 내용의 구체성과 관련성 우선 평가
    - 경쟁사 비교 시 동일한 기준으로 다른 회사들의 역량도 검토
-
-3. **웹 정보 활용 전략**
-   - 최신 프로젝트 수주, 기술 파트너십, 인증 취득 정보 우선 수집
-   - 경쟁사의 유사 프로젝트 경험과 기술 역량 정보 수집
-   - 해당 기술 분야의 시장 리더와 성공 사례 조사
-   - 정부 조달 실적, 공공 프로젝트 참여 이력 확인
 
 === 응답 필수 구성 요소 ===
 
@@ -833,13 +913,7 @@ def run_msp_information_summary_pplx(question: str):
 ✅ 대안 요청 시 더 나은 선택지를 구체적으로 제시했는가?
 ✅ 일반론이 아닌 구체적 근거와 사례를 바탕으로 결론을 도출했는가?
 
-=== 절대 금지 사항 ===
-❌ 질문에서 요구한 비교나 대안 제시를 회피하지 마세요
-❌ 구체적 기술 요구사항을 일반적 AI 역량으로 대체하지 마세요  
-❌ "~할 것으로 보입니다" 같은 모호한 결론 대신 명확한 판단을 제시하세요
-❌ 증거가 부족한 경우 그 사실을 명시하고 대안을 제시하세요
-
-위 지침에 따라 '{best_match}'의 "{question}"에 대해 정확하고 실용적인 분석을 제공해주세요."""
+위 지침에 따라 종합적이고 전문적인 분석을 제공해주세요."""
 
     except Exception as e:
         traceback.print_exc()
