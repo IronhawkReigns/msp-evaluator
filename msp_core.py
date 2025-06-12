@@ -27,14 +27,15 @@ from fastapi import HTTPException
 
 def run_msp_recommendation(question: str, min_score: int):
     """
-    Expert-quality MSP recommendation with simple format but professional depth
+    Sophisticated MSP recommendation leveraging Claude's analytical capabilities
     """
     try:
         query_vector = query_embed(question)
         query_results = collection.query(
             query_embeddings=[query_vector],
-            n_results=15
+            n_results=20  # Increased for more comprehensive analysis
         )
+        
         grouped_chunks = defaultdict(list)
         for meta in query_results["metadatas"][0]:
             if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
@@ -44,89 +45,189 @@ def run_msp_recommendation(question: str, min_score: int):
                     "question": meta['question'],
                     "answer": meta['answer'],
                     "score": meta['score'],
-                    "category": meta.get('category', '미분류')
+                    "category": meta.get('category', '미분류'),
+                    "group": meta.get('group', '기타')
                 })
 
         if not grouped_chunks:
             return {"answer": "해당 조건에 맞는 평가 데이터를 찾을 수 없습니다."}
 
-        # Enhanced analysis for expert-level insights
-        context_blocks = []
-        company_insights = {}
+        # Advanced analytics for Claude's sophisticated analysis
+        company_analytics = {}
+        all_companies = list(grouped_chunks.keys())
         
         for msp, qa_list in grouped_chunks.items():
             scores = [qa['score'] for qa in qa_list]
-            avg_score = sum(scores) / len(scores)
-            high_scores = [qa for qa in qa_list if qa['score'] >= 4]
+            categories = defaultdict(list)
             
-            # Analyze answer quality and specificity
-            detailed_answers = [qa for qa in qa_list if len(qa['answer']) > 100]
-            specific_evidence = [qa for qa in qa_list if any(keyword in qa['answer'].lower() 
-                               for keyword in ['프로젝트', '경험', '사례', '년', '개월', '%', '명', '건'])]
+            # Organize by category for deeper analysis
+            for qa in qa_list:
+                categories[qa['category']].append(qa)
             
-            company_insights[msp] = {
-                'avg_score': avg_score,
-                'excellence_count': len(high_scores),
-                'detail_quality': len(detailed_answers),
-                'evidence_strength': len(specific_evidence),
-                'total_responses': len(qa_list)
+            # Calculate comprehensive metrics
+            analytics = {
+                'overall_avg': round(sum(scores) / len(scores), 2),
+                'score_distribution': {
+                    '5점': len([s for s in scores if s == 5]),
+                    '4점': len([s for s in scores if s == 4]),
+                    '3점': len([s for s in scores if s == 3]),
+                    '2점 이하': len([s for s in scores if s <= 2])
+                },
+                'category_performance': {},
+                'excellence_areas': [],
+                'improvement_areas': [],
+                'evidence_quality': {
+                    'detailed_responses': len([qa for qa in qa_list if len(qa['answer']) > 150]),
+                    'specific_examples': len([qa for qa in qa_list if any(keyword in qa['answer'].lower() 
+                                            for keyword in ['프로젝트', '사례', '경험', '년', '개월', '%', '명', '건', '억', '만'])]),
+                    'total_responses': len(qa_list)
+                }
             }
             
-            # Create rich context with best evidence
-            qa_details = []
-            # Sort by score and answer specificity
-            sorted_qa = sorted(qa_list, key=lambda x: (x['score'], len(x['answer'])), reverse=True)
-            for qa in sorted_qa[:4]:
-                qa_details.append(f"Q: {qa['question']}\nA: {qa['answer']}\n점수: {qa['score']}/5")
+            # Category-wise analysis
+            for category, cat_qa_list in categories.items():
+                if cat_qa_list:
+                    cat_scores = [qa['score'] for qa in cat_qa_list]
+                    analytics['category_performance'][category] = {
+                        'avg_score': round(sum(cat_scores) / len(cat_scores), 2),
+                        'response_count': len(cat_qa_list),
+                        'excellence_count': len([s for s in cat_scores if s >= 4])
+                    }
+                    
+                    # Identify excellence and improvement areas
+                    cat_avg = sum(cat_scores) / len(cat_scores)
+                    if cat_avg >= 4.0:
+                        analytics['excellence_areas'].append(f"{category} ({cat_avg:.1f}점)")
+                    elif cat_avg <= 3.0:
+                        analytics['improvement_areas'].append(f"{category} ({cat_avg:.1f}점)")
             
-            context_blocks.append(f"[{msp}]\n" + "\n\n".join(qa_details))
+            company_analytics[msp] = analytics
 
-        context = "\n\n".join(context_blocks)
+        # Create rich, structured context for Claude's analysis
+        analysis_context = []
         
-        # Expert-level prompt for professional reasoning
-        prompt = f"""당신은 10년 이상의 클라우드 컨설팅 경험을 가진 MSP 선정 전문가입니다.
+        for msp, qa_list in grouped_chunks.items():
+            analytics = company_analytics[msp]
+            
+            # Best evidence selection - prioritize high scores and detailed answers
+            sorted_qa = sorted(qa_list, key=lambda x: (x['score'], len(x['answer'])), reverse=True)
+            top_evidence = sorted_qa[:6]  # Top 6 pieces of evidence
+            
+            company_block = f"""
+=== {msp} 종합 분석 ===
+전체 평균: {analytics['overall_avg']}/5점 | 응답 수: {analytics['evidence_quality']['total_responses']}개
 
-다음 MSP 파트너사 평가 데이터를 분석하여 질문에 가장 적합한 회사들을 추천해주세요. 몇 개 회사를 추천할지는 상황에 따라 결정해 주세요.:
+점수 분포:
+- 우수(5점): {analytics['score_distribution']['5점']}개
+- 양호(4점): {analytics['score_distribution']['4점']}개  
+- 보통(3점): {analytics['score_distribution']['3점']}개
+- 미흡(2점 이하): {analytics['score_distribution']['2점 이하']}개
 
-{context}
+카테고리별 성과:
+{chr(10).join([f"- {cat}: {perf['avg_score']:.1f}점 ({perf['response_count']}개 응답)" 
+              for cat, perf in analytics['category_performance'].items()])}
 
-사용자 질문: "{question}"
+강점 영역: {', '.join(analytics['excellence_areas']) if analytics['excellence_areas'] else '특이사항 없음'}
+개선 영역: {', '.join(analytics['improvement_areas']) if analytics['improvement_areas'] else '특이사항 없음'}
 
-다음 전문가 기준으로 분석하십시오:
-• 답변의 구체성과 실무 경험의 깊이
-• 관련 기술 역량의 실제 입증 정도  
-• 유사 프로젝트 수행 경험과 성과
-• 기술적 차별화 요소와 전문성
-• 실제 비즈니스 임팩트 창출 가능성
+구체성 지표:
+- 상세 답변: {analytics['evidence_quality']['detailed_responses']}/{analytics['evidence_quality']['total_responses']}개
+- 구체적 사례/수치: {analytics['evidence_quality']['specific_examples']}/{analytics['evidence_quality']['total_responses']}개
 
-응답 형식:
-**1위 추천: [회사명]**
-- 추천 이유: [전문가 관점의 핵심 근거 2-3문장 - 반드시 구체적 경험이나 역량을 언급]
-- 핵심 강점: [해당 영역에서의 검증된 전문성]
-- 관련 점수: [관련 평가 점수들]
+핵심 근거 자료:
+{chr(10).join([f"[{qa['score']}점] {qa['category']} | Q: {qa['question'][:60]}{'...' if len(qa['question']) > 60 else ''}" + 
+              f"{chr(10)}    A: {qa['answer'][:200]}{'...' if len(qa['answer']) > 200 else ''}"
+              for qa in top_evidence])}
+"""
+            analysis_context.append(company_block)
 
-**2위 추천: [회사명]**  
-- 추천 이유: [차별화된 강점과 근거 2-3문장]
-- 핵심 강점: [1위와 구별되는 전문성]
-- 관련 점수: [관련 평가 점수들]
+        full_context = "\n".join(analysis_context)
+        
+        # Sophisticated prompt for Claude's analytical reasoning
+        prompt = f"""당신은 15년 경력의 시니어 클라우드 컨설턴트로서, 다음 MSP 파트너사 평가 데이터를 종합 분석하여 최적의 추천을 제공해야 합니다.
 
-중요: 반드시 평가 데이터에 명시된 구체적 사례, 경험, 수치를 근거로 제시하고, 추상적이거나 일반적인 표현은 피하십시오. 실제 전문가가 검토해도 논리적이고 설득력 있는 추천이 되도록 작성하십시오."""
+사용자 요구사항: "{question}"
+
+{full_context}
+
+=== 전문가 분석 프레임워크 ===
+
+1. **요구사항 적합성 분석**
+   - 사용자 질문의 핵심 키워드와 각 회사의 관련 역량 매칭도
+   - 단순 점수가 아닌 질문 맥락에서의 실제 적합성 평가
+
+2. **역량 심화 분석**
+   - 카테고리별 성과 패턴 및 균형성 검토
+   - 우수 영역의 실질적 차별화 요소 식별
+   - 약점 영역의 비즈니스 임팩트 평가
+
+3. **증거 신뢰성 평가**
+   - 답변의 구체성과 실무 경험 수준 판단
+   - 정량적 데이터 vs 정성적 설명의 균형
+   - 일관성 있는 전문성 입증 여부
+
+4. **리스크 및 기회 요소**
+   - 각 회사 선택 시 예상되는 이점과 제약사항
+   - 프로젝트 성공 가능성과 잠재적 우려사항
+
+5. **비교 우위 분석**
+   - 회사 간 명확한 차별화 포인트
+   - 동등한 수준일 경우의 세부 판단 기준
+
+=== 응답 형식 (필수 준수) ===
+
+**🏆 1순위 추천: [회사명]**
+**적합도:** ⭐⭐⭐⭐⭐ (5/5)
+**선정 근거:**
+- [구체적 강점과 사용자 요구사항 연결점 2-3줄]
+- [차별화 요소와 경쟁 우위 1-2줄]
+
+**핵심 역량 분석:**
+- 우수 분야: [카테고리] (X.X점) - [구체적 근거]
+- 검증된 실적: [구체적 사례나 수치]
+
+**선택 시 기대효과:** [실무적 관점의 이점]
+
+---
+
+**🥈 2순위 추천: [회사명]**  
+**적합도:** ⭐⭐⭐⭐☆ (4/5)
+**선정 근거:**
+- [1순위와 차별화된 강점 설명]
+- [특정 상황에서의 우위 요소]
+
+**핵심 역량 분석:**
+- 우수 분야: [카테고리] (X.X점) - [구체적 근거]
+- 고려사항: [약점이나 제약사항이 있다면]
+
+**선택 시 기대효과:** [실무적 관점의 이점]
+
+---
+
+**📊 종합 비교 분석**
+- **핵심 차이점:** [1순위와 2순위의 명확한 구분점]
+- **상황별 권장:** [어떤 상황에서 각각을 선택해야 하는지]
+
+**신뢰도:** 높음 (분석 근거: 총 {sum(len(qa_list) for qa_list in grouped_chunks.values())}개 평가 데이터)
+
+=== 분석 주의사항 ===
+- 평가 점수는 참고용이며, 질문 맥락과의 실제 연관성을 우선 고려
+- 구체적 근거가 있는 내용만 언급하며, 추측이나 일반론 금지
+- 실무진이 의사결정에 활용할 수 있는 구체적이고 실행 가능한 인사이트 제공
+- 회사명과 평가 데이터가 정확히 일치하는지 반드시 확인"""
 
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
-
-    # In your run_msp_recommendation function, around line 100-130
-# Replace this section:
 
     try:
         client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
         
         response = client.messages.create(
             model="claude-3-haiku-20240307",
-            max_tokens=1000,
-            temperature=0.15,  # Low temperature for consistent, professional reasoning
-            system="당신은 클라우드 및 MSP 선정 분야의 시니어 컨설턴트입니다. 항상 데이터에 기반한 논리적이고 구체적인 추천을 제공하며, 전문가 수준의 통찰력을 보여주십시오. 추상적 표현보다는 구체적 근거와 실무적 관점을 중시합니다.",
+            max_tokens=1200,  # Increased for comprehensive analysis
+            temperature=0.1,   # Very low for consistent, analytical reasoning
+            system="당신은 클라우드 및 MSP 선정 분야의 최고 수준 컨설턴트입니다. 데이터 기반의 논리적 분석과 실무적 통찰력을 겸비하여, 고객이 최적의 의사결정을 할 수 있도록 구조화되고 설득력 있는 추천을 제공합니다. 추상적 표현보다는 구체적 근거와 실질적 가치에 집중하며, 분석의 투명성과 신뢰성을 최우선으로 합니다.",
             messages=[{
                 "role": "user", 
                 "content": prompt
@@ -135,17 +236,13 @@ def run_msp_recommendation(question: str, min_score: int):
         
         answer = response.content[0].text.strip()
         
-        # Quality enhancements for professional consistency
-        answer = answer.replace("설루션", "솔루션")
-        answer = answer.replace("있습니다", "있음")  # More concise professional tone
-        answer = answer.replace("합니다", "함")
-        
-        # Ensure professional terminology consistency
+        # Enhanced post-processing for consistency
         professional_terms = {
+            "설루션": "솔루션",
             "구현": "구축", 
             "만들": "구축",
-            "해결": "해결",
-            "제공": "제공"
+            "좋습니다": "우수합니다",
+            "뛰어납니다": "우수합니다"
         }
         
         for old_term, new_term in professional_terms.items():
@@ -154,8 +251,11 @@ def run_msp_recommendation(question: str, min_score: int):
         return {
             "answer": answer,
             "evidence": query_results["metadatas"][0],
-            "model_used": "claude-3-haiku-expert",
-            "analysis_quality": "expert_validated"
+            "model_used": "claude-3-haiku-expert-enhanced",
+            "analysis_quality": "comprehensive_analytical",
+            "companies_analyzed": len(grouped_chunks),
+            "total_evidence_points": sum(len(qa_list) for qa_list in grouped_chunks.values()),
+            "analytics_summary": {company: analytics['overall_avg'] for company, analytics in company_analytics.items()}
         }
         
     except Exception as e:
