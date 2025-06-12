@@ -698,10 +698,14 @@ def run_msp_information_summary_claude(question: str):
         raise HTTPException(status_code=500, detail=f"Claude API error: {str(e)}")
 
 def run_msp_information_summary_pplx(question: str):
+    """
+    Enhanced Perplexity-based information summary with comprehensive web intelligence
+    """
     import traceback
     import requests
     import os
-
+    from collections import defaultdict
+    
     query = question
     msp_name = extract_msp_name(question)
 
@@ -715,37 +719,140 @@ def run_msp_information_summary_pplx(question: str):
     best_match = matches[0]
 
     try:
+        # Enhanced internal data collection
         query_vector = query_embed(question)
         query_results = collection.query(
             query_embeddings=[query_vector],
-            n_results=8
+            n_results=12  # Increased for comprehensive internal context
         )
-        filtered_chunks = [c for c in query_results["metadatas"][0] if c.get("answer") and c.get("question") and c.get("msp_name") == best_match]
-        if not filtered_chunks:
-            return {"answer": "관련된 정보를 찾을 수 없습니다.", "advanced": True}
-
-        answer_blocks = []
-        for chunk in filtered_chunks:
-            if not chunk.get("answer") or not chunk.get("question"):
-                continue
-            answer_blocks.append(f"Q: {chunk['question']}\nA: {chunk['answer']}")
-
-        context = "\n\n".join(answer_blocks)
-        prompt = (
-            f"{context}\n\n"
-            f"사용자의 질문은 다음과 같습니다:\n"
-            f"\"{question}\"\n\n"
-            f"[응답 가이드라인]\n"
-            f"- 아래 Q&A는 참고용일 뿐이며, 더 정확하거나 풍부한 정보가 있다면 웹 기반의 지식도 자유롭게 활용해 주세요.\n"
-            f"- 근거가 명확한 경우, 주어진 정보 외의 배경지식도 적극 활용해 주세요.\n"
-            f"- 문장은 자연스럽고 신뢰감 있게 작성해 주세요.\n"
-            f"- 지나치게 형식을 강조하기보다는, 명확하고 유익한 정보를 중심으로 서술해 주세요.\n"
-            f"- 회사명은 명확히 언급하되, 반복을 피하고 문맥에 자연스럽게 녹여 주세요."
+        
+        # Get comprehensive company profile from internal data
+        all_company_data = collection.get(
+            where={"msp_name": best_match},
+            include=["metadatas"]
         )
+        
+        # Organize internal data
+        internal_chunks = []
+        category_data = defaultdict(list)
+        
+        # Process query-relevant internal data
+        for chunk in query_results["metadatas"][0]:
+            if chunk.get("msp_name") == best_match and chunk.get("answer") and chunk.get("question"):
+                internal_chunks.append({
+                    "question": chunk['question'],
+                    "answer": chunk['answer'],
+                    "score": chunk.get('score', 0),
+                    "category": chunk.get('category', '미분류')
+                })
+        
+        # Process all company data for context
+        for chunk in all_company_data["metadatas"]:
+            if chunk.get("answer") and chunk.get("question"):
+                category = chunk.get('category', '미분류')
+                category_data[category].append({
+                    "question": chunk['question'],
+                    "answer": chunk['answer'],
+                    "score": chunk.get('score', 0)
+                })
+
+        # Calculate internal analytics
+        all_internal_scores = []
+        for category_items in category_data.values():
+            all_internal_scores.extend([item['score'] for item in category_items if item['score']])
+        
+        internal_avg = round(sum(all_internal_scores) / len(all_internal_scores), 2) if all_internal_scores else 0
+        
+        # Create comprehensive internal context
+        internal_context_blocks = []
+        for chunk in internal_chunks[:6]:  # Top 6 most relevant
+            internal_context_blocks.append(
+                f"평가: {chunk['score']}/5점 | {chunk['category']}\n"
+                f"Q: {chunk['question']}\n"
+                f"A: {chunk['answer'][:200]}{'...' if len(chunk['answer']) > 200 else ''}"
+            )
+        
+        internal_context = "\n\n".join(internal_context_blocks) if internal_context_blocks else "내부 평가 데이터 없음"
+        
+        # Enhanced prompt for Perplexity with web intelligence focus
+        prompt = f"""당신은 클라우드 및 MSP 산업의 시니어 리서치 애널리스트입니다. '{best_match}'에 대한 질문 "{question}"에 답변하기 위해, 내부 평가 데이터와 최신 웹 정보를 종합하여 전문적인 분석을 제공해주세요.
+
+=== 내부 평가 데이터 (기준점) ===
+회사명: {best_match}
+내부 평가 평균: {internal_avg}/5점 (총 {len(all_internal_scores)}개 평가 항목)
+평가 카테고리: {len(category_data)}개 분야
+
+주요 내부 평가 내용:
+{internal_context}
+
+=== 웹 기반 정보 통합 지침 ===
+
+1. **최신성 우선**: 내부 평가는 과거 시점 데이터이므로, 최신 웹 정보로 보완하여 현재 상황을 정확히 파악
+
+2. **신뢰도 검증**: 공식 발표, 뉴스 기사, 기업 공시 등 신뢰할 수 있는 소스 우선 활용
+
+3. **다각도 분석**: 
+   - 기업 공식 정보 (홈페이지, 보도자료, 공시)
+   - 시장 반응 (뉴스, 분석 리포트)
+   - 업계 동향 (경쟁사 비교, 시장 트렌드)
+   - 고객/파트너 피드백 (사용 후기, 케이스 스터디)
+
+4. **맥락적 해석**: 웹 정보를 단순 나열이 아닌, 사용자 질문과 내부 평가 맥락에서 해석
+
+=== 전문가 수준 분석 프레임워크 ===
+
+**Stage 1: 정보 통합**
+- 내부 평가와 최신 웹 정보 간의 일치점과 차이점 식별
+- 시간 경과에 따른 변화 추이 파악
+- 정보 간 신뢰도 가중치 적용
+
+**Stage 2: 현황 분석**
+- 현재 회사 상황과 역량 수준 종합 평가
+- 업계 내 위치와 경쟁력 분석
+- 최근 사업 동향과 전략 방향 파악
+
+**Stage 3: 인사이트 도출**
+- 사용자 질문에 대한 구체적이고 실행 가능한 답변
+- 근거 기반의 전망과 권장사항
+- 잠재적 기회와 리스크 요소 식별
+
+=== 응답 구조 ===
+
+**💡 핵심 인사이트**
+[사용자 질문에 대한 명확하고 구체적인 답변 - 최신 정보 기반]
+
+**📊 현황 분석**
+- **내부 평가 기준**: [관련 내부 평가 내용 요약]
+- **최신 웹 정보**: [신뢰할 수 있는 최신 정보]
+- **변화 추이**: [시간에 따른 변화나 발전 사항]
+
+**🏢 업계 맥락**
+- **시장 위치**: [경쟁사 대비 포지셔닝]
+- **차별화 요소**: [고유 강점이나 특징]
+- **업계 트렌드**: [관련 산업 동향과의 연관성]
+
+**⚡ 실무적 시사점**
+- **협업 관점**: [파트너십이나 프로젝트 시 고려사항]
+- **기회 요소**: [활용 가능한 강점이나 기회]
+- **주의 사항**: [리스크나 제약 요소]
+
+**🎯 종합 평가**
+[내부 평가와 최신 정보를 종합한 균형잡힌 최종 평가]
+
+=== 품질 기준 ===
+- 구체적 근거와 출처가 명확한 정보만 활용
+- 추측이나 일반론보다는 팩트 기반 분석
+- 과도한 마케팅 표현 지양, 객관적 서술
+- 불확실한 정보는 그 한계를 명시
+- 사용자가 실제 의사결정에 활용할 수 있는 실용적 정보 제공
+
+이 가이드라인을 바탕으로 '{best_match}'의 "{question}"에 대해 종합적이고 전문적인 분석을 제공해주세요."""
+
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Vector search failed: {str(e)}")
+        return {"answer": f"내부 데이터 처리 중 오류가 발생했습니다: {str(e)}", "advanced": True}
 
+    # Enhanced Perplexity API call
     try:
         response = requests.post(
             "https://api.perplexity.ai/chat/completions",
@@ -756,30 +863,108 @@ def run_msp_information_summary_pplx(question: str):
             json={
                 "model": "sonar",
                 "messages": [
-                    {"role": "system", "content": "정확하고 신뢰할 수 있는 정보를 간결한 한국어로 제공하세요."},
-                    {"role": "user", "content": prompt}
-                ]
+                    {
+                        "role": "system", 
+                        "content": "당신은 15년 경력의 클라우드 및 MSP 산업 전문 리서치 애널리스트입니다. 내부 평가 데이터와 최신 웹 정보를 종합하여 정확하고 실용적인 비즈니스 인텔리전스를 제공하며, 팩트에 기반한 객관적 분석과 실행 가능한 인사이트를 중시합니다."
+                    },
+                    {
+                        "role": "user", 
+                        "content": prompt
+                    }
+                ],
+                "temperature": 0.2,  # Lower for more factual analysis
+                "max_tokens": 1500,  # Increased for comprehensive analysis
+                "top_p": 0.8
             },
-            timeout=30
+            timeout=45  # Increased timeout for comprehensive web search
         )
-        print(f"🔎 Claude API status: {response.status_code}")
-        print(f"📦 Claude API raw response: {response.text}")
+        
+        print(f"🔎 Perplexity API status: {response.status_code}")
+        
         if response.status_code == 200:
             import re
             result = response.json()
             answer = result["choices"][0]["message"]["content"].strip()
-            # Clean up answer
-            answer = re.sub(r"\[Q&A\]", "", answer)
-            answer = re.sub(r"Q[:：]", "", answer)
-            answer = re.sub(r"A[:：]", "", answer)
+            
+            # Enhanced post-processing for professional consistency
+            # Remove citation markers that might interfere with readability
+            answer = re.sub(r"\[\d+\]", "", answer)
+            
+            # Fix common terminology
+            professional_fixes = {
+                "설루션": "솔루션",
+                "클라우드 서비스": "클라우드 솔루션",
+                "빅데이터": "빅데이터",
+                "머신러닝": "머신러닝",
+                "딥러닝": "딥러닝",
+                "인공지능": "AI"
+            }
+            
+            for old_term, new_term in professional_fixes.items():
+                answer = answer.replace(old_term, new_term)
+            
+            # Clean up formatting
+            answer = re.sub(r"\n{3,}", "\n\n", answer)  # Remove excessive line breaks
             answer = answer.strip()
-            answer = re.sub(r"\[\d+\]", "", answer)  # Remove [1], [2], etc.
-            return {"answer": answer, "advanced": True, "evidence": filtered_chunks}
+            
+            return {
+                "answer": answer, 
+                "advanced": True, 
+                "evidence": internal_chunks,
+                "model_used": "perplexity-sonar-enhanced",
+                "data_integration": {
+                    "internal_data_points": len(internal_chunks),
+                    "internal_average": internal_avg,
+                    "categories_covered": len(category_data),
+                    "web_enhanced": True
+                },
+                "analysis_type": "comprehensive_web_intelligence"
+            }
         else:
-            return {"answer": "Claude API 호출에 실패했습니다.", "advanced": True}
+            # Fallback to internal data analysis if Perplexity fails
+            print(f"❌ Perplexity API failed: {response.status_code}, falling back to internal analysis")
+            
+            if internal_chunks:
+                fallback_answer = f"""**[내부 데이터 기반 분석]**
+
+**핵심 답변**
+{best_match}에 대한 질문 "{question}"에 대해 내부 평가 데이터를 바탕으로 분석한 결과입니다.
+
+**평가 현황**
+- 내부 평가 평균: {internal_avg}/5점
+- 평가 항목 수: {len(all_internal_scores)}개
+- 평가 카테고리: {len(category_data)}개 분야
+
+**주요 평가 내용**
+{chr(10).join([f"• [{chunk['category']}] {chunk['question'][:60]}{'...' if len(chunk['question']) > 60 else ''} (점수: {chunk['score']}/5)" for chunk in internal_chunks[:5]])}
+
+**제한사항**
+외부 웹 정보 연동에 실패하여 내부 평가 데이터만을 기반으로 한 제한적 분석입니다. 최신 정보나 시장 동향은 별도 확인이 필요합니다."""
+                
+                return {
+                    "answer": fallback_answer,
+                    "advanced": True,
+                    "evidence": internal_chunks,
+                    "model_used": "internal-fallback",
+                    "data_integration": {
+                        "internal_data_points": len(internal_chunks),
+                        "internal_average": internal_avg,
+                        "web_enhanced": False,
+                        "fallback_reason": "perplexity_api_failure"
+                    }
+                }
+            else:
+                return {
+                    "answer": f"{best_match}에 대한 충분한 정보를 찾을 수 없습니다.", 
+                    "advanced": True
+                }
+                
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Claude API error: {str(e)}")
+        return {
+            "answer": f"웹 기반 분석 중 오류가 발생했습니다: {str(e)}", 
+            "advanced": True
+        }
 
 def extract_msp_name(question: str) -> str:
     from openai import OpenAI
