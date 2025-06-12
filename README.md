@@ -1,4 +1,4 @@
-# MSP Evaluator
+# MSP EvaluatorMore actions
 
 > **AI-Powered Cloud MSP Partner Evaluation & Recommendation Platform**
 
@@ -19,6 +19,26 @@ An enterprise-grade AI platform that revolutionizes cloud MSP partner evaluation
 
 ---
 
+## System Architecture
+
+[React UI]
+[Admin Dashboard]
+[Excel Upload]
+       │
+       ▼
+[FastAPI Backend]
+  ├── AI Models
+  │   ├─ HyperCLOVA API
+  │   ├─ Claude API
+  │   ├─ Perplexity API
+  │   └─ NAVER Search API
+  ├── Vector DB
+  │   └─ ChromaDB (1024D Embeddings)
+  └── Internal Logic
+      ├─ Scoring Engine
+      ├─ Query Router
+      └─ Database Writer
+      
 ### Core Technology Stack
 
 | Layer | Technology | Purpose |
@@ -70,7 +90,7 @@ def chunk_text(text: str):
         "text": text,
         "postProcess": False             # Raw segmentation output
     }
-    
+
     # CLOVA Studio segmentation API call
     response = clova_api_call('/serviceapp/v1/api-tools/segmentation', completion_request)
     return [' '.join(segment) for segment in response["result"]["topicSeg"]]
@@ -156,10 +176,10 @@ def run_msp_recommendation(question: str, min_score: int):
     # Vector similarity search
     query_vector = query_embed(question)
     results = collection.query(query_embeddings=[query_vector], n_results=20)
-    
+
     # Advanced analytics processing
     company_analytics = analyze_performance_metrics(results)
-    
+
     # Claude-powered reasoning
     return generate_expert_recommendation(analytics, question)
 ```
