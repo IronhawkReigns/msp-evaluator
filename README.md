@@ -1,4 +1,4 @@
-# MSP EvaluatorAdd commentMore actions
+# MSP Evaluator
 
 > **AI-Powered Cloud MSP Partner Evaluation & Recommendation Platform**
 
