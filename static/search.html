@@ -26,6 +26,535 @@
             sans: ['Inter', 'system-ui', 'sans-serif'],
           },
           animation: {
+            'fade-in': 'fadeIn 0.6s ease-out',
+            'slide-up': 'slideUp 0.5s ease-out',
+            'float': 'float 6s ease-in-out infinite',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-feature-settings: 'cv11', 'ss01';
+    }
+    
+    .glass-morphism {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+    }
+    
+    .glass-input {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 4px 16px rgba(31, 38, 135, 0.1);
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #14b8a6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .gradient-border {
+      background: linear-gradient(45deg, #059669, #0d9488, #14b8a6);
+      padding: 2px;
+      border-radius: 12px;
+    }
+    
+    .professional-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(31, 38, 135, 0.2);
+      transition: all 0.3s ease;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(229, 231, 235, 0.3);
+      border-radius: 3px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #059669, #0d9488);
+      border-radius: 3px;
+    }
+    
+    .floating {
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    .focus-glow:focus {
+      box-shadow: 
+        0 0 0 3px rgba(5, 150, 105, 0.1),
+        0 4px 16px rgba(5, 150, 105, 0.15);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    }
+    
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #047857 0%, #0f766e 100%);
+      box-shadow: 0 6px 16px rgba(5, 150, 105, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState: useReactState, useEffect: useReactEffect, useRef: useReactRef } = React;
+
+    // Clean, professional icons with unique names
+    const PremiumSearchIcon = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    );
+
+    const PremiumGlobeIcon = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9 3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+      </svg>
+    );
+
+    const PremiumSparklesIcon = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+      </svg>
+    );
+
+    const PremiumChevronDownIcon = ({ className = "w-4 h-4" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
+      </svg>
+    );
+
+    const PremiumChevronUpIcon = ({ className = "w-4 h-4" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 15l7-7 7 7" />
+      </svg>
+    );
+
+    const PremiumEyeIcon = ({ className = "w-4 h-4" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+      </svg>
+    );
+
+    const PremiumEyeOffIcon = ({ className = "w-4 h-4" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+      </svg>
+    );
+
+    const PremiumInfoIcon = ({ className = "w-4 h-4" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    );
+
+    const PremiumMSPSearch = () => {
+      const [query, setQuery] = useReactState('');
+      const [minScore, setMinScore] = useReactState('0');
+      const [isAdvanced, setIsAdvanced] = useReactState(false);
+      const [isLoading, setIsLoading] = useReactState(false);
+      const [results, setResults] = useReactState(null);
+      const [showSamples, setShowSamples] = useReactState(false);
+      const [showEvidence, setShowEvidence] = useReactState(false);
+      const [searchType, setSearchType] = useReactState('standard');
+      const [currentTime, setCurrentTime] = useReactState(new Date());
+      const inputRef = useReactRef(null);
+
+      const sampleQuestions = [
+        { text: "ITCEN CLOIT의 AI 전문 인력 구성은?", category: "인력 분석" },
+        { text: "MLOps 관련 경험이 풍부한 MSP는?", category: "기술 역량" },
+        { text: "디딤365의 협업 방식은 어떤가?", category: "프로세스 분석" },
+        { text: "보안이 강점인 파트너사 추천해줘", category: "역량 기반 추천" }
+      ];
+
+      useReactEffect(() => {
+        inputRef.current?.focus();
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+      }, []);
+
+      const handleSearch = async (endpoint = '/query/router') => {
+        if (!query.trim()) {
+          inputRef.current?.focus();
+          return;
+        }
+
+        setIsLoading(true);
+        setResults(null);
+
+        try {
+          const payload = endpoint === '/query/router' 
+            ? { query, chat_history: [], advanced: isAdvanced }
+            : { query };
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (!response.ok) throw new Error(`서버 오류: ${response.status}`);
+          
+          const data = await response.json();
+          setResults(data);
+          setSearchType(endpoint === '/query/advanced_naver' ? 'naver' : 'standard');
+        } catch (error) {
+          console.error('검색 오류:', error);
+          setResults({ error: '검색 중 오류가 발생했습니다. 다시 시도해 주세요.' });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      const handleSampleClick = (sampleText) => {
+        setQuery(sampleText);
+        setShowSamples(false);
+        setTimeout(() => inputRef.current?.focus(), 100);
+      };
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
+          {/* Subtle Background Elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-32 -right-32 w-64 h-64 bg-gradient-to-br from-emerald-400/20 to-teal-600/20 rounded-full blur-3xl floating"></div>
+            <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-gradient-to-br from-blue-400/20 to-indigo-600/20 rounded-full blur-3xl floating" style={{ animationDelay: '3s' }}></div>
+          </div>
+
+          {/* Professional Header with Glass Effect */}
+          <header className="sticky top-0 z-50 glass-morphism border-b border-white/20 animate-fade-in">
+            <div className="max-w-6xl mx-auto px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-10 h-10 gradient-border rounded-xl">
+                    <div className="w-full h-full bg-white rounded-lg flex items-center justify-center">
+                      <PremiumSparklesIcon className="w-5 h-5 text-emerald-600" />
+                    </div>
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold gradient-text">MSP 검색 도구</h1>
+                    <p className="text-sm text-slate-600">NAVER Cloud Platform • {currentTime.toLocaleTimeString('ko-KR')}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <a 
+                    href="/" 
+                    className="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+                  >
+                    홈
+                  </a>
+                  <a 
+                    href="/login?next=/admin" 
+                    className="px-4 py-2 btn-primary text-white rounded-lg font-medium transition-all duration-300"
+                  >
+                    관리자
+                  </a>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <div className="max-w-4xl mx-auto px-6 py-8 relative z-10">
+            {/* Professional Hero */}
+            <div className="text-center mb-16 animate-fade-in">
+              <h1 className="text-5xl font-bold gradient-text mb-6 leading-tight">
+                MSP 파트너 분석 플랫폼
+              </h1>
+              <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+                AI 기반 분석으로 최적의 클라우드 서비스 파트너를 찾아보세요
+              </p>
+            </div>
+
+            {/* Premium Search Interface */}
+            <div className="glass-card rounded-2xl p-8 mb-8 animate-fade-in professional-hover">
+              
+              {/* Score Filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-slate-700 mb-3">
+                  최소 점수 기준
+                </label>
+                <div className="gradient-border rounded-xl">
+                  <select 
+                    value={minScore}
+                    onChange={(e) => setMinScore(e.target.value)}
+                    className="w-full px-4 py-3 bg-white rounded-lg border-0 focus:ring-2 focus:ring-emerald-500 font-medium appearance-none cursor-pointer"
+                  >
+                    <option value="0">전체 결과</option>
+                    <option value="1">1점 이상</option>
+                    <option value="2">2점 이상</option>
+                    <option value="3">3점 이상</option>
+                    <option value="4">4점 이상</option>
+                    <option value="5">5점만</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* ChatGPT-Style Search Input with Glass Effect */}
+              <div className="mb-6">
+                <div className="gradient-border rounded-2xl">
+                  <div className="relative glass-input rounded-xl">
+                    <textarea
+                      ref={inputRef}
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSearch();
+                        }
+                      }}
+                      placeholder="MSP 파트너에 대해 질문해보세요..."
+                      className="w-full px-4 py-4 pr-16 bg-transparent border-0 rounded-xl focus:ring-0 focus:outline-none resize-none text-base leading-relaxed placeholder-slate-500 focus-glow"
+                      rows="3"
+                      style={{ minHeight: '80px', maxHeight: '200px' }}
+                    />
+                    <div className="absolute bottom-4 right-4 flex items-center space-x-2">
+                      <kbd className="px-2 py-1 bg-slate-100/60 text-slate-600 text-sm rounded border font-medium">Enter</kbd>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Premium Advanced Options */}
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 p-4 glass-input rounded-xl">
+                <div className="flex items-center space-x-4 mb-4 lg:mb-0">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isAdvanced}
+                      onChange={(e) => setIsAdvanced(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div className={`w-11 h-6 rounded-full transition-all duration-300 ${
+                      isAdvanced ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-slate-300'
+                    }`}>
+                      <div className={`w-5 h-5 bg-white rounded-full shadow transition-all duration-300 ${
+                        isAdvanced ? 'translate-x-5' : 'translate-x-0.5'
+                      } mt-0.5`}></div>
+                    </div>
+                  </label>
+                  <span className="text-sm font-semibold text-slate-700">웹 검색 포함</span>
+                  <div className="group relative">
+                    <PremiumInfoIcon className="w-4 h-4 text-emerald-600 cursor-help" />
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      Perplexity API를 사용한 웹 검색
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowSamples(!showSamples)}
+                  className="flex items-center space-x-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
+                >
+                  <span>예시 질문</span>
+                  {showSamples ? <PremiumChevronUpIcon /> : <PremiumChevronDownIcon />}
+                </button>
+              </div>
+
+              {/* Premium Sample Questions */}
+              {showSamples && (
+                <div className="mb-6 p-4 glass-input rounded-xl animate-slide-up">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {sampleQuestions.map((sample, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSampleClick(sample.text)}
+                        className="flex items-start space-x-3 p-4 glass-card rounded-xl hover:shadow-lg transition-all duration-300 text-left professional-hover"
+                      >
+                        <div className="flex-1">
+                          <div className="text-xs font-semibold text-emerald-600 mb-2 uppercase tracking-wider">{sample.category}</div>
+                          <div className="text-sm text-slate-700 font-medium">{sample.text}</div>
+                        </div>
+                        <PremiumChevronDownIcon className="w-4 h-4 text-emerald-500 transform rotate-[-90deg]" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Premium Search Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={() => handleSearch()}
+                  disabled={isLoading}
+                  className="flex-1 flex items-center justify-center space-x-3 px-6 py-4 btn-primary text-white rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>검색 중...</span>
+                    </>
+                  ) : (
+                    <>
+                      <PremiumSearchIcon className="w-5 h-5" />
+                      <span>검색</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => handleSearch('/query/advanced_naver')}
+                  disabled={isLoading}
+                  className="flex-1 flex items-center justify-center space-x-3 px-6 py-4 glass-card border-2 border-emerald-500 text-emerald-600 rounded-xl font-semibold hover:bg-emerald-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <PremiumGlobeIcon className="w-5 h-5" />
+                  <span>NAVER 검색</span>
+                </button>
+              </div>
+
+              <div className="text-center mt-6">
+                <p className="text-sm text-slate-500 font-medium">
+                  AI 기반 분석 결과로, 참고용으로만 사용하시기 바랍니다.
+                </p>
+              </div>
+            </div>
+
+            {/* Premium Results */}
+            {results && (
+              <div className="glass-card rounded-2xl p-6 animate-fade-in professional-hover">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-slate-800">분석 결과</h2>
+                  {(results.advanced || searchType === 'naver') && (
+                    <div className="flex items-center space-x-3 px-4 py-2 bg-gradient-to-r from-emerald-100 to-teal-100 rounded-full">
+                      <PremiumGlobeIcon className="w-5 h-5 text-emerald-600" />
+                      <span className="text-sm font-semibold text-emerald-700">
+                        {searchType === 'naver' ? 'NAVER 검색' : '웹 검색 포함'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {results.error ? (
+                  <div className="p-6 glass-input rounded-xl border-l-4 border-red-500">
+                    <p className="text-red-600 font-semibold">{results.error}</p>
+                  </div>
+                ) : results.answer ? (
+                  <div className="space-y-6">
+                    <div className="p-6 glass-input rounded-xl border-l-4 border-emerald-500">
+                      <div 
+                        className="text-slate-700 leading-relaxed text-base custom-scrollbar"
+                        dangerouslySetInnerHTML={{ __html: results.answer.replace(/\n/g, '<br>') }}
+                        style={{ maxHeight: '500px', overflowY: 'auto' }}
+                      />
+                    </div>
+
+                    {results.evidence && results.evidence.length > 0 && (
+                      <div>
+                        <button
+                          onClick={() => setShowEvidence(!showEvidence)}
+                          className="flex items-center space-x-3 px-4 py-3 glass-card hover:shadow-lg rounded-xl transition-all duration-300 font-medium"
+                        >
+                          {showEvidence ? <PremiumEyeOffIcon /> : <PremiumEyeIcon />}
+                          <span>{showEvidence ? '근거 숨기기' : '분석 근거 보기'}</span>
+                          <span className="text-emerald-600 font-semibold">({results.evidence.length}개)</span>
+                        </button>
+
+                        {showEvidence && (
+                          <div className="mt-6 space-y-4 animate-slide-up">
+                            {results.evidence.map((evidence, index) => (
+                              <div key={index} className="p-4 glass-input rounded-xl border-l-4 border-emerald-500">
+                                <div className="font-semibold text-slate-800 mb-3">
+                                  {evidence.question}
+                                </div>
+                                <div className="text-slate-600 mb-4 leading-relaxed">
+                                  {evidence.answer}
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="inline-flex items-center px-3 py-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm rounded-full font-semibold">
+                                    점수: {evidence.score}/5
+                                  </span>
+                                  <span className="text-sm text-slate-400 font-medium">근거 #{index + 1}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </div>
+
+          {/* Premium Footer */}
+          <footer className="text-center py-12 text-slate-500 relative z-10">
+            <div className="max-w-2xl mx-auto">
+              <div className="glass-card rounded-2xl p-6">
+                <p className="text-lg font-semibold gradient-text">© 2025 NAVER Cloud Platform MSP 검색 도구</p>
+              </div>
+            </div>
+          </footer>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<PremiumMSPSearch />, document.getElementById('root'));
+  </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MSP 검색 도구 - NAVER Cloud</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          animation: {
             'fade-in': 'fadeIn 0.5s ease-out',
             'slide-up': 'slideUp 0.4s ease-out',
           },
