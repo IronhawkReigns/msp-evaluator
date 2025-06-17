@@ -41,9 +41,16 @@ async def login(request: Request):
     print(f"🚨 Login attempt: username={username}, password={password}")
     env_username = os.getenv("ADMIN_USERNAME")
     env_password = os.getenv("ADMIN_PASSWORD")
-    if username != env_username or password != env_password:
-        return RedirectResponse(url="/login?error=invalid", status_code=303)
     
+    if username != env_username or password != env_password:
+        # CHANGE THIS PART - detect if it's an English login attempt
+        referer = request.headers.get("referer", "")
+        if "/en/login" in referer:
+            return RedirectResponse(url="/en/login?error=invalid", status_code=303)
+        else:
+            return RedirectResponse(url="/login?error=invalid", status_code=303)
+    
+    # SUCCESS: redirect to next_url (this part is already correct)
     response = RedirectResponse(url=next_url, status_code=302)
     response.set_cookie(
         key=manager.cookie_name,
@@ -54,13 +61,22 @@ async def login(request: Request):
     )
     return response
 
+# ADD this new route for English login page
+@router.get("/en/login")
+def english_login_page(request: Request):
+    return templates.TemplateResponse("en/login.html", {"request": request})
+
 @router.get("/admin")
 def admin_dashboard(request: Request, user=Depends(manager)):
     return templates.TemplateResponse("admin.html", {"request": request, "user": user})
 
 @router.get("/logout")
-def logout():
-    response = RedirectResponse(url="/", status_code=302)
+def logout(request: Request):
+    # Detect if user came from English site
+    referer = request.headers.get("referer", "")
+    redirect_url = "/en" if "/en/" in referer else "/"
+    
+    response = RedirectResponse(url=redirect_url, status_code=302)
     response.delete_cookie(manager.cookie_name)
     return response
 
