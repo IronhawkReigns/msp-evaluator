@@ -993,15 +993,26 @@ def serve_main_page_en():
 def serve_search_page_en():
     return FileResponse("static/en/search.html")
 
-# Serve English admin dashboard (NO authentication required)
+# English admin routes that redirect to English login but authenticate to Korean admin
 @app.get("/en/admin")
-def serve_admin_ui_en():
-    return FileResponse("static/en/admin.html")
+def serve_admin_ui_en(request: Request):
+    try:
+        user = manager(request)
+        # After successful auth, redirect to KOREAN admin (where functionality exists)
+        return RedirectResponse(url="/admin")
+    except Exception as e:
+        # Redirect to ENGLISH login page
+        return RedirectResponse(url="/en/login?next=/admin")  # Note: next points to Korean admin
 
-# Serve English vector DB viewer (NO authentication required)
 @app.get("/en/ui")
-def serve_ui_en():
-    return FileResponse("static/en/vector-db-viewer.html")
+def serve_ui_en(request: Request):
+    try:
+        user = manager(request)
+        # After successful auth, redirect to KOREAN vector DB viewer
+        return RedirectResponse(url="/ui")
+    except Exception as e:
+        # Redirect to ENGLISH login page  
+        return RedirectResponse(url="/en/login?next=/ui")  # Note: next points to Korean UI
 
 # Keep the English login page for consistency (even though not required)
 @app.get("/en/login")
