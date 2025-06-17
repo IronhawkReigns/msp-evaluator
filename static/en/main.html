@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MSP 평가 도구 - NAVER Cloud</title>
+  <title>MSP Evaluation Tool - NAVER Cloud</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -240,19 +240,19 @@
 
       const tools = [
         {
-          title: "MSP 검색 도구",
-          description: "AI 기반 지능형 MSP 검색 및 추천 시스템",
+          title: "MSP Search Tool",
+          description: "AI-powered intelligent MSP search and recommendation system",
           icon: SearchIcon,
-          href: "/search",
+          href: "/en/search",
           color: "from-emerald-500 via-teal-500 to-cyan-600",
           bgGradient: "from-emerald-50 to-teal-50",
           emoji: "🔍",
-          features: ["실시간 AI 분석", "다중 검색 엔진", "스마트 추천"],
+          features: ["Real-time AI Analysis", "Multi-Engine Search", "Smart Recommendations"],
           delay: "0s"
         },
         {
-          title: "MSP 파트너 순위표",
-          description: "실시간 MSP 파트너사 성과 순위 및 평가 결과",
+          title: "MSP Partner Leaderboard",
+          description: "Real-time MSP partner performance rankings and evaluation results",
           icon: ({ className }) => (
             <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
@@ -262,29 +262,29 @@
           color: "from-purple-500 via-violet-500 to-indigo-600",
           bgGradient: "from-purple-50 to-violet-50",
           emoji: "🏆",
-          features: ["실시간 순위", "상세 성과 분석", "비교 평가"],
+          features: ["Live Rankings", "Detailed Performance Analytics", "Comparative Assessment"],
           delay: "0.1s"
         },
         {
-          title: "벡터 DB 뷰어",
-          description: "관리자용 데이터베이스 관리 및 모니터링 도구",
+          title: "Vector Database Viewer",
+          description: "Administrator database management and monitoring tool",
           icon: DatabaseIcon,
-          href: "/login?next=/admin",
+          href: "/en/login?next=/admin",
           color: "from-blue-500 via-indigo-500 to-purple-600",
           bgGradient: "from-blue-50 to-indigo-50",
           emoji: "📊",
-          features: ["실시간 모니터링", "데이터 관리", "성능 분석"],
+          features: ["Real-time Monitoring", "Data Management", "Performance Analytics"],
           delay: "0.2s"
         },
         {
-          title: "파트너 역량 진단 도구",
-          description: "엑셀 기반 자동 평가 및 점수 산정 시스템",
+          title: "Partner Capability Assessment",
+          description: "Excel-based automated evaluation and scoring system",
           icon: UploadIcon,
-          href: "/upload",
+          href: "/en/upload",
           color: "from-orange-500 via-red-500 to-pink-600",
           bgGradient: "from-orange-50 to-red-50",
           emoji: "📥",
-          features: ["자동 평가", "엑셀 지원", "즉시 점수화"],
+          features: ["Automated Assessment", "Excel Support", "Instant Scoring"],
           delay: "0.4s"
         }
       ];
@@ -314,7 +314,7 @@
                   </div>
                   <div>
                     <h1 className="text-2xl font-black gradient-text text-glow">NAVER Cloud</h1>
-                    <p className="text-xs text-slate-500 font-medium">MSP 평가 플랫폼 • {currentTime.toLocaleTimeString('ko-KR')}</p>
+                    <p className="text-xs text-slate-500 font-medium">MSP Evaluation Platform • {currentTime.toLocaleTimeString('en-US')}</p>
                   </div>
                 </div>
                 
@@ -322,15 +322,15 @@
                 <div className="hidden lg:flex items-center space-x-8">
                   <div className="text-center">
                     <div className="text-2xl font-black gradient-text">{stats.totalMSPs}+</div>
-                    <div className="text-xs text-slate-500 font-medium">등록된 MSP</div>
+                    <div className="text-xs text-slate-500 font-medium">Registered MSPs</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-black gradient-text">{stats.totalEvaluations}+</div>
-                    <div className="text-xs text-slate-500 font-medium">평가 완료</div>
+                    <div className="text-xs text-slate-500 font-medium">Evaluations Completed</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-black gradient-text">{stats.avgResponseTime}초</div>
-                    <div className="text-xs text-slate-500 font-medium">평균 응답</div>
+                    <div className="text-2xl font-black gradient-text">{stats.avgResponseTime}s</div>
+                    <div className="text-xs text-slate-500 font-medium">Average Response</div>
                   </div>
                 </div>
               </div>
@@ -342,17 +342,17 @@
             <div className="text-center mb-20 animate-fade-in-up">
               <div className="inline-flex items-center space-x-3 glass-morphism px-8 py-4 rounded-full text-emerald-700 font-bold mb-12">
                 <LightningIcon className="w-6 h-6" />
-                <span className="text-xl">AI 기반 MSP 평가 플랫폼</span>
+                <span className="text-xl">AI-Powered MSP Evaluation Platform</span>
                 <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
               </div>
               
               <h1 className="text-6xl md:text-7xl font-black gradient-text mb-8 leading-tight tracking-tight">
-                MSP 평가 도구
+                MSP Evaluation Tool
               </h1>
 
               <p className="text-xl md:text-2xl text-slate-600 max-w-3xl mx-auto leading-relaxed mb-12">
-                클라우드 MSP를 효율적으로 검색하고 평가할 수 있는 <br />
-                <span className="font-semibold gradient-text text-glow">차세대 통합 솔루션</span>입니다
+                Efficiently search and evaluate cloud MSPs with our <br />
+                <span className="font-semibold gradient-text text-glow">next-generation integrated solution</span>
               </p>
 
               {/* Enhanced Feature Highlights */}
@@ -360,22 +360,22 @@
                 <div className="flex items-center space-x-3 glass-card px-6 py-4 rounded-2xl">
                   <ChartIcon className="w-8 h-8 text-emerald-600" />
                   <div className="text-left">
-                    <div className="text-xl font-black text-slate-800">실시간 분석</div>
-                    <div className="text-sm text-slate-600 font-medium">AI 기반 평가</div>
+                    <div className="text-xl font-black text-slate-800">Real-time Analytics</div>
+                    <div className="text-sm text-slate-600 font-medium">AI-driven Evaluation</div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3 glass-card px-6 py-4 rounded-2xl">
                   <CloudIcon className="w-8 h-8 text-emerald-600" />
                   <div className="text-left">
-                    <div className="text-xl font-black text-slate-800">클라우드 네이티브</div>
-                    <div className="text-sm text-slate-600 font-medium">확장 가능한 아키텍처</div>
+                    <div className="text-xl font-black text-slate-800">Cloud Native</div>
+                    <div className="text-sm text-slate-600 font-medium">Scalable Architecture</div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3 glass-card px-6 py-4 rounded-2xl">
                   <LightningIcon className="w-8 h-8 text-emerald-600" />
                   <div className="text-left">
-                    <div className="text-xl font-black text-slate-800">고성능</div>
-                    <div className="text-sm text-slate-600 font-medium">초고속 처리</div>
+                    <div className="text-xl font-black text-slate-800">High Performance</div>
+                    <div className="text-sm text-slate-600 font-medium">Ultra-fast Processing</div>
                   </div>
                 </div>
               </div>
@@ -428,7 +428,7 @@
                         <div className={`w-full px-6 py-4 bg-gradient-to-r ${tool.bgGradient} rounded-2xl border-2 border-emerald-200 group-hover:border-emerald-400 transition-all duration-300 text-center relative`}>
                           <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                           <span className="text-lg font-black text-emerald-700 relative z-10">
-                            시작하기 →
+                            Get Started →
                           </span>
                         </div>
                       </div>
@@ -442,11 +442,11 @@
             <div className="text-center animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
               <div className="glass-morphism rounded-3xl p-12 shadow-2xl">
                 <h2 className="text-4xl font-black gradient-text mb-8">
-                  🚀 최신 기술로 구동되는 플랫폼
+                  🚀 Powered by Cutting-Edge Technology
                 </h2>
                 <p className="text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed mb-12">
-                  인공지능, 머신러닝, 클라우드 네이티브 기술을 활용하여 <br />
-                  MSP 평가 프로세스를 혁신적으로 개선합니다.
+                  Leveraging artificial intelligence, machine learning, and cloud-native technologies <br />
+                  to revolutionize the MSP evaluation process.
                 </p>
                 
                 {/* Technology Stack */}
@@ -459,7 +459,7 @@
                   <div className="glass-card rounded-2xl p-6 hover-lift">
                     <div className="text-3xl mb-3">⚡</div>
                     <div className="font-bold text-slate-800">FastAPI</div>
-                    <div className="text-sm text-slate-600">고성능 백엔드</div>
+                    <div className="text-sm text-slate-600">High-Performance Backend</div>
                   </div>
                   <div className="glass-card rounded-2xl p-6 hover-lift">
                     <div className="text-3xl mb-3">🗄️</div>
@@ -476,21 +476,21 @@
                 {/* Call to Action */}
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                   <a
-                    href="/search"
+                    href="/en/search"
                     className="group relative overflow-hidden px-12 py-6 btn-gradient text-white rounded-3xl font-black text-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 shadow-xl"
                   >
                     <div className="absolute inset-0 shimmer-effect opacity-0 group-hover:opacity-100"></div>
                     <span className="relative z-10 flex items-center space-x-3">
                       <SearchIcon className="w-6 h-6" />
-                      <span>지금 시작하기</span>
+                      <span>Start Now</span>
                     </span>
                   </a>
                   
                   <a
-                    href="/login?next=/admin"
+                    href="/en/login?next=/admin"
                     className="px-12 py-6 glass-card border-3 border-emerald-500 text-emerald-600 rounded-3xl font-black text-xl hover:bg-emerald-50 transition-all duration-500 hover:scale-105 shadow-xl"
                   >
-                    관리자 대시보드
+                    Admin Dashboard
                   </a>
                 </div>
               </div>
@@ -503,7 +503,7 @@
               <div className="glass-morphism rounded-3xl p-10 shadow-xl">
                 <div className="flex flex-col lg:flex-row items-center justify-between">
                   <div className="mb-6 lg:mb-0">
-                    <p className="text-lg font-bold gradient-text mb-2">ⓒ 2025 Naver Cloud MSP 평가 도구</p>
+                    <p className="text-lg font-bold gradient-text mb-2">© 2025 NAVER Cloud MSP Evaluation Tool</p>
                   </div>
                   <div className="flex space-x-4">
                     <div className="w-4 h-4 bg-emerald-500 rounded-full animate-pulse"></div>
