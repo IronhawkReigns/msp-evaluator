@@ -1,9 +1,9 @@
-=<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Login - NAVER Cloud</title>
+  <title>관리자 로그인 - NAVER Cloud</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -333,49 +333,49 @@
         </svg>
       </div>
       <h1 class="header-title gradient-text">NAVER Cloud</h1>
-      <p class="header-subtitle">MSP Evaluation Platform</p>
+      <p class="header-subtitle">MSP 평가 플랫폼</p>
     </div>
 
     <!-- Login Form -->
     <div class="form-card">
       <form method="post" action="/auth/login">
-        <h2 class="form-title">Administrator Login</h2>
+        <h2 class="form-title">관리자 로그인</h2>
         
         <div class="form-group">
-          <label class="form-label" for="username">Username</label>
+          <label class="form-label" for="username">사용자 아이디</label>
           <input 
             type="text" 
             id="username"
             name="username" 
             class="form-input"
-            placeholder="Enter your username" 
+            placeholder="아이디를 입력하세요" 
             required 
             autocomplete="username"
           >
         </div>
         
         <div class="form-group">
-          <label class="form-label" for="password">Password</label>
+          <label class="form-label" for="password">비밀번호</label>
           <input 
             type="password" 
             id="password"
             name="password" 
             class="form-input"
-            placeholder="Enter your password" 
+            placeholder="비밀번호를 입력하세요" 
             required 
             autocomplete="current-password"
           >
         </div>
         
         <button type="submit" class="submit-button">
-          Sign In
+          로그인
         </button>
         
         <div class="security-badge">
           <svg class="security-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
-          <span class="security-text">Secure Administrator-Only System</span>
+          <span class="security-text">보안 인증된 관리자 전용 시스템</span>
         </div>
       </form>
     </div>
@@ -383,7 +383,7 @@
     <!-- Footer -->
     <div class="footer">
       <p class="footer-text">
-        <a href="/en" class="footer-link">← Back to Main Page</a>
+        <a href="/" class="footer-link">← 메인 페이지로 돌아가기</a>
       </p>
     </div>
   </div>
@@ -392,7 +392,7 @@
     // Keep the original error handling functionality
     const params = new URLSearchParams(window.location.search);
     if (params.get("error") === "invalid") {
-      alert("Username or password is incorrect.");
+      alert("아이디 또는 비밀번호가 일치하지 않습니다.");
     }
 
     // Auto-focus on username field
@@ -410,13 +410,13 @@
       
       if (!username || !password) {
         e.preventDefault();
-        alert('Please enter both username and password.');
+        alert('아이디와 비밀번호를 모두 입력해주세요.');
         return;
       }
       
       // Show loading state
       submitButton.style.opacity = '0.8';
-      submitButton.textContent = 'Signing in...';
+      submitButton.textContent = '로그인 중...';
     });
   </script>
 </body>
