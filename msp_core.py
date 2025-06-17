@@ -33,7 +33,7 @@ def run_msp_recommendation(question: str, min_score: int):
         query_vector = query_embed(question)
         query_results = collection.query(
             query_embeddings=[query_vector],
-            n_results=20  # Increased for more comprehensive analysis
+            n_results=20
         )
         
         grouped_chunks = defaultdict(list)
@@ -52,7 +52,7 @@ def run_msp_recommendation(question: str, min_score: int):
         if not grouped_chunks:
             return {"answer": "해당 조건에 맞는 평가 데이터를 찾을 수 없습니다."}
 
-        # Advanced analytics for Claude's sophisticated analysis
+        # Enhanced analytics for comprehensive reasoning
         company_analytics = {}
         all_companies = list(grouped_chunks.keys())
         
@@ -60,11 +60,9 @@ def run_msp_recommendation(question: str, min_score: int):
             scores = [qa['score'] for qa in qa_list]
             categories = defaultdict(list)
             
-            # Organize by category for deeper analysis
             for qa in qa_list:
                 categories[qa['category']].append(qa)
             
-            # Calculate comprehensive metrics
             analytics = {
                 'overall_avg': round(sum(scores) / len(scores), 2),
                 'score_distribution': {
@@ -84,7 +82,6 @@ def run_msp_recommendation(question: str, min_score: int):
                 }
             }
             
-            # Category-wise analysis
             for category, cat_qa_list in categories.items():
                 if cat_qa_list:
                     cat_scores = [qa['score'] for qa in cat_qa_list]
@@ -94,7 +91,6 @@ def run_msp_recommendation(question: str, min_score: int):
                         'excellence_count': len([s for s in cat_scores if s >= 4])
                     }
                     
-                    # Identify excellence and improvement areas
                     cat_avg = sum(cat_scores) / len(cat_scores)
                     if cat_avg >= 4.0:
                         analytics['excellence_areas'].append(f"{category} ({cat_avg:.1f}점)")
@@ -103,15 +99,13 @@ def run_msp_recommendation(question: str, min_score: int):
             
             company_analytics[msp] = analytics
 
-        # Create rich, structured context for Claude's analysis
+        # Create rich context for Claude's reasoning
         analysis_context = []
         
         for msp, qa_list in grouped_chunks.items():
             analytics = company_analytics[msp]
-            
-            # Best evidence selection - prioritize high scores and detailed answers
             sorted_qa = sorted(qa_list, key=lambda x: (x['score'], len(x['answer'])), reverse=True)
-            top_evidence = sorted_qa[:6]  # Top 6 pieces of evidence
+            top_evidence = sorted_qa[:6]
             
             company_block = f"""
 === {msp} 종합 분석 ===
@@ -143,7 +137,7 @@ def run_msp_recommendation(question: str, min_score: int):
 
         full_context = "\n".join(analysis_context)
         
-        # Sophisticated prompt for Claude's analytical reasoning
+        # Enhanced prompt with explicit reasoning requirements
         prompt = f"""당신은 MSP 전문가입니다. 다음 평가 데이터를 바탕으로 사용자 요구사항에 맞는 회사를 추천해주세요.
 
 사용자 요구사항: "{question}"
@@ -205,28 +199,56 @@ def run_msp_recommendation(question: str, min_score: int):
 
 === 응답 형식 ===
 
+**[분석 과정]**
+
+**1. 요구사항 분해**
+- 핵심 요구사항: [식별된 주요 요구사항들]
+- 위험도 평가: [고/중/저위험 분류 및 그 이유]
+
+**2. 회사별 적합성 분석**
+[각 회사에 대해 다음 형식으로 분석]
+
+**[회사명]**
+- 요구사항 적합도: [고위험 요구사항 충족 여부]
+- 증거 강도: [강한 증거 vs 약한 증거 평가]
+- 핵심 근거: [가장 설득력 있는 Q&A 2-3개]
+- 제약사항: [부족한 부분이나 우려사항]
+- 종합 점수: [X/10점 - 계산 근거 포함]
+
+**3. 순위 결정 논리**
+- 1순위 선정 이유: [왜 이 회사가 가장 적합한가]
+- 2순위와의 차이점: [1순위와 2순위를 구분하는 핵심 요소]
+- 제외된 회사들: [다른 회사들이 제외된 구체적 이유]
+
+**[최종 추천 결과]**
+
 **Case 1: 충분한 증거가 있는 경우**
 
-**[요구사항 분석]**
-- 핵심 요구사항: [식별된 주요 요구사항들]
-- 위험도 평가: [고/중/저위험 분류]
-
-**[추천 결과]**
-
 **1순위: [회사명]**
-**직접 증거:**
+**선정 이유:** [종합적 판단 근거 1-2문장]
+**핵심 증거:**
+• [요구사항1]: [구체적 Q&A] (점수: X점)
+• [요구사항2]: [구체적 Q&A] (점수: X점)
+**우려사항:** [있다면 솔직하게 명시]
+
+**2순위: [회사명]**
+**선정 이유:** [1순위 대비 부족한 점과 장점]
+**핵심 증거:**
 • [요구사항1]: [구체적 Q&A] (점수: X점)
 • [요구사항2]: [구체적 Q&A] (점수: X점)
 
-**2순위: [회사명]** [요청된 수만큼 반복]
+**[종합 신뢰도]**
+- 분석 기반 데이터: {len(grouped_chunks)}개 회사, 총 {sum(len(qa_list) for qa_list in grouped_chunks.values())}개 평가 항목
+- 증거 품질: [상/중/하] - 구체적 사례와 수치가 포함된 비율
+- 추천 확신도: [상/중/하] - 요구사항 대비 증거 충족도
 
 ---
 
 **Case 2: 불충분한 증거**
 
-**[요구사항 분석]**  
+**[분석 과정]**  
 - 핵심 요구사항: [식별된 요구사항들]
-- 누락된 필수 증거: [부족한 증거들]
+- 누락된 필수 증거: [부족한 증거들과 그 이유]
 
 **[결과: 추천 불가]**
 
@@ -244,10 +266,17 @@ def run_msp_recommendation(question: str, min_score: int):
 2. 요구사항을 더 일반적으로 수정
 3. 전문 업체 풀 확대 검토
 
+=== 필수 포함 요소 ===
+- 모든 추천에는 반드시 **분석 과정**과 **순위 결정 논리** 포함
+- 각 회사의 **종합 점수**와 **계산 근거** 명시
+- **제외된 회사들**의 이유도 간략히 설명
+- **추천 확신도**와 **증거 품질** 평가 포함
+
 === 절대 금지사항 ===
 - 일반적 역량을 특수 전문성으로 확대 해석 금지
 - 미래 계획을 현재 역량으로 간주 금지  
 - 불충분한 증거로 억지 추천 금지
+- 분석 과정 없이 결과만 제시하는 것 금지
 - 요구된 수보다 적은 회사 추천 시 나머지를 억지로 채우기 금지"""
 
     except Exception as e:
@@ -259,9 +288,9 @@ def run_msp_recommendation(question: str, min_score: int):
         
         response = client.messages.create(
             model="claude-3-haiku-20240307",
-            max_tokens=1200,  # Increased for comprehensive analysis
+            max_tokens=2000,  # Increased for comprehensive reasoning
             temperature=0.1,   # Very low for consistent, analytical reasoning
-            system="당신은 클라우드 및 MSP 선정 분야의 최고 수준 컨설턴트입니다. 데이터 기반의 논리적 분석과 실무적 통찰력을 겸비하여, 고객이 최적의 의사결정을 할 수 있도록 구조화되고 설득력 있는 추천을 제공합니다. 추상적 표현보다는 구체적 근거와 실질적 가치에 집중하며, 분석의 투명성과 신뢰성을 최우선으로 합니다.",
+            system="당신은 클라우드 및 MSP 선정 분야의 최고 수준 컨설턴트입니다. 데이터 기반의 논리적 분석과 실무적 통찰력을 겸비하여, 고객이 최적의 의사결정을 할 수 있도록 구조화되고 설득력 있는 추천을 제공합니다. 추천의 투명성을 위해 분석 과정과 논리적 근거를 명확히 제시하며, 추상적 표현보다는 구체적 근거와 실질적 가치에 집중합니다.",
             messages=[{
                 "role": "user", 
                 "content": prompt
@@ -285,11 +314,18 @@ def run_msp_recommendation(question: str, min_score: int):
         return {
             "answer": answer,
             "evidence": query_results["metadatas"][0],
-            "model_used": "claude-3-haiku-expert-enhanced",
-            "analysis_quality": "comprehensive_analytical",
+            "model_used": "claude-3-haiku-enhanced-reasoning",
+            "analysis_quality": "comprehensive_analytical_with_reasoning",
             "companies_analyzed": len(grouped_chunks),
             "total_evidence_points": sum(len(qa_list) for qa_list in grouped_chunks.values()),
-            "analytics_summary": {company: analytics['overall_avg'] for company, analytics in company_analytics.items()}
+            "analytics_summary": {company: analytics['overall_avg'] for company, analytics in company_analytics.items()},
+            "reasoning_components": {
+                "requirement_breakdown": True,
+                "evidence_verification": True,
+                "ranking_logic": True,
+                "confidence_assessment": True,
+                "excluded_companies_rationale": True
+            }
         }
         
     except Exception as e:
