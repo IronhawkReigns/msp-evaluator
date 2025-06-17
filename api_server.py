@@ -982,3 +982,61 @@ def serve_leaderboard_paths(path: str):
 @app.get("/search")
 def serve_react_search():
     return FileResponse("static/search.html")
+
+# Serve English main page
+@app.get("/en")
+def serve_main_page_en():
+    return FileResponse("static/en/main.html")
+
+# Serve English search page  
+@app.get("/en/search")
+def serve_search_page_en():
+    return FileResponse("static/en/search.html")
+
+# Serve English admin login
+@app.get("/en/login")
+def serve_login_page_en():
+    return FileResponse("static/en/login.html")
+
+# Serve English admin dashboard (protected)
+@app.get("/en/admin")
+def serve_admin_ui_en(request: Request):
+    try:
+        user = manager(request)
+        return FileResponse("static/en/admin.html")
+    except Exception as e:
+        return RedirectResponse(url="/en/login?next=/en/admin")
+
+# Serve English vector DB viewer (protected)
+@app.get("/en/ui")
+def serve_ui_en(request: Request):
+    try:
+        user = manager(request)
+        return FileResponse("static/en/vector-db-viewer.html")
+    except:
+        return RedirectResponse(url="/en/login?next=/en/ui")
+
+# Serve English upload page
+@app.get("/en/upload", response_class=HTMLResponse)
+async def serve_upload_page_en(request: Request):
+    return templates.TemplateResponse("en/upload.html", {"request": request})
+
+# Serve English leaderboard
+@app.get("/en/leaderboard")
+def serve_leaderboard_en():
+    return FileResponse("static/en/index.html")
+
+@app.get("/en/leaderboard/{path:path}")
+def serve_leaderboard_paths_en(path: str):
+    return FileResponse("static/en/index.html")
+
+@app.get("/auto-redirect")
+def auto_redirect_by_language(request: Request):
+    """Automatically redirect to English or Korean version based on browser language"""
+    accept_language = request.headers.get("accept-language", "")
+    
+    # Check if English is preferred
+    if "en" in accept_language.lower() and accept_language.lower().find("en") < accept_language.lower().find("ko"):
+        return RedirectResponse(url="/en")
+    else:
+        return RedirectResponse(url="/")
