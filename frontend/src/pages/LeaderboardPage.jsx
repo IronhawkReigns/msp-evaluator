@@ -4,7 +4,7 @@ import { Trophy, Medal, Award, TrendingUp, Users, Cpu, Settings, Eye, Filter, Re
 import { Zap, Star, Target, SparklesIcon } from "lucide-react";
 
 // Environment-aware API URL
-const API_BASE = 'https://mspevaluator.duckdns.org';
+const API_BASE = 'https://mspeval.org';
 
 // Component for score visualization bars
 const ScoreBar = ({ score, maxScore = 5, color = "blue" }) => {
