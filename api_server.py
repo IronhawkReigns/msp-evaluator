@@ -993,28 +993,20 @@ def serve_main_page_en():
 def serve_search_page_en():
     return FileResponse("static/en/search.html")
 
-# Serve English admin login
+# Serve English admin dashboard (NO authentication required)
+@app.get("/en/admin")
+def serve_admin_ui_en():
+    return FileResponse("static/en/admin.html")
+
+# Serve English vector DB viewer (NO authentication required)
+@app.get("/en/ui")
+def serve_ui_en():
+    return FileResponse("static/en/vector-db-viewer.html")
+
+# Keep the English login page for consistency (even though not required)
 @app.get("/en/login")
 def serve_login_page_en():
     return FileResponse("static/en/login.html")
-
-# Serve English admin dashboard (protected)
-@app.get("/en/admin")
-def serve_admin_ui_en(request: Request):
-    try:
-        user = manager(request)
-        return FileResponse("static/en/admin.html")
-    except Exception as e:
-        return RedirectResponse(url="/en/login?next=/en/admin")
-
-# Serve English vector DB viewer (protected)
-@app.get("/en/ui")
-def serve_ui_en(request: Request):
-    try:
-        user = manager(request)
-        return FileResponse("static/en/vector-db-viewer.html")
-    except:
-        return RedirectResponse(url="/en/login?next=/en/ui")
 
 # Serve English upload page
 @app.get("/en/upload", response_class=HTMLResponse)
