@@ -43,14 +43,14 @@ async def login(request: Request):
     env_password = os.getenv("ADMIN_PASSWORD")
     
     if username != env_username or password != env_password:
-        # CHANGE THIS PART - detect if it's an English login attempt
+        # Check if request came from English login page
         referer = request.headers.get("referer", "")
         if "/en/login" in referer:
             return RedirectResponse(url="/en/login?error=invalid", status_code=303)
         else:
             return RedirectResponse(url="/login?error=invalid", status_code=303)
     
-    # SUCCESS: redirect to next_url (this part is already correct)
+    # SUCCESS: Always redirect to next_url (which will be /admin)
     response = RedirectResponse(url=next_url, status_code=302)
     response.set_cookie(
         key=manager.cookie_name,
