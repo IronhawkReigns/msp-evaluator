@@ -27,10 +27,6 @@ print("✅ user_loader registration:", getattr(manager, "_user_callback", None))
 templates = Jinja2Templates(directory="templates")
 router = APIRouter()
 
-@router.get("/login")
-def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
-
 @router.post("/auth/login")
 async def login(request: Request):
     form = await request.form()
