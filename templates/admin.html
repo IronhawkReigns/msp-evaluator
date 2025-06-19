@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - NAVER Cloud</title>
+  <title>관리자 대시보드 - NAVER Cloud</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -834,26 +834,26 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
           </svg>
         </div>
-        <a href="/en" class="header-title gradient-text">NAVER Cloud</a>
+        <a href="/" class="header-title gradient-text">NAVER Cloud</a>
       </div>
       
       <!-- Live Stats -->
       <div class="header-stats">
         <div class="stat-item">
           <div class="stat-value" id="stat-companies">—</div>
-          <div class="stat-label">MSP Count</div>
+          <div class="stat-label">MSP 수</div>
         </div>
         <div class="stat-item">
           <div class="stat-value" id="stat-entries">—</div>
-          <div class="stat-label">Total Entries</div>
+          <div class="stat-label">총 항목</div>
         </div>
         <div class="stat-item">
           <div class="stat-value" id="stat-updated">—</div>
-          <div class="stat-label">Last Updated</div>
+          <div class="stat-label">최근 업데이트</div>
         </div>
       </div>
       
-      <a href="/logout" class="logout-btn">Logout</a>
+      <a href="/logout" class="logout-btn">로그아웃</a>
     </div>
   </header>
 
@@ -864,7 +864,7 @@
         <svg class="admin-badge-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
-        <span>System Administrator Only</span>
+        <span>시스템 관리자 전용</span>
         <div class="admin-badge-dot"></div>
       </div>
       
@@ -872,13 +872,13 @@
         <div class="user-avatar" id="userAvatar">A</div>
         <div class="user-info">
           <div class="user-name" id="userName">{{ user.name }}</div>
-          <div class="user-role">System Administrator</div>
+          <div class="user-role">시스템 관리자</div>
         </div>
       </div>
       
-      <h1 class="welcome-title gradient-text">Admin Dashboard</h1>
+      <h1 class="welcome-title gradient-text">관리자 대시보드</h1>
       <p class="welcome-subtitle">
-        Efficiently manage and monitor MSP partner vector data.
+        MSP 파트너사의 벡터 데이터를 효율적으로 관리하고 모니터링할 수 있습니다.
       </p>
     </div>
 
@@ -893,23 +893,23 @@
             </svg>
           </div>
           <div class="card-title-group">
-            <h2 class="card-title">Quick Access</h2>
-            <p class="card-subtitle">Management Tool Shortcuts</p>
+            <h2 class="card-title">빠른 접근</h2>
+            <p class="card-subtitle">관리 도구 바로가기</p>
           </div>
         </div>
         <p class="card-description">
-          Quickly access vector database management and monitoring tools.
+          벡터 데이터베이스 관리 및 모니터링 도구에 빠르게 접근할 수 있습니다.
         </p>
         <div class="quick-actions">
-          <a href="/en/ui" class="action-btn">
+          <a href="/ui" class="action-btn">
             <div class="action-btn-icon">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
               </svg>
             </div>
             <div class="action-btn-content">
-              <div class="action-btn-title">Vector DB Viewer</div>
-              <div class="action-btn-desc">Data Query & Management</div>
+              <div class="action-btn-title">벡터 DB 뷰어</div>
+              <div class="action-btn-desc">데이터 조회 및 관리</div>
             </div>
             <div class="action-btn-arrow">
               <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -917,15 +917,15 @@
               </svg>
             </div>
           </a>
-          <a href="/en/search" class="action-btn">
+          <a href="/search" class="action-btn">
             <div class="action-btn-icon">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
             <div class="action-btn-content">
-              <div class="action-btn-title">Search Tool</div>
-              <div class="action-btn-desc">AI-Powered MSP Search</div>
+              <div class="action-btn-title">검색 도구</div>
+              <div class="action-btn-desc">AI 기반 MSP 검색</div>
             </div>
             <div class="action-btn-arrow">
               <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -945,20 +945,20 @@
             </svg>
           </div>
           <div class="card-title-group">
-            <h2 class="card-title">Partner Management</h2>
-            <p class="card-subtitle">Data Deletion & Cleanup</p>
+            <h2 class="card-title">파트너사 관리</h2>
+            <p class="card-subtitle">데이터 삭제 및 정리</p>
           </div>
         </div>
         <p class="card-description">
-          Safely delete partner data from the vector database.
+          벡터 데이터베이스에서 파트너사 데이터를 안전하게 삭제할 수 있습니다.
         </p>
         
         <div class="form-group">
-          <label class="form-label" for="company-select">Select Company to Delete</label>
+          <label class="form-label" for="company-select">삭제할 회사 선택</label>
           <div class="form-select-wrapper">
             <div class="form-select-border">
               <select id="company-select" class="form-select">
-                <option value="" disabled selected>Choose a company...</option>
+                <option value="" disabled selected>회사를 선택하세요...</option>
               </select>
             </div>
             <div class="select-arrow">
@@ -973,7 +973,7 @@
           <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
-          <span id="delete-btn-text">Delete Selected Company</span>
+          <span id="delete-btn-text">선택한 회사 삭제</span>
         </button>
 
         <div id="result-message"></div>
@@ -989,12 +989,12 @@
           </svg>
         </div>
         <div class="card-title-group">
-          <h2 class="card-title">Recent Vector Generation Log</h2>
-          <p class="card-subtitle">Partner Update Status</p>
+          <h2 class="card-title">최근 벡터 생성 기록</h2>
+          <p class="card-subtitle">파트너사별 업데이트 현황</p>
         </div>
       </div>
       <p class="card-description">
-        View recent vector data generation times for each partner.
+        각 파트너사의 최근 벡터 데이터 생성 시간을 확인할 수 있습니다.
       </p>
       
       <div class="log-container">
@@ -1003,8 +1003,8 @@
             <div class="log-item-left">
               <div class="log-icon"></div>
               <div>
-                <div class="log-company">Loading data...</div>
-                <div class="log-label">Loading</div>
+                <div class="log-company">데이터를 불러오는 중...</div>
+                <div class="log-label">로딩 중</div>
               </div>
             </div>
           </li>
@@ -1018,8 +1018,8 @@
           </svg>
         </div>
         <div class="status-text">
-          <div class="status-title">System Status: Normal</div>
-          <div class="status-desc" id="status-desc">System is operating normally</div>
+          <div class="status-title">시스템 상태: 정상</div>
+          <div class="status-desc" id="status-desc">시스템이 정상적으로 작동 중입니다</div>
         </div>
       </div>
     </div>
@@ -1112,11 +1112,11 @@
       const deleteBtnText = document.getElementById("delete-btn-text");
       
       if (!name) {
-        showMessage("Please select a company to delete.", "error");
+        showMessage("삭제할 회사를 선택해주세요.", "error");
         return;
       }
 
-      if (!confirm(`Are you sure you want to delete all data for "${name}"?`)) {
+      if (!confirm(`정말로 "${name}"의 모든 데이터를 삭제하시겠습니까?`)) {
         return;
       }
 
@@ -1124,14 +1124,14 @@
       isLoading = true;
       deleteBtn.disabled = true;
       deleteBtn.classList.add('btn-loading');
-      deleteBtnText.textContent = 'Deleting...';
+      deleteBtnText.textContent = '삭제 중...';
 
       try {
         const res = await fetch(`/ui/delete_company/${name}`, {
           method: "DELETE"
         });
         const result = await res.json();
-        showMessage(`${name} deleted (total ${result.count} items)`, "success");
+        showMessage(`${name} 삭제됨 (총 ${result.count}개 항목)`, "success");
         
         // Reset form
         document.getElementById("company-select").value = "";
@@ -1141,14 +1141,14 @@
         showTimestamps();
         updateStats();
       } catch (e) {
-        showMessage("Delete failed", "error");
-        console.error("Delete error:", e);
+        showMessage("삭제 실패", "error");
+        console.error("삭제 에러:", e);
       } finally {
         // Reset loading state
         isLoading = false;
         deleteBtn.disabled = false;
         deleteBtn.classList.remove('btn-loading');
-        deleteBtnText.textContent = 'Delete Selected Company';
+        deleteBtnText.textContent = '선택한 회사 삭제';
       }
     }
 
