@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>관리자 대시보드 - NAVER Cloud</title>
+  <title>Admin Dashboard - NAVER Cloud</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -834,26 +834,26 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
           </svg>
         </div>
-        <a href="/" class="header-title gradient-text">NAVER Cloud</a>
+        <a href="/en" class="header-title gradient-text">NAVER Cloud</a>
       </div>
       
       <!-- Live Stats -->
       <div class="header-stats">
         <div class="stat-item">
           <div class="stat-value" id="stat-companies">—</div>
-          <div class="stat-label">MSP 수</div>
+          <div class="stat-label">MSP Count</div>
         </div>
         <div class="stat-item">
           <div class="stat-value" id="stat-entries">—</div>
-          <div class="stat-label">총 항목</div>
+          <div class="stat-label">Total Entries</div>
         </div>
         <div class="stat-item">
           <div class="stat-value" id="stat-updated">—</div>
-          <div class="stat-label">최근 업데이트</div>
+          <div class="stat-label">Last Updated</div>
         </div>
       </div>
       
-      <a href="/logout" class="logout-btn">로그아웃</a>
+      <a href="/logout" class="logout-btn">Logout</a>
     </div>
   </header>
 
@@ -864,7 +864,7 @@
         <svg class="admin-badge-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
-        <span>시스템 관리자 전용</span>
+        <span>System Administrator Only</span>
         <div class="admin-badge-dot"></div>
       </div>
       
@@ -872,13 +872,13 @@
         <div class="user-avatar" id="userAvatar">A</div>
         <div class="user-info">
           <div class="user-name" id="userName">{{ user.name }}</div>
-          <div class="user-role">시스템 관리자</div>
+          <div class="user-role">System Administrator</div>
         </div>
       </div>
       
-      <h1 class="welcome-title gradient-text">관리자 대시보드</h1>
+      <h1 class="welcome-title gradient-text">Admin Dashboard</h1>
       <p class="welcome-subtitle">
-        MSP 파트너사의 벡터 데이터를 효율적으로 관리하고 모니터링할 수 있습니다.
+        Efficiently manage and monitor MSP partner vector data.
       </p>
     </div>
 
@@ -893,23 +893,23 @@
             </svg>
           </div>
           <div class="card-title-group">
-            <h2 class="card-title">빠른 접근</h2>
-            <p class="card-subtitle">관리 도구 바로가기</p>
+            <h2 class="card-title">Quick Access</h2>
+            <p class="card-subtitle">Management Tool Shortcuts</p>
           </div>
         </div>
         <p class="card-description">
-          벡터 데이터베이스 관리 및 모니터링 도구에 빠르게 접근할 수 있습니다.
+          Quickly access vector database management and monitoring tools.
         </p>
         <div class="quick-actions">
-          <a href="/ui" class="action-btn">
+          <a href="/en/ui" class="action-btn">
             <div class="action-btn-icon">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
               </svg>
             </div>
             <div class="action-btn-content">
-              <div class="action-btn-title">벡터 DB 뷰어</div>
-              <div class="action-btn-desc">데이터 조회 및 관리</div>
+              <div class="action-btn-title">Vector DB Viewer</div>
+              <div class="action-btn-desc">Data Query & Management</div>
             </div>
             <div class="action-btn-arrow">
               <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -917,15 +917,15 @@
               </svg>
             </div>
           </a>
-          <a href="/search" class="action-btn">
+          <a href="/en/search" class="action-btn">
             <div class="action-btn-icon">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
             <div class="action-btn-content">
-              <div class="action-btn-title">검색 도구</div>
-              <div class="action-btn-desc">AI 기반 MSP 검색</div>
+              <div class="action-btn-title">Search Tool</div>
+              <div class="action-btn-desc">AI-Powered MSP Search</div>
             </div>
             <div class="action-btn-arrow">
               <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -945,20 +945,20 @@
             </svg>
           </div>
           <div class="card-title-group">
-            <h2 class="card-title">파트너사 관리</h2>
-            <p class="card-subtitle">데이터 삭제 및 정리</p>
+            <h2 class="card-title">Partner Management</h2>
+            <p class="card-subtitle">Data Deletion & Cleanup</p>
           </div>
         </div>
         <p class="card-description">
-          벡터 데이터베이스에서 파트너사 데이터를 안전하게 삭제할 수 있습니다.
+          Safely delete partner data from the vector database.
         </p>
         
         <div class="form-group">
-          <label class="form-label" for="company-select">삭제할 회사 선택</label>
+          <label class="form-label" for="company-select">Select Company to Delete</label>
           <div class="form-select-wrapper">
             <div class="form-select-border">
               <select id="company-select" class="form-select">
-                <option value="" disabled selected>회사를 선택하세요...</option>
+                <option value="" disabled selected>Choose a company...</option>
               </select>
             </div>
             <div class="select-arrow">
@@ -973,7 +973,7 @@
           <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
-          <span id="delete-btn-text">선택한 회사 삭제</span>
+          <span id="delete-btn-text">Delete Selected Company</span>
         </button>
 
         <div id="result-message"></div>
@@ -989,12 +989,12 @@
           </svg>
         </div>
         <div class="card-title-group">
-          <h2 class="card-title">최근 벡터 생성 기록</h2>
-          <p class="card-subtitle">파트너사별 업데이트 현황</p>
+          <h2 class="card-title">Recent Vector Generation Log</h2>
+          <p class="card-subtitle">Partner Update Status</p>
         </div>
       </div>
       <p class="card-description">
-        각 파트너사의 최근 벡터 데이터 생성 시간을 확인할 수 있습니다.
+        View recent vector data generation times for each partner.
       </p>
       
       <div class="log-container">
@@ -1003,8 +1003,8 @@
             <div class="log-item-left">
               <div class="log-icon"></div>
               <div>
-                <div class="log-company">데이터를 불러오는 중...</div>
-                <div class="log-label">로딩 중</div>
+                <div class="log-company">Loading data...</div>
+                <div class="log-label">Loading</div>
               </div>
             </div>
           </li>
@@ -1018,8 +1018,8 @@
           </svg>
         </div>
         <div class="status-text">
-          <div class="status-title">시스템 상태: 정상</div>
-          <div class="status-desc" id="status-desc">시스템이 정상적으로 작동 중입니다</div>
+          <div class="status-title">System Status: Normal</div>
+          <div class="status-desc" id="status-desc">System is operating normally</div>
         </div>
       </div>
     </div>
@@ -1047,62 +1047,62 @@
 
     // Update stats in header
     function updateStats() {
-      fetch("/ui/data")
-        .then(response => response.json())
-        .then(data => {
-          const uniqueCompanies = [...new Set(data.map(entry => entry.msp_name))];
-          document.getElementById('stat-companies').textContent = uniqueCompanies.length;
-          document.getElementById('stat-entries').textContent = data.length;
-          
-          // Find most recent update
-          const timestamps = data
-            .filter(entry => entry.last_updated)
-            .map(entry => new Date(entry.last_updated))
-            .sort((a, b) => b - a);
-          
-          if (timestamps.length > 0) {
-            const latest = timestamps[0];
-            const now = new Date();
-            const diffHours = Math.floor((now - latest) / (1000 * 60 * 60));
-            const diffDays = Math.floor(diffHours / 24);
+        fetch("/admin/data_with_timestamps")
+            .then(response => response.json())
+            .then(data => {
+            const uniqueCompanies = [...new Set(data.map(entry => entry.msp_name))];
+            document.getElementById('stat-companies').textContent = uniqueCompanies.length;
+            document.getElementById('stat-entries').textContent = data.length;
             
-            let timeText = '방금 전';
-            if (diffDays > 0) timeText = `${diffDays}일 전`;
-            else if (diffHours > 0) timeText = `${diffHours}시간 전`;
+            // Find most recent update using the timestamp field
+            const timestamps = data
+                .filter(entry => entry.timestamp)
+                .map(entry => new Date(entry.timestamp))
+                .sort((a, b) => b - a);
             
-            document.getElementById('stat-updated').textContent = timeText;
-          }
+            if (timestamps.length > 0) {
+                const latest = timestamps[0];
+                const now = new Date();
+                const diffHours = Math.floor((now - latest) / (1000 * 60 * 60));
+                const diffDays = Math.floor(diffHours / 24);
+                
+                let timeText = '방금 전';
+                if (diffDays > 0) timeText = `${diffDays}일 전`;
+                else if (diffHours > 0) timeText = `${diffHours}시간 전`;
+                
+                document.getElementById('stat-updated').textContent = timeText;
+            }
         })
         .catch(console.error);
     }
 
     // Fetch companies function
     async function fetchCompanies() {
-      try {
-        const res = await fetch("/ui/data");
-        const data = await res.json();
-        const select = document.getElementById("company-select");
+        try {
+            const res = await fetch("/admin/data_with_timestamps");  // Use new endpoint
+            const data = await res.json();
+            const select = document.getElementById("company-select");
 
-        // Clear existing options except the first one
-        select.innerHTML = '<option value="" disabled selected>회사를 선택하세요...</option>';
+            // Clear existing options except the first one
+            select.innerHTML = '<option value="" disabled selected>회사를 선택하세요...</option>';
 
-        const seen = new Set();
-        companies = [];
-        data.forEach(entry => {
-          const name = entry.msp_name;
-          if (!seen.has(name)) {
-            seen.add(name);
-            companies.push(name);
-            const option = document.createElement("option");
-            option.value = name;
-            option.textContent = name;
-            select.appendChild(option);
-          }
-        });
-      } catch (e) {
-        console.error("회사 목록 불러오기 실패:", e);
-        showMessage("회사 목록을 불러오는데 실패했습니다.", "error");
-      }
+            const seen = new Set();
+            companies = [];
+            data.forEach(entry => {
+            const name = entry.msp_name;
+            if (!seen.has(name)) {
+                seen.add(name);
+                companies.push(name);
+                const option = document.createElement("option");
+                option.value = name;
+                option.textContent = name;
+                select.appendChild(option);
+            }
+            });
+        } catch (e) {
+            console.error("회사 목록 불러오기 실패:", e);
+            showMessage("회사 목록을 불러오는데 실패했습니다.", "error");
+        }
     }
 
     // Delete company function
@@ -1112,11 +1112,11 @@
       const deleteBtnText = document.getElementById("delete-btn-text");
       
       if (!name) {
-        showMessage("삭제할 회사를 선택해주세요.", "error");
+        showMessage("Please select a company to delete.", "error");
         return;
       }
 
-      if (!confirm(`정말로 "${name}"의 모든 데이터를 삭제하시겠습니까?`)) {
+      if (!confirm(`Are you sure you want to delete all data for "${name}"?`)) {
         return;
       }
 
@@ -1124,14 +1124,14 @@
       isLoading = true;
       deleteBtn.disabled = true;
       deleteBtn.classList.add('btn-loading');
-      deleteBtnText.textContent = '삭제 중...';
+      deleteBtnText.textContent = 'Deleting...';
 
       try {
         const res = await fetch(`/ui/delete_company/${name}`, {
           method: "DELETE"
         });
         const result = await res.json();
-        showMessage(`${name} 삭제됨 (총 ${result.count}개 항목)`, "success");
+        showMessage(`${name} deleted (total ${result.count} items)`, "success");
         
         // Reset form
         document.getElementById("company-select").value = "";
@@ -1141,119 +1141,119 @@
         showTimestamps();
         updateStats();
       } catch (e) {
-        showMessage("삭제 실패", "error");
-        console.error("삭제 에러:", e);
+        showMessage("Delete failed", "error");
+        console.error("Delete error:", e);
       } finally {
         // Reset loading state
         isLoading = false;
         deleteBtn.disabled = false;
         deleteBtn.classList.remove('btn-loading');
-        deleteBtnText.textContent = '선택한 회사 삭제';
+        deleteBtnText.textContent = 'Delete Selected Company';
       }
     }
 
     // Show timestamps function
     async function showTimestamps() {
-      try {
-        const res = await fetch("/ui/data");
-        const data = await res.json();
-        const logList = document.getElementById("log-list");
-        const systemStatus = document.getElementById("system-status");
-        const statusDesc = document.getElementById("status-desc");
-        
-        logList.innerHTML = "";
+        try {
+            const res = await fetch("/admin/data_with_timestamps");  // Use new endpoint
+            const data = await res.json();
+            const logList = document.getElementById("log-list");
+            const systemStatus = document.getElementById("system-status");
+            const statusDesc = document.getElementById("status-desc");
+            
+            logList.innerHTML = "";
 
-        const grouped = {};
-        data.forEach(entry => {
-          const name = entry.msp_name;
-          const updated = entry.last_updated;
-          if (updated && (!grouped[name] || new Date(updated) > new Date(grouped[name]))) {
-            grouped[name] = updated;
-          }
-        });
+            const grouped = {};
+            data.forEach(entry => {
+            const name = entry.msp_name;
+            const updated = entry.timestamp;  // Use 'timestamp' not 'last_updated'
+            if (updated && (!grouped[name] || new Date(updated) > new Date(grouped[name]))) {
+                grouped[name] = updated;
+            }
+            });
 
-        const names = Object.keys(grouped);
-        logs = names.map(name => ({
-          name,
-          timestamp: grouped[name],
-          formatted: new Date(grouped[name]).toLocaleString("ko-KR", {
-            timeZone: "Asia/Seoul",
-            year: "numeric", 
-            month: "2-digit", 
-            day: "2-digit",
-            hour: "2-digit", 
-            minute: "2-digit"
-          }),
-          rawTime: new Date(grouped[name])
-        })).sort((a, b) => b.rawTime - a.rawTime);
+            const names = Object.keys(grouped);
+            logs = names.map(name => ({
+            name,
+            timestamp: grouped[name],
+            formatted: new Date(grouped[name]).toLocaleString("ko-KR", {
+                timeZone: "Asia/Seoul",
+                year: "numeric", 
+                month: "2-digit", 
+                day: "2-digit",
+                hour: "2-digit", 
+                minute: "2-digit"
+            }),
+            rawTime: new Date(grouped[name])
+            })).sort((a, b) => b.rawTime - a.rawTime);
 
-        if (logs.length === 0) {
-          const li = document.createElement("li");
-          li.className = "log-item";
-          li.innerHTML = `
-            <div class="log-item-left">
-              <div class="log-icon"></div>
-              <div>
-                <div class="log-company">최근 벡터 생성 내역이 없습니다</div>
-                <div class="log-label">데이터 없음</div>
-              </div>
-            </div>
-          `;
-          logList.appendChild(li);
-          systemStatus.style.display = "none";
-          return;
+            if (logs.length === 0) {
+            const li = document.createElement("li");
+            li.className = "log-item";
+            li.innerHTML = `
+                <div class="log-item-left">
+                <div class="log-icon"></div>
+                <div>
+                    <div class="log-company">최근 벡터 생성 내역이 없습니다</div>
+                    <div class="log-label">데이터 없음</div>
+                </div>
+                </div>
+            `;
+            logList.appendChild(li);
+            systemStatus.style.display = "none";
+            return;
+            }
+
+            logs.forEach((log, index) => {
+            const li = document.createElement("li");
+            li.className = "log-item";
+            li.style.animationDelay = `${index * 0.1}s`;
+            
+            const now = new Date();
+            const diff = now - log.rawTime;
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const days = Math.floor(hours / 24);
+            
+            let relativeTime = "방금 전";
+            if (days > 0) relativeTime = `${days}일 전`;
+            else if (hours > 0) relativeTime = `${hours}시간 전`;
+            
+            li.innerHTML = `
+                <div class="log-item-left">
+                <div class="log-icon"></div>
+                <div>
+                    <div class="log-company">${log.name}</div>
+                    <div class="log-label">파트너사</div>
+                </div>
+                </div>
+                <div class="log-item-right">
+                <div class="log-time">${log.formatted}</div>
+                <div class="log-relative">${relativeTime}</div>
+                </div>
+            `;
+            logList.appendChild(li);
+            });
+
+            // Show system status
+            systemStatus.style.display = "flex";
+            statusDesc.textContent = `총 ${logs.length}개 파트너사 데이터 활성화`;
+            
+        } catch (e) {
+            console.error("벡터 생성 시간 로딩 실패:", e);
+            const logList = document.getElementById("log-list");
+            logList.innerHTML = `
+            <li class="log-item">
+                <div class="log-item-left">
+                <div class="log-icon"></div>
+                <div>
+                    <div class="log-company">데이터를 불러오는데 실패했습니다</div>
+                    <div class="log-label">오류 발생</div>
+                </div>
+                </div>
+            </li>
+            `;
+            document.getElementById("system-status").style.display = "none";
         }
-
-        logs.forEach((log, index) => {
-          const li = document.createElement("li");
-          li.className = "log-item";
-          li.style.animationDelay = `${index * 0.1}s`;
-          
-          const now = new Date();
-          const diff = now - log.rawTime;
-          const hours = Math.floor(diff / (1000 * 60 * 60));
-          const days = Math.floor(hours / 24);
-          
-          let relativeTime = "방금 전";
-          if (days > 0) relativeTime = `${days}일 전`;
-          else if (hours > 0) relativeTime = `${hours}시간 전`;
-          
-          li.innerHTML = `
-            <div class="log-item-left">
-              <div class="log-icon"></div>
-              <div>
-                <div class="log-company">${log.name}</div>
-                <div class="log-label">파트너사</div>
-              </div>
-            </div>
-            <div class="log-item-right">
-              <div class="log-time">${log.formatted}</div>
-              <div class="log-relative">${relativeTime}</div>
-            </div>
-          `;
-          logList.appendChild(li);
-        });
-
-        // Show system status
-        systemStatus.style.display = "flex";
-        statusDesc.textContent = `총 ${logs.length}개 파트너사 데이터 활성화`;
-        
-      } catch (e) {
-        console.error("벡터 생성 시간 로딩 실패:", e);
-        const logList = document.getElementById("log-list");
-        logList.innerHTML = `
-          <li class="log-item">
-            <div class="log-item-left">
-              <div class="log-icon"></div>
-              <div>
-                <div class="log-company">데이터를 불러오는데 실패했습니다</div>
-                <div class="log-label">오류 발생</div>
-              </div>
-            </div>
-          </li>
-        `;
-        document.getElementById("system-status").style.display = "none";
-      }
     }
 
     // Enhanced message display function
