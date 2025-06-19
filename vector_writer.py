@@ -100,30 +100,8 @@ def clova_embedding(text: str):
     else:
         print(f"[Embedding API Error] {result}")
         return []
-    
-def delete_company_data_from_chroma(company_name: str):
-    """Delete all existing data for a company before adding new data"""
-    try:
-        # Get all data for this company
-        results = collection.get(
-            where={"msp_name": company_name},
-            include=["metadatas"]
-        )
-        
-        if results["ids"]:
-            print(f"Deleting {len(results['ids'])} existing entries for {company_name}")
-            collection.delete(ids=results["ids"])
-            print(f"Successfully deleted existing data for {company_name}")
-        else:
-            print(f"No existing data found for {company_name}")
-            
-    except Exception as e:
-        print(f"Error deleting existing data for {company_name}: {e}")
 
 def add_msp_data_to_chroma(company_name, company_data, summary):
-    # DELETE EXISTING DATA FIRST
-    delete_company_data_from_chroma(company_name)
-    
     documents = []
     embeddings = []
     metadatas = []
@@ -135,9 +113,6 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
         question = entry.get('question', '')
         answer = entry["answer"]
         score = entry["score"]
-        group = entry.get("group", "미분류")  # Add group info
-        category = entry.get("category", "미분류")  # Add category info
-        
         chunks = chunk_text(answer)
         for cidx, chunk in enumerate(chunks):
             document = f"Q: {question}\nA: {chunk}"
@@ -145,7 +120,6 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
             if not embedding:
                 continue
             uid = f"{company_name}_{idx}_{cidx}"
-            
             # Clean summary, log and skip problematic keys
             cleaned_summary = {}
             for item in summary:
@@ -164,8 +138,6 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
                 "question": question,
                 "answer": chunk,
                 "score": score,
-                "group": group,  # Add group metadata
-                "category": category,  # Add category metadata
                 "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 **cleaned_summary
             }
@@ -174,16 +146,12 @@ def add_msp_data_to_chroma(company_name, company_data, summary):
             metadatas.append(metadata)
             ids.append(uid)
 
-    if documents:  # Only add if we have documents
-        collection.add(
-            documents=documents,
-            embeddings=embeddings,
-            metadatas=metadatas,
-            ids=ids
-        )
-        print(f"Added {len(documents)} new entries for {company_name}")
-    else:
-        print(f"No valid documents to add for {company_name}")
+    collection.add(
+        documents=documents,
+        embeddings=embeddings,
+        metadatas=metadatas,
+        ids=ids
+    )
 
 def run_from_msp_name(company_name: str):
     print(f"Running vector DB update for: {company_name}")
@@ -200,21 +168,9 @@ def run_from_msp_name(company_name: str):
         traceback.print_exc()
         raise
 
-def run_from_direct_input(company_name: str, company_data: dict, summary: dict, overwrite: bool = True):
-    """
-    Args:
-        company_name: Name of the MSP company
-        company_data: Q&A data with scores
-        summary: Summary statistics
-        overwrite: If True, delete existing data first (default: True)
-    """
+def run_from_direct_input(company_name: str, company_data: dict, summary: dict):
     print(f"Running vector DB update (direct input) for: {company_name}")
-    print(f"Overwrite mode: {overwrite}")
-    print(f"[DEBUG] Sample company_data item: {company_data[0] if company_data else 'EMPTY'}")
-    
     try:
-        if overwrite:
-            print("Overwrite mode enabled - will delete existing data first")
         add_msp_data_to_chroma(company_name, company_data, summary)
         print(f"{company_name} successfully written to ChromaDB.")
     except Exception as e:
