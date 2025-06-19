@@ -101,7 +101,32 @@ def clova_embedding(text: str):
         print(f"[Embedding API Error] {result}")
         return []
 
+# Delete existing company data before adding new data
+def delete_company_data_from_chroma(company_name: str):
+    """Delete all existing data for a company before adding new data"""
+    try:
+        # Get all data for this company
+        results = collection.get(
+            where={"msp_name": company_name},
+            include=["metadatas"]
+        )
+        
+        if results["ids"]:
+            print(f"🗑️ Deleting {len(results['ids'])} existing entries for {company_name}")
+            collection.delete(ids=results["ids"])
+            print(f"✅ Successfully deleted existing data for {company_name}")
+        else:
+            print(f"ℹ️ No existing data found for {company_name}")
+            
+    except Exception as e:
+        print(f"❌ Error deleting existing data for {company_name}: {e}")
+        # Don't raise - allow the upload to continue
+
 def add_msp_data_to_chroma(company_name, company_data, summary):
+    # Delete existing data first
+    delete_company_data_from_chroma(company_name)
+    
+    # EVERYTHING ELSE REMAINS EXACTLY THE SAME AS ORIGINAL
     documents = []
     embeddings = []
     metadatas = []
