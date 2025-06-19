@@ -1017,3 +1017,30 @@ def auto_redirect_by_language(request: Request):
         return RedirectResponse(url="/en")
     else:
         return RedirectResponse(url="/")
+
+@app.get("/admin/data_with_timestamps")
+def get_admin_data_with_timestamps():
+    """Admin-specific endpoint that includes timestamp data"""
+    try:
+        results = collection.get(include=["metadatas"])
+        data = []
+        
+        for meta in results["metadatas"]:
+            if not isinstance(meta.get("answer"), str) or not meta["answer"].strip():
+                continue
+                
+            data.append({
+                "msp_name": meta["msp_name"],
+                "question": meta["question"],
+                "score": meta["score"],
+                "answer": meta["answer"],
+                "timestamp": meta.get("timestamp"),
+                "group": meta.get("group"),
+                "category": meta.get("category")
+            })
+        
+        return JSONResponse(content=data)
+        
+    except Exception as e:
+        print(f"Error in admin timestamp endpoint: {e}")
+        return JSONResponse(content=[], status_code=500)
