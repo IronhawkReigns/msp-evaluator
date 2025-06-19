@@ -62,6 +62,10 @@ async def login(request: Request):
 def english_login_page(request: Request):
     return templates.TemplateResponse("en/login.html", {"request": request})
 
+@router.get("/login")
+def korean_login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
 @router.get("/admin")
 def admin_dashboard(request: Request, user=Depends(manager)):
     return templates.TemplateResponse("admin.html", {"request": request, "user": user})
