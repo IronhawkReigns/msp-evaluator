@@ -210,6 +210,7 @@ def run_from_direct_input(company_name: str, company_data: dict, summary: dict, 
     """
     print(f"Running vector DB update (direct input) for: {company_name}")
     print(f"Overwrite mode: {overwrite}")
+    print(f"[DEBUG] Sample company_data item: {company_data[0] if company_data else 'EMPTY'}")
     
     try:
         if overwrite:
