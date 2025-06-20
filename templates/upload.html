@@ -1322,15 +1322,14 @@
               {
                 label: '업계 평균 (Ground Truth)',
                 data: groundTruthScores,
-                backgroundColor: 'rgba(0, 0, 0, 0.1)', // Black with transparency
+                backgroundColor: 'rgba(0, 0, 0, 0.1)',
                 borderColor: 'rgba(0, 0, 0, 0.8)',
-                pointBackgroundColor: 'rgba(0, 0, 0, 0.8)',
-                pointBorderColor: '#fff',
+                pointBackgroundColor: 'transparent', // Remove dots
+                pointBorderColor: 'transparent',     // Remove dots
                 pointHoverBackgroundColor: '#fff',
                 pointHoverBorderColor: 'rgba(0, 0, 0, 1)',
                 borderWidth: 2,
-                // borderDash: [5, 5], // Remove this line to make it solid
-                pointRadius: 4
+                pointRadius: 0 // Set to 0 to hide dots
               },
               {
                 label: `현재 MSP (${category})`,
