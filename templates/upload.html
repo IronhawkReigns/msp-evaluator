@@ -1322,19 +1322,19 @@
               {
                 label: '업계 평균 (Ground Truth)',
                 data: groundTruthScores,
-                backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                backgroundColor: 'rgba(0, 0, 0, 0.1)', // Black with transparency
                 borderColor: 'rgba(0, 0, 0, 0.8)',
-                pointBackgroundColor: 'transparent', // Remove dots
-                pointBorderColor: 'transparent',     // Remove dots
+                pointBackgroundColor: 'rgba(0, 0, 0, 0.8)',
+                pointBorderColor: '#fff',
                 pointHoverBackgroundColor: '#fff',
                 pointHoverBorderColor: 'rgba(0, 0, 0, 1)',
                 borderWidth: 2,
-                pointRadius: 0 // Set to 0 to hide dots
+                pointRadius: 4
               },
               {
                 label: `현재 MSP (${category})`,
                 data: currentScores,
-                backgroundColor: 'transparent', // Remove filling
+                backgroundColor: 'transparent',
                 borderColor: getColorForCategory(category, 1),
                 pointBackgroundColor: getColorForCategory(category, 1),
                 pointBorderColor: '#fff',
