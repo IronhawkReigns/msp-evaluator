@@ -57,7 +57,7 @@ const MSPCard = ({ msp, rank, onSelect }) => {
             <RankBadge rank={rank} />
             <div>
               <h3 className="text-lg font-bold text-gray-900">{msp.name}</h3>
-              <p className="text-sm text-gray-500">MSP 파트너</p>
+              <p className="text-sm text-gray-500">AI 파트너</p>
             </div>
           </div>
           <div className="text-right">
@@ -120,7 +120,7 @@ const MSPModal = ({ msp, onClose }) => {
           <div className="flex justify-between items-start mb-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">{msp.name}</h2>
-              <p className="text-gray-600">MSP 파트너사 상세 정보</p>
+              <p className="text-gray-600">파트너사 상세 정보</p>
             </div>
             <button
               onClick={onClose}
@@ -186,7 +186,7 @@ const EnhancedHeader = ({ currentTime, totalMSPs, refreshing, needsRefresh, onRe
             </div>
             <div>
               <h1 className="text-2xl font-black gradient-text text-glow">NAVER Cloud</h1>
-              <p className="text-xs text-slate-500 font-medium">MSP 순위표 • {currentTime}</p>
+              <p className="text-xs text-slate-500 font-medium">파트너 리더보드 • {currentTime}</p>
             </div>
           </div>
           
@@ -320,10 +320,10 @@ const ModernHeroSection = ({ totalMSPs }) => {
             {/* Main title with gradient text */}
             <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight tracking-tight">
               <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
-                MSP 파트너
+                AI 파트너
               </span>
               <span className="block bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                순위표
+                리더보드
               </span>
             </h1>
             
@@ -389,7 +389,7 @@ const ModernStatsGrid = ({ data }) => {
             <div className="text-sm text-blue-600 font-medium">참여 파트너사</div>
           </div>
         </div>
-        <div className="text-xs text-blue-600">전체 등록된 MSP 파트너</div>
+        <div className="text-xs text-blue-600">전체 등록된 파트너</div>
       </div>
       
       <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl p-6 border border-green-200 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -599,7 +599,7 @@ export default function LeaderboardPage() {
       <footer className="text-center py-16 text-slate-500 relative z-10 animate-fade-in-up">
         <div className="max-w-3xl mx-auto">
           <div className="glass-card rounded-3xl p-8 shadow-xl">
-            <p className="text-2xl font-bold mb-4 gradient-text">ⓒ 2025 Naver Cloud MSP 순위표</p>
+            <p className="text-2xl font-bold mb-4 gradient-text">ⓒ 2025 Naver Cloud 파트너 리더보드</p>
             <div className="flex justify-center space-x-4 mt-6">
               <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
               <div className="w-3 h-3 bg-teal-500 rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></div>
