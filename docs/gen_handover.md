@@ -98,7 +98,7 @@
 
 ---
 
-## 💬 개인적인 팁 몇 가지
+## 개인적인 팁 몇 가지
 
 - **에러 났을 때** `sudo journalctl -u msp-evaluator -f` 로 로그 확인하는 게 가장 빠릅니다
 - `/query/router` 에 Claude 연결돼 있어서, API limit 나면 그쪽부터 확인해보세요
