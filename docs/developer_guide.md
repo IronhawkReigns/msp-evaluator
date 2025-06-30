@@ -401,7 +401,7 @@ WantedBy=multi-user.target
 # /etc/nginx/sites-available/msp-evaluator
 server {
     listen 80;
-    server_name mspevaluator.duckdns.org;
+    server_name mspevaluator.org;
 
     location / {
         proxy_pass http://127.0.0.1:8000;
