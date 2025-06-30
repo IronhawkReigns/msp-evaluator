@@ -4,7 +4,7 @@
 
 적합한 클라우드 파트너를 찾기 위해 몇 주씩 자료를 뒤지고 계신가요? 이제 그럴 필요 없습니다. 간단한 질문 몇 개로 AI가 여러분에게 딱 맞는 MSP 파트너를 추천해드립니다.
 
-**지금 바로 시작하기**: [mspevaluator.duckdns.org](http://mspevaluator.duckdns.org)
+**지금 바로 시작하기**: [mspeval.org](https://mspeval.org)
 
 ---
 
@@ -348,7 +348,7 @@ AI가 완벽하지는 않지만, 많은 시간을 절약하고 놓치기 쉬운 
 
 궁금한 점이 있으시면 언제든 연락해주세요. 함께 더 나은 서비스를 만들어가겠습니다.
 
-**지금 바로 시작해보세요**: [mspevaluator.duckdns.org](http://mspevaluator.duckdns.org)
+**지금 바로 시작해보세요**: [mspeval.org](https://mspeval.org)
 
 ---
 
