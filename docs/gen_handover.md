@@ -98,6 +98,16 @@
 
 ---
 
+## 💬 개인적인 팁 몇 가지
+
+- **에러 났을 때** `sudo journalctl -u msp-evaluator -f` 로 로그 확인하는 게 가장 빠릅니다
+- `/query/router` 에 Claude 연결돼 있어서, API limit 나면 그쪽부터 확인해보세요
+- `.env` 잘못되면 조용히 실패합니다… 무조건 재확인!
+- 클로바 임베딩은 **오류가 있어도 조용히 None 리턴**할 수 있어서, `chroma_store` 비면 이쪽부터 의심하세요
+- Claude + Perplexity 호출은 고비용이므로, 디버깅할 땐 `advanced=false`로 테스트 권장
+
+---
+
 ## 마지막으로
 
 운영하시다가 이슈가 생기거나 구조 이해가 어려울 경우, 부담 없이 연락 주세요.  
