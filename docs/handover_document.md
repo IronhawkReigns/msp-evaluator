@@ -15,7 +15,7 @@
 
 ### 서비스 정보
 - **서비스명**: MSP 평가 도구 (MSP Evaluator)
-- **운영 URL**: http://mspevaluator.duckdns.org
+- **운영 URL**: https://mspeval.org
 - **목적**: 클라우드 MSP 파트너사의 AI 역량 자동 평가 및 관리
 - **사용자**: NAVER Cloud Platform 내부 팀
 - **개발 기간**: 2025년 5월 - 6월
@@ -59,12 +59,12 @@ source venv/bin/activate
 #### 관리자 계정 (웹 로그인)
 - **Username**: 환경변수 `ADMIN_USERNAME` 확인
 - **Password**: 환경변수 `ADMIN_PASSWORD` 확인
-- **로그인 URL**: http://mspevaluator.duckdns.org/login
+- **로그인 URL**: http://mspeval.org/login
 
-#### DuckDNS 설정
-- **도메인**: mspevaluator.duckdns.org
-- **토큰**: [DuckDNS 계정에서 확인]
-- **갱신**: cron으로 자동 갱신 설정됨
+#### 도메인 설정
+- **도메인**: mspeval.org
+- **도메인 관리**: 현재 namecheap.com 이용 중, mistervic03@gmail.com 으로 문의
+
 
 ### API 키 관리
 
@@ -110,6 +110,7 @@ echo $NAVER_CLIENT_SECRET
 # 갱신 주기: 필요시
 ```
 
+
 ---
 
 ## 시스템 구조
@@ -148,7 +149,7 @@ echo $NAVER_CLIENT_SECRET
 /etc/nginx/sites-available/msp-evaluator
 
 # SSL 인증서
-/etc/letsencrypt/live/mspevaluator.duckdns.org/
+/etc/letsencrypt/live/mspeval.org/
 
 # 로그 파일
 /var/log/nginx/access.log
@@ -164,7 +165,7 @@ echo $NAVER_CLIENT_SECRET
 #### 로그인 절차
 ```bash
 # 1. 브라우저에서 접속
-http://mspevaluator.duckdns.org/admin
+http://mspeval.org/admin
 
 # 2. 로그인 정보 (환경변수에서 확인)
 echo $ADMIN_USERNAME  # 사용자명
@@ -197,7 +198,7 @@ echo $ADMIN_PASSWORD  # 비밀번호
 **주간 점검시 수행작업**:
 ```bash
 # 1. 브라우저에서 DB 뷰어 접속
-http://mspevaluator.duckdns.org/ui
+http://mspeval.org/ui
 
 # 2. 다음 사항들 확인
 - 중복된 MSP 이름이 있는지 점검
@@ -261,7 +262,7 @@ http://mspevaluator.duckdns.org/ui
 ```bash
 # 처리 절차:
 1. MSP에게 Excel 템플릿 제공 (user manual 참조)
-2. 업로드 페이지 안내: http://mspevaluator.duckdns.org/upload
+2. 업로드 페이지 안내: http://mspeval.org/upload
 3. 업로드 완료 후 결과 확인 및 피드백 제공
 ```
 
@@ -321,7 +322,7 @@ sudo systemctl status nginx
 
 # 응답 테스트
 curl -I http://localhost:8000/
-curl -I http://mspevaluator.duckdns.org/
+curl -I http://mspeval.org/
 ```
 
 #### 2. 시스템 리소스 확인
@@ -553,7 +554,7 @@ ab -n 100 -c 10 http://localhost:8000/
 ```
 
 ### 모니터링 대시보드
-- **웹 접근**: http://mspevaluator.duckdns.org/admin
+- **웹 접근**: http://mspeval.org/admin
 - **시스템 메트릭**: htop, df -h, free -h
 - **로그 모니터링**: journalctl -u msp-evaluator -f
 
