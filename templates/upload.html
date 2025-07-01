@@ -752,7 +752,7 @@
       <h1 class="hero-title gradient-text">파트너사 역량 진단 도구</h1>
       <p class="hero-subtitle">
         엑셀 기반 자동 평가 및 점수 산정 시스템으로<br />
-        <span class="font-semibold gradient-text">MSP 파트너사를 효율적으로 진단</span>하세요
+        <span class="font-semibold gradient-text">AI 파트너사를 효율적으로 진단</span>하세요
       </p>
     </div>
 
@@ -1189,9 +1189,9 @@
     const vectorUploadBtnScript = (() => {
       if (vectorUploadBtn) {
         vectorUploadBtn.addEventListener('click', async () => {
-          const mspName = prompt("업로드할 MSP 이름을 입력하세요:");
+          const mspName = prompt("업로드할 파트너사 이름을 입력하세요:");
           if (!mspName) {
-            alert("MSP 이름이 입력되지 않았습니다.");
+            alert("파트너 이름이 입력되지 않았습니다.");
             return;
           }
 
@@ -1332,7 +1332,7 @@
                 pointRadius: 4
               },
               {
-                label: `현재 MSP (${category})`,
+                label: `현재 파트너사 (${category})`,
                 data: currentScores,
                 backgroundColor: 'transparent',
                 borderColor: getColorForCategory(category, 1),
