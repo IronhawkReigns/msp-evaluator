@@ -1318,7 +1318,7 @@ def call_naver_search_server(command: str, *args):
             cmd,
             capture_output=True,
             text=True,
-            timeout=45,  # 기존과 동일한 타임아웃
+            timeout=45,
             cwd=os.getcwd()
         )
         
@@ -1415,17 +1415,17 @@ def run_msp_news_summary_mcp(question: str):
         web_raw = call_naver_search_server("web", msp_name, "7")
         
         print(f"MCP 검색 완료")
-        print(f"📊 DEBUG: 뉴스 raw 길이: {len(news_raw)}")  # 이 줄 추가
-        print(f"📊 DEBUG: 뉴스 raw 시작: {news_raw[:100]}...")  # 이 줄 추가
+        print(f"📊 DEBUG: 뉴스 raw 길이: {len(news_raw)}")
+        print(f"📊 DEBUG: 뉴스 raw 시작: {news_raw[:100]}...")
         
         # 검색 결과를 기존 형식으로 변환
         news_items_parsed = parse_search_results_for_claude(news_raw, "news")
         web_items_parsed = parse_search_results_for_claude(web_raw, "web")
         
-        print(f"📊 DEBUG: 파싱된 뉴스 아이템 수: {len(news_items_parsed)}")  # 이 줄 추가
+        print(f"📊 DEBUG: 파싱된 뉴스 아이템 수: {len(news_items_parsed)}")
         
         if not news_items_parsed:
-            print(f"❌ DEBUG: 뉴스 아이템이 없어서 종료")  # 이 줄 추가
+            print(f"❌ DEBUG: 뉴스 아이템이 없어서 종료")
             return {"answer": f"{msp_name}에 대한 뉴스 기사를 찾을 수 없습니다.", "advanced": True}
 
         # 데이터 정리 로직
