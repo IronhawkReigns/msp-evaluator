@@ -1,17 +1,15 @@
 from msp_core import (
+    run_msp_news_summary_mcp,
     run_msp_recommendation,
-    run_msp_information_summary,
     run_msp_information_summary_claude,
     run_msp_information_summary_pplx,
     extract_msp_name,
-    query_embed,
     collection,
-    run_msp_news_summary_clova,
     run_msp_news_summary_claude
 )
-from utils import fix_korean_encoding, map_group_to_category
+from utils import fix_korean_encoding
 from fastapi import File, UploadFile
-from excel_upload_handler import evaluate_uploaded_excel, compute_category_scores_from_excel_data, summarize_answers_for_subcategories
+from excel_upload_handler import compute_category_scores_from_excel_data, summarize_answers_for_subcategories
 from clova_router import Executor
 from pydantic import BaseModel
 from difflib import get_close_matches
@@ -33,7 +31,7 @@ class RouterQuery(BaseModel):
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 import requests
-from vector_writer import run_from_msp_name
+from vector_writer import run_from_msp_name, clova_embedding as query_embed
 from admin_protected import router as admin_router, manager
 
 # Register user_loader at import time to avoid "Missing user_loader callback" error
@@ -322,7 +320,7 @@ async def query_router(data: RouterQuery):
 # Advanced Naver route
 @app.post("/query/advanced_naver")
 async def query_advanced_naver(data: RouterQuery):
-    return run_msp_news_summary_claude(data.query)
+    return run_msp_news_summary_mcp(data.query)
 
 # Add protected /admin route using same login logic as /ui
 @app.get("/admin")
