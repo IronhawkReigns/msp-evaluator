@@ -1337,6 +1337,12 @@ def parse_search_results_for_claude(raw_text: str, search_type: str = "news"):
     검색 결과를 Claude가 분석하기 좋은 형태로 변환
     """
     items = []
+
+    print(f"🔍 PARSE DEBUG: 입력 텍스트 길이: {len(raw_text)}")
+    print(f"🔍 PARSE DEBUG: 텍스트 시작: {raw_text[:200]}...")
+    
+    if not raw_text or "오류" in raw_text or "실패" in raw_text:
+        print(f"❌ PARSE DEBUG: 텍스트가 비어있거나 오류 포함")
     
     if not raw_text or "오류" in raw_text or "실패" in raw_text:
         return items
@@ -1346,10 +1352,12 @@ def parse_search_results_for_claude(raw_text: str, search_type: str = "news"):
             # "📰 뉴스 1", "📰 뉴스 2" 패턴으로 분할
             import re
             sections = re.split(r'📰 뉴스 \d+', raw_text)[1:]
+            print(f"🔍 PARSE DEBUG: 분할된 섹션 수: {len(sections)}")
         else:
             sections = raw_text.split("🌐 웹문서")[1:]
         
         for section in sections:
+            print(f"🔍 PARSE DEBUG: 섹션 {i+1}: {section[:100]}...")
             lines = section.strip().split('\n')
             item = {}
             
