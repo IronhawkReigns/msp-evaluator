@@ -1302,3 +1302,218 @@ def run_msp_news_summary_claude(question: str):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Claude API error: {str(e)}")
+
+import subprocess
+import json
+import traceback
+import anthropic
+import os
+
+def call_naver_search_server(command: str, *args):
+    """네이버 검색 서버 호출"""
+    try:
+        cmd = ["python3", "./mcp/naver_search_server.py", command] + list(args)
+        
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=45,  # 기존과 동일한 타임아웃
+            cwd=os.getcwd()
+        )
+        
+        if result.returncode == 0:
+            return result.stdout.strip()
+        else:
+            return f"서버 호출 실패 (코드: {result.returncode}): {result.stderr}"
+            
+    except subprocess.TimeoutExpired:
+        return "네이버 검색 서버 타임아웃 (45초 초과)"
+    except Exception as e:
+        return f"서버 호출 중 오류: {str(e)}"
+
+def parse_search_results_for_claude(raw_text: str, search_type: str = "news"):
+    """
+    검색 결과를 Claude가 분석하기 좋은 형태로 변환
+    """
+    items = []
+    
+    if not raw_text or "오류" in raw_text or "실패" in raw_text:
+        return items
+    
+    try:
+        if search_type == "news":
+            sections = raw_text.split("📰 뉴스")[1:]
+        else:
+            sections = raw_text.split("🌐 웹문서")[1:]
+        
+        for section in sections:
+            lines = section.strip().split('\n')
+            item = {}
+            
+            for line in lines:
+                line = line.strip()
+                if line.startswith('제목:'):
+                    item['title'] = line.replace('제목:', '').strip()
+                elif line.startswith('세부내용:') or line.startswith('요약:'):
+                    item['description'] = line.replace('세부내용:', '').replace('요약:', '').strip()
+                elif line.startswith('날짜:'):
+                    item['pubDate'] = line.replace('날짜:', '').strip()
+                elif line.startswith('링크:'):
+                    item['link'] = line.replace('링크:', '').strip()
+            
+            if item.get('title') and item.get('description'):
+                items.append(item)
+        
+        return items
+        
+    except Exception as e:
+        print(f"파싱 오류: {e}")
+        return []
+
+def run_msp_news_summary_mcp_final(question: str):
+    """
+    MCP 아키텍처 기반 뉴스 요약 (기존 품질 유지)
+    """
+    
+    msp_name = extract_msp_name(question)
+    if not msp_name:
+        return {"answer": "회사명을 인식하지 못했습니다. 다시 시도해 주세요.", "advanced": True}
+
+    # 내부 벡터 DB 검색 (기존과 동일)
+    try:
+        query_vector = query_embed(question)
+        query_results = collection.query(
+            query_embeddings=[query_vector],
+            n_results=15
+        )
+        db_chunks = [
+            f"Q: {chunk['question']}\nA: {chunk['answer']} (점수: {chunk.get('score', 'N/A')}/5)"
+            for chunk in query_results["metadatas"][0]
+            if chunk.get("msp_name") == msp_name and chunk.get("question") and chunk.get("answer")
+        ][:8]
+        db_context = "\n\n".join(db_chunks)
+    except Exception as e:
+        db_context = ""
+
+    try:
+        print(f"🔍 MCP 서버를 통한 '{msp_name}' 검색 시작...")
+        
+        # MCP 서버를 통한 검색 (기존 API 호출 대체)
+        news_raw = call_naver_search_server("news", msp_name, "15")
+        web_raw = call_naver_search_server("web", msp_name, "7")
+        
+        print(f"📊 MCP 검색 완료")
+        
+        # 검색 결과를 기존 형식으로 변환
+        news_items_parsed = parse_search_results_for_claude(news_raw, "news")
+        web_items_parsed = parse_search_results_for_claude(web_raw, "web")
+        
+        if not news_items_parsed:
+            return {"answer": f"{msp_name}에 대한 뉴스 기사를 찾을 수 없습니다.", "advanced": True}
+
+        # 기존과 동일한 데이터 정리 로직
+        def clean_text(text):
+            return text.replace('<b>', '').replace('</b>', '').replace('&quot;', '"').replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
+
+        # 기존과 동일한 포맷팅
+        news_items = []
+        for i, item in enumerate(news_items_parsed[:12], 1):
+            title = clean_text(item.get('title', ''))
+            desc = clean_text(item.get('description', ''))
+            pub_date = item.get('pubDate', 'N/A')
+            
+            if title and desc:
+                news_items.append(f"{i}. [{pub_date}] {title}\n   세부내용: {desc}")
+
+        web_items = []
+        for i, item in enumerate(web_items_parsed[:5], 1):
+            title = clean_text(item.get('title', ''))
+            desc = clean_text(item.get('description', ''))
+            
+            if title and desc and len(desc) > 50:
+                web_items.append(f"{i}. {title}\n   요약: {desc}")
+
+        article_text = "\n\n".join(news_items)
+        web_text = "\n\n".join(web_items)
+
+        # 기존과 동일한 고품질 Claude 프롬프트
+        prompt = f"""다음은 클라우드 MSP 파트너사 '{msp_name}'에 대한 종합 정보입니다. 이 다양한 정보원을 분석하여 사용자 질문에 전문적이고 통찰력 있는 답변을 제공해주세요.
+
+사용자 질문: "{question}"
+
+=== 내부 평가 데이터 (가장 신뢰도 높음) ===
+{db_context}
+
+=== 뉴스 기사 정보 ({len(news_items)}개 최신 기사) ===
+{article_text}
+
+=== 웹 문서 정보 ({len(web_items)}개 관련 문서) ===
+{web_text}
+
+=== 전문가 수준 분석 지침 ===
+1. **정보 통합 분석**: 내부 평가, 뉴스, 웹 정보를 종합하여 균형잡힌 시각 제공
+2. **신뢰도 우선순위**: 내부 평가 데이터 → 공식 뉴스 → 웹 문서 순으로 가중치 적용
+3. **구체적 근거 제시**: 
+   - 평가 점수나 구체적 수치 우선 언급
+   - 시기별 변화나 최근 동향 파악
+   - 경쟁사 대비 차별화 요소 식별
+4. **실무적 관점**: 실제 고객/파트너 관점에서 의미있는 정보 우선 정리
+5. **객관적 균형**: 강점과 개선영역을 모두 고려한 공정한 평가
+
+응답 형식: 자연스럽고 전문적인 한국어로 작성하되, 마케팅 표현보다는 팩트와 데이터 중심으로 서술해주세요."""
+
+    except Exception as e:
+        traceback.print_exc()
+        return {"answer": f"MCP 기반 검색에 실패했습니다: {str(e)}", "advanced": True}
+
+    # 기존과 동일한 Claude API 호출
+    try:
+        client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        
+        response = client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=1500,
+            temperature=0.2,
+            system="당신은 10년 이상 경력의 클라우드 및 MSP 전문 컨설턴트입니다. 다양한 정보원을 종합 분석하여 객관적이고 실용적인 통찰을 제공하며, 구체적 근거와 데이터에 기반한 전문가 수준의 평가를 중시합니다.",
+            messages=[{
+                "role": "user", 
+                "content": prompt
+            }]
+        )
+        
+        answer = response.content[0].text.strip()
+        answer = answer.replace("설루션", "솔루션")
+        answer = answer.replace("클라우드 서비스", "클라우드 솔루션")
+        
+        return {
+            "answer": answer, 
+            "advanced": True, 
+            "evidence": news_items_parsed[:12], 
+            "web_evidence": web_items_parsed[:5],
+            "model_used": "mcp-naver-server + claude-3-haiku-enhanced",
+            "data_summary": {
+                "news_articles": len(news_items),
+                "web_documents": len(web_items),
+                "internal_qa_pairs": len(db_chunks),
+                "total_sources": len(news_items) + len(web_items) + len(db_chunks)
+            },
+            "mcp_integration": {
+                "server_type": "simple_subprocess",
+                "data_source": "naver_search_server",
+                "architecture": "modular_mcp_approach"
+            }
+        }
+        
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Claude API error: {str(e)}")
+
+# 헬스체크 함수
+def check_mcp_server_status():
+    """MCP 서버 상태 확인"""
+    try:
+        result = call_naver_search_server("extract", "테스트 질문")
+        return "MCP 서버 정상 작동" if "테스트" in result else f"MCP 서버 이상: {result[:100]}"
+    except Exception as e:
+        return f"MCP 서버 연결 실패: {str(e)}"
