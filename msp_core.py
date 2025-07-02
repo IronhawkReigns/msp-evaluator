@@ -1356,7 +1356,7 @@ def parse_search_results_for_claude(raw_text: str, search_type: str = "news"):
         else:
             sections = raw_text.split("🌐 웹문서")[1:]
         
-        for section in sections:
+        for i, section in enumerate(sections):
             print(f"🔍 PARSE DEBUG: 섹션 {i+1}: {section[:100]}...")
             lines = section.strip().split('\n')
             item = {}
