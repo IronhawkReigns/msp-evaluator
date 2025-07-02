@@ -1312,7 +1312,7 @@ import os
 def call_naver_search_server(command: str, *args):
     """네이버 검색 서버 호출"""
     try:
-        cmd = ["python3", "./mcp/naver_search_server.py", command] + list(args)
+        cmd = ["python3", "./mcp/naver_mcp_server.py", command] + list(args)
         
         result = subprocess.run(
             cmd,
@@ -1516,7 +1516,7 @@ def run_msp_news_summary_mcp(question: str):
             },
             "mcp_integration": {
                 "server_type": "simple_subprocess",
-                "data_source": "naver_search_server",
+                "data_source": "naver_mcp_server",
                 "architecture": "modular_mcp_approach"
             }
         }
