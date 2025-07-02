@@ -1343,7 +1343,9 @@ def parse_search_results_for_claude(raw_text: str, search_type: str = "news"):
     
     try:
         if search_type == "news":
-            sections = raw_text.split("📰 뉴스")[1:]
+            # "📰 뉴스 1", "📰 뉴스 2" 패턴으로 분할
+            import re
+            sections = re.split(r'📰 뉴스 \d+', raw_text)[1:]
         else:
             sections = raw_text.split("🌐 웹문서")[1:]
         
