@@ -1371,16 +1371,16 @@ def parse_search_results_for_claude(raw_text: str, search_type: str = "news"):
         print(f"파싱 오류: {e}")
         return []
 
-def run_msp_news_summary_mcp_final(question: str):
+def run_msp_news_summary_mcp(question: str):
     """
-    MCP 아키텍처 기반 뉴스 요약 (기존 품질 유지)
+    MCP 아키텍처 기반 뉴스 요약
     """
     
     msp_name = extract_msp_name(question)
     if not msp_name:
         return {"answer": "회사명을 인식하지 못했습니다. 다시 시도해 주세요.", "advanced": True}
 
-    # 내부 벡터 DB 검색 (기존과 동일)
+    # 내부 벡터 DB 검색
     try:
         query_vector = query_embed(question)
         query_results = collection.query(
@@ -1397,13 +1397,13 @@ def run_msp_news_summary_mcp_final(question: str):
         db_context = ""
 
     try:
-        print(f"🔍 MCP 서버를 통한 '{msp_name}' 검색 시작...")
+        print(f"MCP 서버를 통한 '{msp_name}' 검색 시작...")
         
         # MCP 서버를 통한 검색 (기존 API 호출 대체)
         news_raw = call_naver_search_server("news", msp_name, "15")
         web_raw = call_naver_search_server("web", msp_name, "7")
         
-        print(f"📊 MCP 검색 완료")
+        print(f"MCP 검색 완료")
         
         # 검색 결과를 기존 형식으로 변환
         news_items_parsed = parse_search_results_for_claude(news_raw, "news")
@@ -1412,11 +1412,11 @@ def run_msp_news_summary_mcp_final(question: str):
         if not news_items_parsed:
             return {"answer": f"{msp_name}에 대한 뉴스 기사를 찾을 수 없습니다.", "advanced": True}
 
-        # 기존과 동일한 데이터 정리 로직
+        # 데이터 정리 로직
         def clean_text(text):
             return text.replace('<b>', '').replace('</b>', '').replace('&quot;', '"').replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
 
-        # 기존과 동일한 포맷팅
+        # 포맷팅
         news_items = []
         for i, item in enumerate(news_items_parsed[:12], 1):
             title = clean_text(item.get('title', ''))
@@ -1437,7 +1437,7 @@ def run_msp_news_summary_mcp_final(question: str):
         article_text = "\n\n".join(news_items)
         web_text = "\n\n".join(web_items)
 
-        # 기존과 동일한 고품질 Claude 프롬프트
+        # Claude 프롬프트
         prompt = f"""다음은 클라우드 MSP 파트너사 '{msp_name}'에 대한 종합 정보입니다. 이 다양한 정보원을 분석하여 사용자 질문에 전문적이고 통찰력 있는 답변을 제공해주세요.
 
 사용자 질문: "{question}"
@@ -1467,7 +1467,7 @@ def run_msp_news_summary_mcp_final(question: str):
         traceback.print_exc()
         return {"answer": f"MCP 기반 검색에 실패했습니다: {str(e)}", "advanced": True}
 
-    # 기존과 동일한 Claude API 호출
+    # Claude API 호출
     try:
         client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
         
