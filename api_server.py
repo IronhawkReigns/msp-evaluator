@@ -273,7 +273,7 @@ async def ask_question(request: Request):
     if not question:
         raise HTTPException(status_code=400, detail="Missing question")
 
-    return run_multi_llm_msp_recommendation(question, min_score)
+    return run_msp_recommendation(question, min_score)
 
 # Router endpoint
 @app.post("/query/router")
@@ -304,11 +304,14 @@ async def query_router(data: RouterQuery):
             print(f"🟢 Advanced toggle received: {data.advanced}")
             if "Information" in blocked:
                 if data.advanced:
-                    return run_msp_information_summary_pplx(data.query)
+                    return run_multi_llm_msp_recommendation(data.query)
                 else:
                     return run_msp_information_summary_claude(data.query)
             elif "Recommend" in blocked:
-                return run_multi_llm_msp_recommendation(data.query, min_score=0)
+                if data.advanced:
+                    return run_multi_llm_msp_recommendation(data.query, min_score=0)  # ADD THIS
+                else:
+                    return run_msp_recommendation(data.query, min_score=0)
             elif "Unrelated" in blocked:
                 return {"answer": "본 시스템은 MSP 평가 도구입니다. 해당 질문은 지원하지 않습니다. 다른 질문을 입력해 주세요."}
             else:
