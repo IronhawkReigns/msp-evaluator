@@ -1,4 +1,985 @@
-if (result.summary && Array.isArray(result.summary)) {
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>파트너 역량 진단 도구 - NAVER Cloud</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-feature-settings: 'cv11', 'ss01';
+      font-variation-settings: 'opsz' 32;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%);
+      color: #1f2937;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Enhanced Background Decoration */
+    .background-decoration {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .floating-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      animation: float 8s ease-in-out infinite;
+    }
+
+    .orb-1 {
+      top: -10%;
+      right: -10%;
+      width: 400px;
+      height: 400px;
+      background: linear-gradient(135deg, rgba(5, 150, 105, 0.15), rgba(13, 148, 136, 0.15));
+      animation-delay: 0s;
+    }
+
+    .orb-2 {
+      bottom: -10%;
+      left: -10%;
+      width: 350px;
+      height: 350px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.15));
+      animation-delay: 2s;
+    }
+
+    .orb-3 {
+      top: 33%;
+      left: 25%;
+      width: 250px;
+      height: 250px;
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.1));
+      animation-delay: 4s;
+    }
+
+    .grid-pattern {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(5, 150, 105, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(5, 150, 105, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    @keyframes fadeInUp {
+      0% { opacity: 0; transform: translateY(40px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInDown {
+      0% { opacity: 0; transform: translateY(-30px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes gradient {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Glass Morphism */
+    .glass-morphism {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Gradient Text */
+    .gradient-text {
+      background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #14b8a6 100%);
+      background-size: 300% 300%;
+      animation: gradient 8s ease infinite;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .gradient-border {
+      background: linear-gradient(45deg, #059669, #0d9488, #14b8a6, #06b6d4);
+      background-size: 300% 300%;
+      animation: gradient 6s ease infinite;
+    }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(20px);
+      background: rgba(255, 255, 255, 0.9);
+      border-bottom: 1px solid rgba(5, 150, 105, 0.1);
+      padding: 1rem 2rem;
+      animation: fadeInDown 0.6s ease-out;
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-container {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #059669, #0d9488);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    }
+
+    .logo-icon {
+      width: 24px;
+      height: 24px;
+      color: white;
+    }
+
+    .header-title {
+      font-size: 1.5rem;
+      font-weight: 900;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .header-title:hover {
+      text-decoration: none;
+      transform: scale(1.05);
+    }
+
+    .admin-link {
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #059669, #0d9488);
+      color: white;
+      text-decoration: none;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    }
+
+    .admin-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(5, 150, 105, 0.4);
+    }
+
+    /* Main Container */
+    .main-container {
+      position: relative;
+      z-index: 10;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Hero Section */
+    .hero-section {
+      text-align: center;
+      margin-bottom: 4rem;
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    .upload-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      padding: 1rem 2rem;
+      background: rgba(5, 150, 105, 0.1);
+      border-radius: 9999px;
+      border: 1px solid rgba(5, 150, 105, 0.2);
+      font-weight: 700;
+      color: #059669;
+    }
+
+    .upload-badge-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .upload-badge-dot {
+      width: 8px;
+      height: 8px;
+      background: #059669;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .hero-title {
+      font-size: 3.5rem;
+      font-weight: 900;
+      margin-bottom: 1.5rem;
+      color: #1f2937;
+      line-height: 1.1;
+      letter-spacing: -0.025em;
+    }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: #6b7280;
+      font-weight: 500;
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Upload Form */
+    .upload-form-container {
+      margin-bottom: 3rem;
+      animation: fadeInUp 0.8s ease-out;
+      animation-delay: 0.2s;
+    }
+
+    .upload-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      padding: 2.5rem;
+      border-radius: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-form::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, #059669, #0d9488, #14b8a6);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .form-label {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #374151;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+    }
+
+    .file-input-border {
+      padding: 2px;
+      border-radius: 16px;
+      background: linear-gradient(45deg, #059669, #0d9488, #14b8a6, #06b6d4);
+      background-size: 300% 300%;
+      animation: gradient 6s ease infinite;
+    }
+
+    .file-input {
+      width: 100%;
+      padding: 1rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 14px;
+      background-color: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+      box-sizing: border-box;
+      margin: 0;
+    }
+
+    .file-input:focus {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .upload-button {
+      padding: 1.25rem 2rem;
+      font-size: 1.125rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #059669 0%, #0d9488 25%, #14b8a6 50%, #06b6d4 75%, #0ea5e9 100%);
+      background-size: 300% 300%;
+      animation: gradient 4s ease infinite;
+      color: white;
+      box-shadow: 0 8px 24px rgba(5, 150, 105, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    .upload-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .upload-button:hover::before {
+      left: 100%;
+    }
+
+    .upload-button:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 12px 32px rgba(5, 150, 105, 0.4);
+    }
+
+    .upload-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Tables */
+    .table-container {
+      margin-bottom: 3rem;
+      border-radius: 24px;
+      overflow: hidden;
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    .table-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #059669, #0d9488, #14b8a6);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.9rem;
+      background-color: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(15px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    thead tr {
+      background: linear-gradient(135deg, #059669, #0d9488);
+      color: white;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    th, td {
+      padding: 1rem 1.25rem;
+      border-right: 1px solid rgba(5, 150, 105, 0.1);
+      border-bottom: 1px solid rgba(5, 150, 105, 0.1);
+      font-size: 0.9rem;
+      white-space: normal;
+      word-break: keep-all;
+    }
+
+    thead th:first-child,
+    tbody td:first-child {
+      white-space: nowrap;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    th:last-child, td:last-child {
+      border-right: none;
+    }
+
+    thead th {
+      text-align: center;
+    }
+
+    tbody td {
+      text-align: left;
+    }
+
+    thead th:first-child,
+    tbody td:first-child {
+      text-align: center;
+      font-weight: 700;
+    }
+
+    tbody tr:hover {
+      background-color: rgba(5, 150, 105, 0.05);
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: rgba(248, 250, 252, 0.8);
+    }
+
+    .score-input {
+      width: 3.2em;
+      font-size: 1rem;
+      padding: 0.5em 0.6em;
+      border: 2px solid rgba(5, 150, 105, 0.3);
+      border-radius: 8px;
+      text-align: center;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.9);
+      font-weight: 600;
+    }
+
+    .score-input:focus {
+      border-color: #059669;
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1);
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin: 2rem 0;
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    .action-btn {
+      padding: 0.875rem 1.75rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .action-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .action-btn:hover::before {
+      left: 100%;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px) scale(1.05);
+    }
+
+    .btn-green {
+      background: linear-gradient(135deg, #059669, #0d9488);
+      color: white;
+    }
+
+    .btn-blue {
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      color: white;
+    }
+
+    .btn-orange {
+      background: linear-gradient(135deg, #ea580c, #dc2626);
+      color: white;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #059669 0%, #0d9488 25%, #14b8a6 50%, #06b6d4 75%, #0ea5e9 100%);
+      background-size: 300% 300%;
+      animation: gradient 4s ease infinite;
+      color: white;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      border: 4px solid rgba(5, 150, 105, 0.1);
+      border-top: 4px solid #059669;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 30px auto;
+    }
+
+    /* Chart Section */
+    .chart-section {
+      margin-top: 3rem;
+      text-align: center;
+      animation: fadeInUp 0.8s ease-out;
+      animation-delay: 0.4s;
+    }
+
+    .chart-title {
+      font-size: 1.5rem;
+      color: #059669;
+      font-weight: 900;
+      margin-bottom: 2rem;
+    }
+
+    .charts-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .chart-wrapper {
+      width: 500px;
+      max-width: 100%;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(15px);
+      border-radius: 24px;
+      padding: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .chart-wrapper h4 {
+      margin-bottom: 1rem;
+      color: #059669;
+      font-weight: 700;
+      font-size: 1.125rem;
+    }
+
+    canvas {
+      width: 500px !important;
+      height: 500px !important;
+      max-width: 100%;
+      background-color: transparent;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .download-btn {
+      display: block;
+      margin: 1rem auto 0;
+      padding: 0.5rem 1rem;
+      background: #059669;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .download-btn:hover {
+      background: #047857;
+      transform: translateY(-1px);
+    }
+
+    /* Summary Section */
+    .summary-section {
+      margin-top: 2rem;
+      animation: fadeInUp 0.8s ease-out;
+      animation-delay: 0.6s;
+    }
+
+    .summary-title {
+      font-size: 1.25rem;
+      color: #059669;
+      font-weight: 900;
+      margin: 2rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid rgba(5, 150, 105, 0.2);
+    }
+
+    .summary-text {
+      margin-top: 0.5rem;
+      line-height: 1.6;
+      color: #374151;
+      background: rgba(255, 255, 255, 0.6);
+      padding: 1rem;
+      border-radius: 12px;
+      border-left: 4px solid #059669;
+    }
+
+    /* Responsive Design */
+    @media (min-width: 768px) {
+      .form-group {
+        flex-direction: row;
+        align-items: center;
+      }
+      
+      .form-label {
+        flex: 0 0 200px;
+        margin-bottom: 0;
+      }
+      
+      .file-input-wrapper {
+        flex: 1;
+      }
+      
+      .upload-button {
+        flex: 0 0 200px;
+      }
+      
+      .hero-title {
+        font-size: 4rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .main-container {
+        padding: 1rem;
+      }
+      
+      .header-content {
+        padding: 0 1rem;
+      }
+      
+      .hero-title {
+        font-size: 2.5rem;
+      }
+      
+      .upload-form {
+        padding: 1.5rem;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .chart-wrapper {
+        width: 100%;
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Background Decoration -->
+  <div class="background-decoration">
+    <div class="floating-orb orb-1"></div>
+    <div class="floating-orb orb-2"></div>
+    <div class="floating-orb orb-3"></div>
+    <div class="grid-pattern"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="header-brand">
+        <div class="logo-container">
+          <svg class="logo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+        </div>
+        <a href="/" class="header-title gradient-text">NAVER Cloud</a>
+      </div>
+      <a href="/login?next=/admin" class="admin-link">관리자</a>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <!-- Hero Section -->
+    <div class="hero-section">
+      <div class="upload-badge">
+        <svg class="upload-badge-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
+        <span>파트너사 역량 진단 시스템</span>
+        <div class="upload-badge-dot"></div>
+      </div>
+      
+      <h1 class="hero-title gradient-text">파트너사 역량 진단 도구</h1>
+      <p class="hero-subtitle">
+        엑셀 기반 자동 평가 및 점수 산정 시스템으로<br />
+        <span class="font-semibold gradient-text">AI 파트너사를 효율적으로 진단</span>하세요
+      </p>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="upload-form-container">
+      <form id="uploadForm" class="upload-form glass-card" autocomplete="off" novalidate>
+        <div class="form-group">
+          <label for="excelFile" class="form-label">엑셀 파일 (.xlsx)</label>
+          <div class="file-input-wrapper">
+            <div class="file-input-border">
+              <input type="file" id="excelFile" name="file" accept=".xlsx" required class="file-input" />
+            </div>
+          </div>
+          <button type="submit" class="upload-button">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <span>업로드 및 평가</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Results Tables -->
+    <div id="evaluatedQuestionsTable"></div>
+    <div id="summaryTable"></div>
+
+    <!-- Radar Chart Section -->
+    <div id="radarChartSection" class="chart-section" style="display: none;">
+      <h3 class="chart-title">역량 그룹별 방사형 차트</h3>
+      <div id="radarChartsContainer" class="charts-container"></div>
+    </div>
+
+    <!-- Vector DB Upload Button -->
+    <div style="text-align:center; margin-top: 24px;">
+      <button id="uploadToVectorDbBtn" class="action-btn btn-primary" style="display:none;">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+        </svg>
+        벡터 DB에 업로드
+      </button>
+    </div>
+
+    <!-- Subcategory Summaries -->
+    <div id="subCategorySummaries" class="summary-section"></div>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    // PRESERVE ALL ORIGINAL JAVASCRIPT FUNCTIONALITY
+    const form = document.getElementById('uploadForm');
+    const evaluatedQuestionsTable = document.getElementById('evaluatedQuestionsTable');
+    const summaryTable = document.getElementById('summaryTable');
+    const vectorUploadBtn = document.getElementById('uploadToVectorDbBtn');
+    let result = {};
+
+    function createTable(headers, rows, editableScore = false) {
+      const tableContainer = document.createElement('div');
+      tableContainer.className = 'table-container glass-card';
+      tableContainer.style.position = 'relative';
+      
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+      headers.forEach(h => {
+        const th = document.createElement('th');
+        th.textContent = h;
+        headRow.appendChild(th);
+      });
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      rows.forEach(row => {
+        const tr = document.createElement('tr');
+        headers.forEach(header => {
+          const td = document.createElement('td');
+          const key = header.toLowerCase();
+          const camelCaseKey = key.replace(/\s+(.)/g, (match, group1) => group1.toUpperCase());
+
+          if (editableScore && camelCaseKey === 'score') {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'score-input';
+            input.min = 1;
+            input.max = 5;
+            input.value = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
+            input.addEventListener('change', () => {
+              row[camelCaseKey] = Number(input.value);
+            });
+            td.appendChild(input);
+          } else {
+            td.textContent = row[camelCaseKey] !== undefined ? row[camelCaseKey] : '';
+          }
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      tableContainer.appendChild(table);
+      return tableContainer;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      console.log("DEBUG: Upload started");
+
+      evaluatedQuestionsTable.innerHTML = '<div class="spinner"></div>';
+      summaryTable.innerHTML = '';
+
+      // Remove previous subcategory summary container if any
+      const oldSubCatContainer = document.getElementById('subCategorySummaries');
+      if (oldSubCatContainer) oldSubCatContainer.innerHTML = '';
+
+      const fileInput = document.getElementById('excelFile');
+      if (!fileInput.files.length) {
+        alert('엑셀 파일을 선택해주세요.');
+        evaluatedQuestionsTable.innerHTML = '';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      try {
+        console.log("DEBUG: Sending upload request...");
+        const res = await fetch('/api/upload_excel', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!res.ok) {
+          console.error(`DEBUG: Server responded with error: ${res.status}`);
+          throw new Error(`서버 오류: ${res.status}`);
+        }
+
+        result = await res.json();
+        // Parse group_to_category_map if needed
+        if (typeof result.group_to_category_map === 'string') {
+          try {
+            result.group_to_category_map = JSON.parse(result.group_to_category_map);
+          } catch (e) {
+            console.error("❌ Failed to parse group_to_category_map:", e);
+          }
+        }
+        console.log("DEBUG: API result", result);
+        
+        // === Insert debug logs for summary and groups ===
+        console.log("🔍 Summary data from API:", result.summary);
+        console.log("🔍 Group data from API:", result.groups);
+        
+        // Normalize summary structure from backend to frontend format
+        if (Array.isArray(result.summary)) {
+          result.summary = result.summary.map((item) => ({
+            name: item.Category,
+            score: item.Score,
+            questions: item.Questions,
+          }));
+        }
+        
+        // ========== DEBUG LOGS for subcategory_summaries ==========
+        console.log("DEBUG: Subcategory summaries keys:", Object.keys(result.subcategory_summaries || {}));
+        Object.entries(result.subcategory_summaries || {}).forEach(([group, subcats]) => {
+          console.log(`DEBUG: Group '${group}' subcategories:`, Object.keys(subcats));
+        });
+
+        if (vectorUploadBtn) {
+          vectorUploadBtn.style.display = (result.evaluated_questions && result.evaluated_questions.length) ? 'inline-block' : 'none';
+        }
+
+        if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+          const evalTable = createTable(['Category', 'Question', 'Answer', 'Score'], result.evaluated_questions, true);
+          evaluatedQuestionsTable.innerHTML = '';
+
+          // Copy buttons container
+          const copyBtnWrapper = document.createElement('div');
+          copyBtnWrapper.className = 'action-buttons';
+
+          // Categories for which to add copy buttons
+          const categoriesToCopy = ['인적역량', 'AI기술역량', '솔루션 역량'];
+
+          categoriesToCopy.forEach(category => {
+            const btn = document.createElement('button');
+            btn.textContent = `${category} 점수 복사`;
+            btn.className = 'action-btn';
+
+            // Set distinct gradient backgrounds
+            switch(category) {
+              case '인적역량':
+                btn.classList.add('btn-green');
+                break;
+              case 'AI기술역량':
+                btn.classList.add('btn-blue');
+                break;
+              case '솔루션 역량':
+                btn.classList.add('btn-orange');
+                break;
+            }
+
+            btn.addEventListener('click', () => {
+              const scoresToCopy = result.evaluated_questions
+                .filter(q => q.category === category)
+                .map(q => (q.score !== undefined ? q.score : ''))
+                .join('\n');
+              navigator.clipboard.writeText(scoresToCopy).then(() => {
+                alert(`✅ ${category} 점수가 클립보드에 복사되었습니다.`);
+              }).catch(() => {
+                alert(`❌ ${category} 점수 복사에 실패했습니다.`);
+              });
+            });
+
+            copyBtnWrapper.appendChild(btn);
+          });
+
+          evaluatedQuestionsTable.appendChild(evalTable);
+          evaluatedQuestionsTable.appendChild(copyBtnWrapper);
+          createOrShowRequestSummaryBtn();
+          if (requestSummaryBtn) requestSummaryBtn.style.display = 'inline-block';
+
+        } else {
+          evaluatedQuestionsTable.innerHTML = '';
+          if (vectorUploadBtn) vectorUploadBtn.style.display = 'none';
+        }
+
+        if (result.summary && Array.isArray(result.summary)) {
           const tableContainer = document.createElement('div');
           tableContainer.className = 'table-container glass-card';
           tableContainer.style.position = 'relative';
@@ -36,3 +1017,528 @@ if (result.summary && Array.isArray(result.summary)) {
         } else {
           summaryTable.innerHTML = '';
         }
+
+        // === Prepare radar chart labels and scores using groupSummary from API ===
+        if (result.groups && Array.isArray(result.groups)) {
+          const radarSection = document.getElementById('radarChartSection');
+          if (radarSection) {
+            radarSection.style.display = 'block';
+          }
+          const groupSummary = result.groups;
+          console.log("🔍 Group data from API:", groupSummary);
+
+          const radarLabels = groupSummary.map((item) => item.name);
+          const radarScores = groupSummary.map((item) => item.score);
+          console.log("✅ Radar Labels:", radarLabels);
+          console.log("✅ Radar Scores:", radarScores);
+
+          // Safety check for group_to_category_map before drawing radar charts
+          if (!result.group_to_category) {
+            console.warn("group_to_category is missing from API result.");
+            result.group_to_category = {};  // fallback to empty object
+          }
+          
+          // Add try-catch to prevent errors from breaking the upload
+          try {
+            console.log("✅ group_to_category_map:", result.group_to_category);
+            drawMultipleRadarCharts(result.groups, result.group_to_category);
+          } catch (chartError) {
+            console.error("Error drawing radar charts:", chartError);
+            // Continue with the rest of the upload process even if charts fail
+          }
+        }
+        
+        const subCatSummariesDiv = document.getElementById('subCategorySummaries');
+        if (subCatSummariesDiv) subCatSummariesDiv.innerHTML = '';
+
+      } catch (error) {
+        console.error("DEBUG: Upload error:", error);
+        evaluatedQuestionsTable.innerHTML = '';
+        summaryTable.innerHTML = '';
+        alert('업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+        console.error(error);
+      }
+    });
+
+    // --- Separate 요약 요청하기 button logic ---
+    let requestSummaryBtn = null;
+    function createOrShowRequestSummaryBtn() {
+      if (!requestSummaryBtn) {
+        requestSummaryBtn = document.createElement('button');
+        requestSummaryBtn.id = 'requestSummaryBtn';
+        requestSummaryBtn.textContent = '요약 요청하기';
+        requestSummaryBtn.className = 'action-btn btn-primary';
+        requestSummaryBtn.style.display = 'none'; // initially hidden
+
+        // Wrap in centered div
+        const btnWrapper = document.createElement('div');
+        btnWrapper.id = 'summaryRequestWrapper';
+        btnWrapper.style.textAlign = 'center';
+        btnWrapper.style.marginTop = '24px';
+        btnWrapper.appendChild(requestSummaryBtn);
+
+        summaryTable.parentNode.insertBefore(btnWrapper, summaryTable.nextSibling);
+
+        requestSummaryBtn.addEventListener('click', async () => {
+          try {
+            requestSummaryBtn.disabled = true;
+            requestSummaryBtn.textContent = '요약 생성 중...';
+
+            const response = await fetch('/api/get_summary', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ evaluated: result.evaluated_questions })
+            });
+
+            if (!response.ok) throw new Error('요약 요청 실패');
+
+            const summaryResult = await response.json();
+            // ========== DEBUG LOGS for 요약 요청 subcategory_summaries ==========
+            console.log("DEBUG: 요약 요청 결과 subcategory_summaries:", summaryResult.subcategory_summaries);
+            Object.entries(summaryResult.subcategory_summaries || {}).forEach(([group, subcats]) => {
+              console.log(`DEBUG: 요약 요청 그룹 '${group}' 하위 카테고리:`, Object.keys(subcats));
+            });
+
+            // Remove or clear previous subcategory summaries container
+            const subCategoryContainerId = 'subCategorySummaries';
+            let subCatContainer = document.getElementById(subCategoryContainerId);
+            if (!subCatContainer) {
+              subCatContainer = document.createElement('div');
+              subCatContainer.id = subCategoryContainerId;
+              subCatContainer.className = 'summary-section';
+              summaryTable.parentNode.insertBefore(subCatContainer, btnWrapper.nextSibling);
+            } else {
+              subCatContainer.innerHTML = '';
+            }
+
+            // Render subcategory summaries as flat readable text under group headers
+            Object.entries(summaryResult.subcategory_summaries || {}).forEach(([groupName, summaryData]) => {
+              const title = document.createElement('h3');
+              title.textContent = groupName;
+              title.className = 'summary-title';
+              subCatContainer.appendChild(title);
+
+              if (typeof summaryData === 'string') {
+                const p = document.createElement('p');
+                p.textContent = summaryData;
+                p.className = 'summary-text';
+                subCatContainer.appendChild(p);
+              } else if (typeof summaryData === 'object') {
+                Object.entries(summaryData).forEach(([subkey, summaryText]) => {
+                  const p = document.createElement('p');
+                  p.textContent = summaryText;
+                  p.className = 'summary-text';
+                  subCatContainer.appendChild(p);
+                });
+              }
+            });
+
+            requestSummaryBtn.textContent = '요약 요청하기';
+            requestSummaryBtn.disabled = false;
+          } catch (error) {
+            alert('요약 요청 중 오류 발생');
+            requestSummaryBtn.textContent = '요약 요청하기';
+            requestSummaryBtn.disabled = false;
+            console.error(error);
+          }
+        });
+      }
+    }
+
+    const GROUND_TRUTH_AVERAGES = {
+      "AI 개발 및 활용 시 발생할 수 있는 윤리적 문제에 대한 고려는 어느 정도인가?": 3.74,
+      "AI 관련 국내외 자격증 또는 인증을 보유한 인력이 있나요?": 2.92,
+      "AI 관련 분야(머신러닝, 딥러닝, 자연어 처리 등) 전문 인력 구성 비율은 어느 정도인가?": 3.55,
+      "AI 전문가, 도메인 전문가, 비즈니스 팀 간의 원활한 협업을 위한 귀사의 접근 방식은 무엇인가요?": 3.97,
+      "AI 프로젝트 수행 경력이 있는 인력 비율은 얼마나 되나요?": 3.94,
+      "데이터 사이언티스트, MLOps 엔지니어 등 직무별 인력 구성은 어떻게 되나요?": 3.39,
+      "복잡한 AI 프로젝트를 관리하기 위해 어떤 프로젝트 관리 방법론을 사용하며, 성공적인 관리 사례를 제시해 주실 수 있나요?": 3.60,
+      "수행한 AI 관련 프로젝트 경험은 얼마나 되며, 성공적인 프로젝트 사례는 무엇인가?": 3.86,
+      "외부 학회, 세미나, 공모전 등에서 수상하거나 발표한 경험이 있나요?": 3.37,
+      "최신 AI 트렌드(LLM, 생성형 AI 등)에 대한 내부 교육이나 학습은 어떻게 이루어지고 있나요?": 3.82,
+      "팀 내 협업과 지식 공유를 위해 어떤 시스템이나 방법론을 활용하고 있나요?": 3.79,
+      "파트너사는 AI 윤리 및 책임 의식을 가지고 있는가?": 3.44,
+      "프로젝트 진행 시 일정 관리, 품질 관리, 위험 관리를 효과적으로 수행할 수 있는가?": 3.94,
+      
+      "AI 기술 관련 특허 및 인증을 보유하고 있는가?": 3.61,
+      "AI 기술 연구 개발에 투자하고 있는가?": 4.21,
+      "다양한 AI 기술을 융합하고 활용할 수 있는 능력을 갖추고 있는가?": 4.10,
+      "다양한 AI 모델(머신러닝, 딥러닝 등)을 개발하고 학습할 수 있는 능력을 갖추고 있는가?": 4.04,
+      "대규모 데이터를 처리하고 분석할 수 있는 능력을 갖추고 있는가?": 4.09,
+  
+      "개인정보 보호 및 데이터 보안을 위한 기술적, 관리적 조치를 취하고 있는가?": 3.80,
+      "고객사 요구사항에 맞는 AI 플랫폼 및 인프라를 구축할 수 있는가?": 4.35,
+      "고객사 요구사항을 충족하는 솔루션을 제공할 수 있는가?": 4.23,
+      "고객사가 솔루션 도입 후 기술 지원 및 유지보수 서비스를 제공하는가?": 4.25,
+      "고객사와의 효과적인 커뮤니케이션을 위해 어떤 채널과 방법을 활용하며, 지속적인 피드백을 어떻게 반영하고 있나요?": 3.79,
+      "긴급 상황 발생 시 기술 지원이 가능한 상주 또는 전담 인력 배치가 가능한가요?": 4.07,
+      "사용자 인터페이스(UI) 및 사용자 경험(UX)은 직관적인가?": 4.20,
+      "서비스 수준 협약(SLA) 및 유지보수 정책은 어떻게 되는가?": 3.83,
+      "성능 테스트 결과 및 안정성 검증 자료를 제공할 수 있는가?": 3.50,
+      "솔루션의 개발 로드맵 및 향후 계획을 가지고 있는가?": 4.00,
+      "솔루션의 지속적인 개선 및 발전을 위한 투자를 하고 있는가?": 4.00,
+      "온프레미스, 클라우드, 하이브리드 등 다양한 환경에서의 배포가 가능한가요?": 3.82,
+      "제공 가능한 AI 솔루션(모듈, 플랫폼 등)의 종류와 주요 기능은 무엇인가요?": 3.97,
+      "제공하는 AI 솔루션은 경쟁사 대비 차별성 및 경쟁력을 갖추고 있는가?": 4.44,
+      "제공하는 AI 솔루션은 보안성(데이터 암호화, 접근 제어 등)을 갖추고 있는가?": 3.82,
+      "제공하는 AI 솔루션은 사용하기 편리한가?": 4.23,
+      "제공하는 AI 솔루션은 확장성(다른 시스템과의 연계, API 제공 등) 및 유연성을 갖추고 있는가?": 4.27
+    };
+
+    // --- 벡터 DB 업로드 버튼 핸들러 ---
+    const vectorUploadBtnScript = (() => {
+      if (vectorUploadBtn) {
+        vectorUploadBtn.addEventListener('click', async () => {
+          const mspName = prompt("업로드할 파트너사 이름을 입력하세요:");
+          if (!mspName) {
+            alert("파트너 이름이 입력되지 않았습니다.");
+            return;
+          }
+
+          const items = [];
+          if (result.evaluated_questions && Array.isArray(result.evaluated_questions)) {
+            result.evaluated_questions.forEach(q => {
+              items.push({
+                question: q.question,
+                answer: q.answer,
+                score: q.score
+              });
+            });
+          }
+
+          const response = await fetch('/api/add_to_vector_db', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              msp_name: mspName,
+              items: items,
+              summary: result.summary
+            })
+          });
+
+          if (response.ok) {
+            alert("✅ 벡터 DB에 업로드되었습니다.");
+          } else {
+            alert("❌ 업로드 실패");
+          }
+        });
+      }
+    })();
+
+    // Function to get ground truth average for a group
+    function getGroundTruthForGroup(groupName, evaluatedQuestions) {
+      // Find all questions in this group
+      const questionsInGroup = evaluatedQuestions.filter(q => q.group === groupName);
+      
+      if (questionsInGroup.length === 0) return 0;
+      
+      // Get ground truth scores for these questions
+      const groundTruthScores = questionsInGroup
+        .map(q => GROUND_TRUTH_AVERAGES[q.question])
+        .filter(score => score !== undefined);
+      
+      if (groundTruthScores.length === 0) return 0;
+      
+      // Calculate average and convert to percentage (since your charts use 0-100 scale)
+      const average = groundTruthScores.reduce((sum, score) => sum + score, 0) / groundTruthScores.length;
+      return (average / 5) * 100; // Convert 1-5 scale to 0-100 percentage
+    }
+
+    function drawMultipleRadarCharts(groups, groupToCategoryMap) {
+      console.log("📊 drawMultipleRadarCharts called with:");
+      console.log("  - groups:", JSON.stringify(groups, null, 2));
+      console.log("  - groupToCategoryMap:", JSON.stringify(groupToCategoryMap, null, 2));
+
+      const container = document.getElementById("radarChartsContainer");
+      if (!container) {
+        console.error("Radar charts container not found");
+        return;
+      }
+      container.innerHTML = ""; // Clear existing charts
+      
+      // Safety check
+      if (!groups || !Array.isArray(groups) || groups.length === 0) {
+        console.warn("No groups data for radar charts");
+        return;
+      }
+      
+      // Group by parent category
+      const categorizedGroups = {
+        "인적역량": [],
+        "AI기술역량": [],
+        "솔루션 역량": []
+      };
+      
+      groups.forEach(group => {
+        if (group.name === "인적역량" || group.name === "AI기술역량" || group.name === "솔루션 역량") {
+          return;
+        }
+
+        const category = groupToCategoryMap[group.name] || "기타";
+        if (categorizedGroups[category]) {
+          categorizedGroups[category].push(group);
+        }
+      });
+
+      console.log("📊 Categorized groups:", JSON.stringify(categorizedGroups, null, 2));
+      
+      // Create a radar chart for each category
+      Object.entries(categorizedGroups).forEach(([category, categoryGroups]) => {
+        if (categoryGroups.length === 0) return;
+        
+        // Create wrapper for this category
+        const chartWrapper = document.createElement('div');
+        chartWrapper.className = 'chart-wrapper';
+        
+        const canvas = document.createElement('canvas');
+        canvas.id = `radar-${category.replace(/\s/g, '-')}`;
+        canvas.width = 500;
+        canvas.height = 500;
+        
+        const title = document.createElement('h4');
+        title.textContent = category;
+        
+        chartWrapper.appendChild(title);
+        chartWrapper.appendChild(canvas);
+        container.appendChild(chartWrapper);
+
+        // Prepare data for Chart.js
+        const labels = categoryGroups.map(g => g.name);
+        const currentScores = categoryGroups.map(g => g.score);
+        
+        // Calculate ground truth averages for these groups
+        const groundTruthScores = categoryGroups.map(group => {
+          return getGroundTruthForGroup(group.name, result.evaluated_questions || []);
+        });
+        
+        // Create radar chart with both datasets
+        new Chart(canvas.getContext('2d'), {
+          type: 'radar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: '업계 평균 (Ground Truth)',
+                data: groundTruthScores,
+                backgroundColor: 'transparent',
+                borderColor: 'rgba(0, 0, 0, 0.8)',
+                pointBackgroundColor: 'rgba(0, 0, 0, 0.8)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(0, 0, 0, 1)',
+                borderWidth: 2,
+                pointRadius: 4
+              },
+              {
+                label: `현재 파트너사 (${category})`,
+                data: currentScores,
+                backgroundColor: 'transparent',
+                borderColor: getColorForCategory(category, 1),
+                pointBackgroundColor: getColorForCategory(category, 1),
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: getColorForCategory(category, 1),
+                borderWidth: 3,
+                pointRadius: 5
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            layout: {
+              padding: {
+                top: 50,
+                right: 50,
+                bottom: 50,
+                left: 50
+              }
+            },
+            scales: {
+              r: {
+                min: 0,
+                max: 100,
+                ticks: {
+                  stepSize: 20,
+                  display: false  // Hide tick labels for cleaner look
+                },
+                pointLabels: {
+                  font: {
+                    size: 11,
+                    family: 'Inter',
+                    weight: 600
+                  },
+                  padding: 15,
+                  color: '#374151'
+                },
+                grid: {
+                  color: 'rgba(156, 163, 175, 0.3)'
+                },
+                angleLines: {
+                  color: 'rgba(156, 163, 175, 0.3)'
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                display: true,
+                position: 'bottom',
+                labels: {
+                  font: {
+                    size: 12,
+                    family: 'Inter',
+                    weight: 600
+                  },
+                  padding: 20,
+                  usePointStyle: true,
+                  pointStyle: 'circle'
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                titleColor: '#1f2937',
+                bodyColor: '#374151',
+                borderColor: 'rgba(156, 163, 175, 0.3)',
+                borderWidth: 1,
+                cornerRadius: 8,
+                padding: 12,
+                callbacks: {
+                  title: function(context) {
+                    return context[0].label;
+                  },
+                  label: function(context) {
+                    const value = context.parsed.r.toFixed(1);
+                    const isGroundTruth = context.datasetIndex === 0;
+                    return `${context.dataset.label}: ${value}%${isGroundTruth ? ' (업계 평균)' : ''}`;
+                  },
+                  afterBody: function(context) {
+                    if (context.length === 2) {
+                      const current = context[1].parsed.r;
+                      const groundTruth = context[0].parsed.r;
+                      const diff = current - groundTruth;
+                      const emoji = diff > 0 ? '📈' : diff < 0 ? '📉' : '➖';
+                      return `\n${emoji} 차이: ${diff > 0 ? '+' : ''}${diff.toFixed(1)}%p`;
+                    }
+                    return '';
+                  }
+                }
+              }
+            },
+            interaction: {
+              intersect: false,
+              mode: 'point'
+            }
+          }
+        });
+
+        // Enhanced download button with better styling
+        const downloadBtn = document.createElement('button');
+        downloadBtn.innerHTML = `
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          차트 다운로드
+        `;
+        downloadBtn.className = 'download-btn';
+        downloadBtn.style.cssText = `
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 8px 16px;
+          background: linear-gradient(135deg, #059669, #0d9488);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-family: 'Inter', sans-serif;
+          font-weight: 600;
+          font-size: 14px;
+          transition: all 0.3s ease;
+          margin-top: 12px;
+          box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+        `;
+
+        downloadBtn.addEventListener('mouseenter', function() {
+          this.style.transform = 'translateY(-1px) scale(1.02)';
+          this.style.boxShadow = '0 4px 12px rgba(5, 150, 105, 0.4)';
+        });
+
+        downloadBtn.addEventListener('mouseleave', function() {
+          this.style.transform = 'translateY(0) scale(1)';
+          this.style.boxShadow = '0 2px 8px rgba(5, 150, 105, 0.3)';
+        });
+
+        downloadBtn.addEventListener('click', function() {
+          // Create a temporary canvas with white background
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = canvas.height;
+          const tempCtx = tempCanvas.getContext('2d');
+          
+          // Fill white background
+          tempCtx.fillStyle = 'white';
+          tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+          
+          // Draw the chart canvas on top
+          tempCtx.drawImage(canvas, 0, 0);
+          
+          // Add timestamp to filename for uniqueness
+          const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+          
+          // Download
+          const link = document.createElement('a');
+          link.download = `${category}_vs_업계평균_${timestamp}.png`;
+          link.href = tempCanvas.toDataURL('image/png', 1.0);
+          link.click();
+        });
+
+        chartWrapper.appendChild(downloadBtn);
+
+        // Add summary statistics below the chart
+        const statsDiv = document.createElement('div');
+        statsDiv.style.cssText = `
+          margin-top: 16px;
+          padding: 12px;
+          background: rgba(248, 250, 252, 0.8);
+          border-radius: 8px;
+          font-size: 13px;
+          color: #374151;
+          border-left: 4px solid ${getColorForCategory(category, 1)};
+        `;
+
+        // Calculate averages in percentage first (for diff calculation)
+        const avgCurrentPercent = currentScores.reduce((sum, score) => sum + score, 0) / currentScores.length;
+        const avgGroundTruthPercent = groundTruthScores.reduce((sum, score) => sum + score, 0) / groundTruthScores.length;
+        const overallDiff = avgCurrentPercent - avgGroundTruthPercent;
+
+        // Convert to /5 scale for display
+        const avgCurrent = (avgCurrentPercent / 100) * 5;
+        const avgGroundTruth = (avgGroundTruthPercent / 100) * 5;
+
+        statsDiv.innerHTML = `
+          <div style="font-weight: 600; margin-bottom: 6px;">${category} 성과 요약</div>
+          <div>• 현재 평균: <strong>${avgCurrent.toFixed(1)}/5.0</strong></div>
+          <div>• 업계 평균: <strong>${avgGroundTruth.toFixed(1)}/5.0</strong></div>
+          <div>• 차이: <strong style="color: ${overallDiff >= 0 ? '#059669' : '#dc2626'}">
+            ${overallDiff >= 0 ? '+' : ''}${overallDiff.toFixed(1)}%p
+            ${overallDiff >= 0 ? '(업계 평균 초과)' : '(업계 평균 미만)'}
+          </strong></div>
+        `;
+
+        chartWrapper.appendChild(statsDiv);
+      });
+    }
+
+    function getColorForCategory(category, alpha) {
+      const colors = {
+        "인적역량": `rgba(5, 150, 105, ${alpha})`,     // Green
+        "AI기술역량": `rgba(14, 165, 233, ${alpha})`,  // Blue
+        "솔루션 역량": `rgba(234, 88, 12, ${alpha})`   // Orange
+      };
+      return colors[category] || `rgba(128, 128, 128, ${alpha})`;
+    }
+  </script>
+</body>
+</html>
