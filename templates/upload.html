@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>파트너 역량 진단 도구 - NAVER Cloud</title>
+  <title>Partner Capability Assessment Tool - NAVER Cloud</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -732,9 +732,9 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
         </div>
-        <a href="/" class="header-title gradient-text">NAVER Cloud</a>
+        <a href="/en" class="header-title gradient-text">NAVER Cloud</a>
       </div>
-      <a href="/login?next=/admin" class="admin-link">관리자</a>
+      <a href="/en/login?next=/en/admin" class="admin-link">Admin</a>
     </div>
   </header>
 
@@ -745,14 +745,14 @@
         <svg class="upload-badge-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
         </svg>
-        <span>파트너사 역량 진단 시스템</span>
+        <span>Partner Capability Assessment System</span>
         <div class="upload-badge-dot"></div>
       </div>
       
-      <h1 class="hero-title gradient-text">파트너사 역량 진단 도구</h1>
+      <h1 class="hero-title gradient-text">Partner Capability Assessment Tool</h1>
       <p class="hero-subtitle">
-        엑셀 기반 자동 평가 및 점수 산정 시스템으로<br />
-        <span class="font-semibold gradient-text">AI 파트너사를 효율적으로 진단</span>하세요
+        <span class="font-semibold gradient-text">Efficiently assess MSP partners</span> with our<br />
+        Excel-based automated evaluation and scoring system
       </p>
     </div>
 
@@ -760,7 +760,7 @@
     <div class="upload-form-container">
       <form id="uploadForm" class="upload-form glass-card" autocomplete="off" novalidate>
         <div class="form-group">
-          <label for="excelFile" class="form-label">엑셀 파일 (.xlsx)</label>
+          <label for="excelFile" class="form-label">Excel File (.xlsx)</label>
           <div class="file-input-wrapper">
             <div class="file-input-border">
               <input type="file" id="excelFile" name="file" accept=".xlsx" required class="file-input" />
@@ -770,7 +770,7 @@
             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
-            <span>업로드 및 평가</span>
+            <span>Upload & Evaluate</span>
           </button>
         </div>
       </form>
@@ -782,7 +782,7 @@
 
     <!-- Radar Chart Section -->
     <div id="radarChartSection" class="chart-section" style="display: none;">
-      <h3 class="chart-title">역량 그룹별 방사형 차트</h3>
+      <h3 class="chart-title">Capability Group Radar Charts</h3>
       <div id="radarChartsContainer" class="charts-container"></div>
     </div>
 
@@ -792,7 +792,7 @@
         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
         </svg>
-        벡터 DB에 업로드
+        Upload to Vector DB
       </button>
     </div>
 
@@ -871,7 +871,7 @@
 
       const fileInput = document.getElementById('excelFile');
       if (!fileInput.files.length) {
-        alert('엑셀 파일을 선택해주세요.');
+        alert('Please select an Excel file.');
         evaluatedQuestionsTable.innerHTML = '';
         return;
       }
@@ -888,7 +888,7 @@
 
         if (!res.ok) {
           console.error(`DEBUG: Server responded with error: ${res.status}`);
-          throw new Error(`서버 오류: ${res.status}`);
+          throw new Error(`Server error: ${res.status}`);
         }
 
         result = await res.json();
@@ -934,22 +934,22 @@
           copyBtnWrapper.className = 'action-buttons';
 
           // Categories for which to add copy buttons
-          const categoriesToCopy = ['인적역량', 'AI기술역량', '솔루션 역량'];
+          const categoriesToCopy = ['Human Resources', 'AI Technical Capabilities', 'Solution Capabilities'];
 
           categoriesToCopy.forEach(category => {
             const btn = document.createElement('button');
-            btn.textContent = `${category} 점수 복사`;
+            btn.textContent = `Copy ${category} Scores`;
             btn.className = 'action-btn';
 
             // Set distinct gradient backgrounds
             switch(category) {
-              case '인적역량':
+              case 'Human Resources':
                 btn.classList.add('btn-green');
                 break;
-              case 'AI기술역량':
+              case 'AI Technical Capabilities':
                 btn.classList.add('btn-blue');
                 break;
-              case '솔루션 역량':
+              case 'Solution Capabilities':
                 btn.classList.add('btn-orange');
                 break;
             }
@@ -960,9 +960,9 @@
                 .map(q => (q.score !== undefined ? q.score : ''))
                 .join('\n');
               navigator.clipboard.writeText(scoresToCopy).then(() => {
-                alert(`✅ ${category} 점수가 클립보드에 복사되었습니다.`);
+                alert(`✅ ${category} scores copied to clipboard.`);
               }).catch(() => {
-                alert(`❌ ${category} 점수 복사에 실패했습니다.`);
+                alert(`❌ Failed to copy ${category} scores.`);
               });
             });
 
@@ -999,8 +999,10 @@
           table.appendChild(thead);
 
           const tbody = document.createElement('tbody');
-          result.summary.forEach(row => {
+          
+          result.summary.forEach((row, index) => {
             const tr = document.createElement('tr');
+            
             // Use normalized keys: name, score, questions
             const cells = [row.name || '', row.score || '', row.questions || ''];
             cells.forEach(cell => {
@@ -1009,7 +1011,18 @@
               tr.appendChild(td);
             });
             tbody.appendChild(tr);
+            
+            // Hard coded separator lines after specific rows
+            const rowName = row.name || '';
+            if (rowName === '솔루션 역량' || 
+                rowName === 'AI 윤리 및 책임 의식' || 
+                rowName === 'AI 기술의 특허 및 인증 보유 현황') {
+              const separatorRow = document.createElement('tr');
+              separatorRow.innerHTML = '<td colspan="3" style="border-top: 3px solid #1f2937; padding: 0; background: transparent; height: 2px;"></td>';
+              tbody.appendChild(separatorRow);
+            }
           });
+          
           table.appendChild(tbody);
           tableContainer.appendChild(table);
           summaryTable.innerHTML = '';
@@ -1055,18 +1068,18 @@
         console.error("DEBUG: Upload error:", error);
         evaluatedQuestionsTable.innerHTML = '';
         summaryTable.innerHTML = '';
-        alert('업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+        alert('An error occurred during upload. Please try again.');
         console.error(error);
       }
     });
 
-    // --- Separate 요약 요청하기 button logic ---
+    // --- Separate Request Summary button logic ---
     let requestSummaryBtn = null;
     function createOrShowRequestSummaryBtn() {
       if (!requestSummaryBtn) {
         requestSummaryBtn = document.createElement('button');
         requestSummaryBtn.id = 'requestSummaryBtn';
-        requestSummaryBtn.textContent = '요약 요청하기';
+        requestSummaryBtn.textContent = 'Request Summary';
         requestSummaryBtn.className = 'action-btn btn-primary';
         requestSummaryBtn.style.display = 'none'; // initially hidden
 
@@ -1082,7 +1095,7 @@
         requestSummaryBtn.addEventListener('click', async () => {
           try {
             requestSummaryBtn.disabled = true;
-            requestSummaryBtn.textContent = '요약 생성 중...';
+            requestSummaryBtn.textContent = 'Generating Summary...';
 
             const response = await fetch('/api/get_summary', {
               method: 'POST',
@@ -1090,13 +1103,13 @@
               body: JSON.stringify({ evaluated: result.evaluated_questions })
             });
 
-            if (!response.ok) throw new Error('요약 요청 실패');
+            if (!response.ok) throw new Error('Summary request failed');
 
             const summaryResult = await response.json();
-            // ========== DEBUG LOGS for 요약 요청 subcategory_summaries ==========
-            console.log("DEBUG: 요약 요청 결과 subcategory_summaries:", summaryResult.subcategory_summaries);
+            // ========== DEBUG LOGS for Request Summary subcategory_summaries ==========
+            console.log("DEBUG: Request Summary result subcategory_summaries:", summaryResult.subcategory_summaries);
             Object.entries(summaryResult.subcategory_summaries || {}).forEach(([group, subcats]) => {
-              console.log(`DEBUG: 요약 요청 그룹 '${group}' 하위 카테고리:`, Object.keys(subcats));
+              console.log(`DEBUG: Request Summary group '${group}' subcategories:`, Object.keys(subcats));
             });
 
             // Remove or clear previous subcategory summaries container
@@ -1133,11 +1146,11 @@
               }
             });
 
-            requestSummaryBtn.textContent = '요약 요청하기';
+            requestSummaryBtn.textContent = 'Request Summary';
             requestSummaryBtn.disabled = false;
           } catch (error) {
-            alert('요약 요청 중 오류 발생');
-            requestSummaryBtn.textContent = '요약 요청하기';
+            alert('Error occurred during summary request');
+            requestSummaryBtn.textContent = 'Request Summary';
             requestSummaryBtn.disabled = false;
             console.error(error);
           }
@@ -1145,53 +1158,13 @@
       }
     }
 
-    const GROUND_TRUTH_AVERAGES = {
-      "AI 개발 및 활용 시 발생할 수 있는 윤리적 문제에 대한 고려는 어느 정도인가?": 3.74,
-      "AI 관련 국내외 자격증 또는 인증을 보유한 인력이 있나요?": 2.92,
-      "AI 관련 분야(머신러닝, 딥러닝, 자연어 처리 등) 전문 인력 구성 비율은 어느 정도인가?": 3.55,
-      "AI 전문가, 도메인 전문가, 비즈니스 팀 간의 원활한 협업을 위한 귀사의 접근 방식은 무엇인가요?": 3.97,
-      "AI 프로젝트 수행 경력이 있는 인력 비율은 얼마나 되나요?": 3.94,
-      "데이터 사이언티스트, MLOps 엔지니어 등 직무별 인력 구성은 어떻게 되나요?": 3.39,
-      "복잡한 AI 프로젝트를 관리하기 위해 어떤 프로젝트 관리 방법론을 사용하며, 성공적인 관리 사례를 제시해 주실 수 있나요?": 3.60,
-      "수행한 AI 관련 프로젝트 경험은 얼마나 되며, 성공적인 프로젝트 사례는 무엇인가?": 3.86,
-      "외부 학회, 세미나, 공모전 등에서 수상하거나 발표한 경험이 있나요?": 3.37,
-      "최신 AI 트렌드(LLM, 생성형 AI 등)에 대한 내부 교육이나 학습은 어떻게 이루어지고 있나요?": 3.82,
-      "팀 내 협업과 지식 공유를 위해 어떤 시스템이나 방법론을 활용하고 있나요?": 3.79,
-      "파트너사는 AI 윤리 및 책임 의식을 가지고 있는가?": 3.44,
-      "프로젝트 진행 시 일정 관리, 품질 관리, 위험 관리를 효과적으로 수행할 수 있는가?": 3.94,
-      
-      "AI 기술 관련 특허 및 인증을 보유하고 있는가?": 3.61,
-      "AI 기술 연구 개발에 투자하고 있는가?": 4.21,
-      "다양한 AI 기술을 융합하고 활용할 수 있는 능력을 갖추고 있는가?": 4.10,
-      "다양한 AI 모델(머신러닝, 딥러닝 등)을 개발하고 학습할 수 있는 능력을 갖추고 있는가?": 4.04,
-      "대규모 데이터를 처리하고 분석할 수 있는 능력을 갖추고 있는가?": 4.09,
-  
-      "개인정보 보호 및 데이터 보안을 위한 기술적, 관리적 조치를 취하고 있는가?": 3.80,
-      "고객사 요구사항에 맞는 AI 플랫폼 및 인프라를 구축할 수 있는가?": 4.35,
-      "고객사 요구사항을 충족하는 솔루션을 제공할 수 있는가?": 4.23,
-      "고객사가 솔루션 도입 후 기술 지원 및 유지보수 서비스를 제공하는가?": 4.25,
-      "고객사와의 효과적인 커뮤니케이션을 위해 어떤 채널과 방법을 활용하며, 지속적인 피드백을 어떻게 반영하고 있나요?": 3.79,
-      "긴급 상황 발생 시 기술 지원이 가능한 상주 또는 전담 인력 배치가 가능한가요?": 4.07,
-      "사용자 인터페이스(UI) 및 사용자 경험(UX)은 직관적인가?": 4.20,
-      "서비스 수준 협약(SLA) 및 유지보수 정책은 어떻게 되는가?": 3.83,
-      "성능 테스트 결과 및 안정성 검증 자료를 제공할 수 있는가?": 3.50,
-      "솔루션의 개발 로드맵 및 향후 계획을 가지고 있는가?": 4.00,
-      "솔루션의 지속적인 개선 및 발전을 위한 투자를 하고 있는가?": 4.00,
-      "온프레미스, 클라우드, 하이브리드 등 다양한 환경에서의 배포가 가능한가요?": 3.82,
-      "제공 가능한 AI 솔루션(모듈, 플랫폼 등)의 종류와 주요 기능은 무엇인가요?": 3.97,
-      "제공하는 AI 솔루션은 경쟁사 대비 차별성 및 경쟁력을 갖추고 있는가?": 4.44,
-      "제공하는 AI 솔루션은 보안성(데이터 암호화, 접근 제어 등)을 갖추고 있는가?": 3.82,
-      "제공하는 AI 솔루션은 사용하기 편리한가?": 4.23,
-      "제공하는 AI 솔루션은 확장성(다른 시스템과의 연계, API 제공 등) 및 유연성을 갖추고 있는가?": 4.27
-    };
-
-    // --- 벡터 DB 업로드 버튼 핸들러 ---
+    // --- Vector DB Upload button handler ---
     const vectorUploadBtnScript = (() => {
       if (vectorUploadBtn) {
         vectorUploadBtn.addEventListener('click', async () => {
-          const mspName = prompt("업로드할 파트너사 이름을 입력하세요:");
+          const mspName = prompt("Enter MSP name to upload:");
           if (!mspName) {
-            alert("파트너 이름이 입력되지 않았습니다.");
+            alert("MSP name was not entered.");
             return;
           }
 
@@ -1219,32 +1192,13 @@
           });
 
           if (response.ok) {
-            alert("✅ 벡터 DB에 업로드되었습니다.");
+            alert("✅ Successfully uploaded to Vector DB.");
           } else {
-            alert("❌ 업로드 실패");
+            alert("❌ Upload failed");
           }
         });
       }
     })();
-
-    // Function to get ground truth average for a group
-    function getGroundTruthForGroup(groupName, evaluatedQuestions) {
-      // Find all questions in this group
-      const questionsInGroup = evaluatedQuestions.filter(q => q.group === groupName);
-      
-      if (questionsInGroup.length === 0) return 0;
-      
-      // Get ground truth scores for these questions
-      const groundTruthScores = questionsInGroup
-        .map(q => GROUND_TRUTH_AVERAGES[q.question])
-        .filter(score => score !== undefined);
-      
-      if (groundTruthScores.length === 0) return 0;
-      
-      // Calculate average and convert to percentage (since your charts use 0-100 scale)
-      const average = groundTruthScores.reduce((sum, score) => sum + score, 0) / groundTruthScores.length;
-      return (average / 5) * 100; // Convert 1-5 scale to 0-100 percentage
-    }
 
     function drawMultipleRadarCharts(groups, groupToCategoryMap) {
       console.log("📊 drawMultipleRadarCharts called with:");
@@ -1266,17 +1220,17 @@
       
       // Group by parent category
       const categorizedGroups = {
-        "인적역량": [],
-        "AI기술역량": [],
-        "솔루션 역량": []
+        "Human Resources": [],
+        "AI Technical Capabilities": [],
+        "Solution Capabilities": []
       };
       
       groups.forEach(group => {
-        if (group.name === "인적역량" || group.name === "AI기술역량" || group.name === "솔루션 역량") {
+        if (group.name === "Human Resources" || group.name === "AI Technical Capabilities" || group.name === "Solution Capabilities") {
           return;
         }
 
-        const category = groupToCategoryMap[group.name] || "기타";
+        const category = groupToCategoryMap[group.name] || "Other";
         if (categorizedGroups[category]) {
           categorizedGroups[category].push(group);
         }
@@ -1306,54 +1260,34 @@
 
         // Prepare data for Chart.js
         const labels = categoryGroups.map(g => g.name);
-        const currentScores = categoryGroups.map(g => g.score);
+        const data = categoryGroups.map(g => g.score);
         
-        // Calculate ground truth averages for these groups
-        const groundTruthScores = categoryGroups.map(group => {
-          return getGroundTruthForGroup(group.name, result.evaluated_questions || []);
-        });
-        
-        // Create radar chart with both datasets
+        // Create radar chart
         new Chart(canvas.getContext('2d'), {
           type: 'radar',
           data: {
             labels: labels,
-            datasets: [
-              {
-                label: '업계 평균 (Ground Truth)',
-                data: groundTruthScores,
-                backgroundColor: 'transparent',
-                borderColor: 'rgba(0, 0, 0, 0.8)',
-                pointBackgroundColor: 'rgba(0, 0, 0, 0.8)',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: 'rgba(0, 0, 0, 1)',
-                borderWidth: 2,
-                pointRadius: 4
-              },
-              {
-                label: `현재 파트너사 (${category})`,
-                data: currentScores,
-                backgroundColor: 'transparent',
-                borderColor: getColorForCategory(category, 1),
-                pointBackgroundColor: getColorForCategory(category, 1),
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: getColorForCategory(category, 1),
-                borderWidth: 3,
-                pointRadius: 5
-              }
-            ]
+            datasets: [{
+              label: category,
+              data: data,
+              backgroundColor: getColorForCategory(category, 0.2),
+              borderColor: getColorForCategory(category, 1),
+              pointBackgroundColor: getColorForCategory(category, 1),
+              pointBorderColor: '#fff',
+              pointHoverBackgroundColor: '#fff',
+              pointHoverBorderColor: getColorForCategory(category, 1),
+              borderWidth: 2
+            }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: true,
             layout: {
               padding: {
-                top: 50,
-                right: 50,
-                bottom: 50,
-                left: 50
+                top: 40,
+                right: 40,
+                bottom: 40,
+                left: 40
               }
             },
             scales: {
@@ -1362,113 +1296,36 @@
                 max: 100,
                 ticks: {
                   stepSize: 20,
-                  display: false  // Hide tick labels for cleaner look
+                  display: false  // This completely hides the tick labels
                 },
                 pointLabels: {
                   font: {
-                    size: 11,
-                    family: 'Inter',
-                    weight: 600
+                    size: 10,
+                    family: 'Inter'
                   },
-                  padding: 15,
-                  color: '#374151'
-                },
-                grid: {
-                  color: 'rgba(156, 163, 175, 0.3)'
-                },
-                angleLines: {
-                  color: 'rgba(156, 163, 175, 0.3)'
+                  padding: 10  // Add padding to prevent label cutoff
                 }
               }
             },
             plugins: {
               legend: {
-                display: true,
-                position: 'bottom',
-                labels: {
-                  font: {
-                    size: 12,
-                    family: 'Inter',
-                    weight: 600
-                  },
-                  padding: 20,
-                  usePointStyle: true,
-                  pointStyle: 'circle'
-                }
+                display: false
               },
               tooltip: {
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                titleColor: '#1f2937',
-                bodyColor: '#374151',
-                borderColor: 'rgba(156, 163, 175, 0.3)',
-                borderWidth: 1,
-                cornerRadius: 8,
-                padding: 12,
                 callbacks: {
-                  title: function(context) {
-                    return context[0].label;
-                  },
                   label: function(context) {
-                    const value = context.parsed.r.toFixed(1);
-                    const isGroundTruth = context.datasetIndex === 0;
-                    return `${context.dataset.label}: ${value}%${isGroundTruth ? ' (업계 평균)' : ''}`;
-                  },
-                  afterBody: function(context) {
-                    if (context.length === 2) {
-                      const current = context[1].parsed.r;
-                      const groundTruth = context[0].parsed.r;
-                      const diff = current - groundTruth;
-                      const emoji = diff > 0 ? '📈' : diff < 0 ? '📉' : '➖';
-                      return `\n${emoji} 차이: ${diff > 0 ? '+' : ''}${diff.toFixed(1)}%p`;
-                    }
-                    return '';
+                    return context.dataset.label + ': ' + context.parsed.r.toFixed(1) + '%';
                   }
                 }
               }
-            },
-            interaction: {
-              intersect: false,
-              mode: 'point'
             }
           }
         });
 
-        // Enhanced download button with better styling
+        // Add download button
         const downloadBtn = document.createElement('button');
-        downloadBtn.innerHTML = `
-          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          차트 다운로드
-        `;
+        downloadBtn.textContent = 'Download';
         downloadBtn.className = 'download-btn';
-        downloadBtn.style.cssText = `
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          padding: 8px 16px;
-          background: linear-gradient(135deg, #059669, #0d9488);
-          color: white;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-          font-family: 'Inter', sans-serif;
-          font-weight: 600;
-          font-size: 14px;
-          transition: all 0.3s ease;
-          margin-top: 12px;
-          box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
-        `;
-
-        downloadBtn.addEventListener('mouseenter', function() {
-          this.style.transform = 'translateY(-1px) scale(1.02)';
-          this.style.boxShadow = '0 4px 12px rgba(5, 150, 105, 0.4)';
-        });
-
-        downloadBtn.addEventListener('mouseleave', function() {
-          this.style.transform = 'translateY(0) scale(1)';
-          this.style.boxShadow = '0 2px 8px rgba(5, 150, 105, 0.3)';
-        });
 
         downloadBtn.addEventListener('click', function() {
           // Create a temporary canvas with white background
@@ -1484,58 +1341,22 @@
           // Draw the chart canvas on top
           tempCtx.drawImage(canvas, 0, 0);
           
-          // Add timestamp to filename for uniqueness
-          const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
-          
           // Download
           const link = document.createElement('a');
-          link.download = `${category}_vs_업계평균_${timestamp}.png`;
-          link.href = tempCanvas.toDataURL('image/png', 1.0);
+          link.download = `${category}_radar_chart.png`;
+          link.href = tempCanvas.toDataURL();
           link.click();
         });
 
         chartWrapper.appendChild(downloadBtn);
-
-        // Add summary statistics below the chart
-        const statsDiv = document.createElement('div');
-        statsDiv.style.cssText = `
-          margin-top: 16px;
-          padding: 12px;
-          background: rgba(248, 250, 252, 0.8);
-          border-radius: 8px;
-          font-size: 13px;
-          color: #374151;
-          border-left: 4px solid ${getColorForCategory(category, 1)};
-        `;
-
-        // Calculate averages in percentage first (for diff calculation)
-        const avgCurrentPercent = currentScores.reduce((sum, score) => sum + score, 0) / currentScores.length;
-        const avgGroundTruthPercent = groundTruthScores.reduce((sum, score) => sum + score, 0) / groundTruthScores.length;
-        const overallDiff = avgCurrentPercent - avgGroundTruthPercent;
-
-        // Convert to /5 scale for display
-        const avgCurrent = (avgCurrentPercent / 100) * 5;
-        const avgGroundTruth = (avgGroundTruthPercent / 100) * 5;
-
-        statsDiv.innerHTML = `
-          <div style="font-weight: 600; margin-bottom: 6px;">${category} 성과 요약</div>
-          <div>• 현재 평균: <strong>${avgCurrent.toFixed(1)}/5.0</strong></div>
-          <div>• 업계 평균: <strong>${avgGroundTruth.toFixed(1)}/5.0</strong></div>
-          <div>• 차이: <strong style="color: ${overallDiff >= 0 ? '#059669' : '#dc2626'}">
-            ${overallDiff >= 0 ? '+' : ''}${overallDiff.toFixed(1)}%p
-            ${overallDiff >= 0 ? '(업계 평균 초과)' : '(업계 평균 미만)'}
-          </strong></div>
-        `;
-
-        chartWrapper.appendChild(statsDiv);
       });
     }
 
     function getColorForCategory(category, alpha) {
       const colors = {
-        "인적역량": `rgba(5, 150, 105, ${alpha})`,     // Green
-        "AI기술역량": `rgba(14, 165, 233, ${alpha})`,  // Blue
-        "솔루션 역량": `rgba(234, 88, 12, ${alpha})`   // Orange
+        "Human Resources": `rgba(5, 150, 105, ${alpha})`,     // Green
+        "AI Technical Capabilities": `rgba(14, 165, 233, ${alpha})`,  // Blue
+        "Solution Capabilities": `rgba(234, 88, 12, ${alpha})`   // Orange
       };
       return colors[category] || `rgba(128, 128, 128, ${alpha})`;
     }
