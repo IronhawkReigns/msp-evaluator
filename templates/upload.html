@@ -999,8 +999,10 @@
           table.appendChild(thead);
 
           const tbody = document.createElement('tbody');
-          result.summary.forEach(row => {
+          
+          result.summary.forEach((row, index) => {
             const tr = document.createElement('tr');
+            
             // Use normalized keys: name, score, questions
             const cells = [row.name || '', row.score || '', row.questions || ''];
             cells.forEach(cell => {
@@ -1009,7 +1011,18 @@
               tr.appendChild(td);
             });
             tbody.appendChild(tr);
+            
+            // Hard coded separator lines after specific rows
+            const rowName = row.name || '';
+            if (rowName === '솔루션 역량' || 
+                rowName === 'AI 윤리 및 책임 의식' || 
+                rowName === 'AI 기술의 특허 및 인증 보유 현황') {
+              const separatorRow = document.createElement('tr');
+              separatorRow.innerHTML = '<td colspan="3" style="border-top: 3px solid #1f2937; padding: 0; background: transparent; height: 2px;"></td>';
+              tbody.appendChild(separatorRow);
+            }
           });
+          
           table.appendChild(tbody);
           tableContainer.appendChild(table);
           summaryTable.innerHTML = '';
